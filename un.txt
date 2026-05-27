@@ -1,0 +1,6 @@
+cd /root/luci-app-sub-sync
+sh install.sh
+
+
+cd /root/luci-app-sub-sync
+sh uninstall.sh
