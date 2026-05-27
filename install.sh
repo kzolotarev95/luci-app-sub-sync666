@@ -87,13 +87,19 @@ cat > "$ACL_FILE" <<'ACLEOF'
             "ubus": {
                 "file": [ "exec" ]
             },
-            "uci": [ "podkop" ]
+            "uci": [ "podkop" ],
+            "file": {
+                "/usr/bin/sub-sync": [ "exec" ]
+            }
         },
         "write": {
             "ubus": {
                 "file": [ "exec" ]
             },
-            "uci": [ "podkop" ]
+            "uci": [ "podkop" ],
+            "file": {
+                "/usr/bin/sub-sync": [ "exec" ]
+            }
         }
     }
 }
