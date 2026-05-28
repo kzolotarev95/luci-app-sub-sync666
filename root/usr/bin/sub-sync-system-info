@@ -1,0 +1,67 @@
+#!/bin/sh
+
+json_escape() {
+    printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+NOW="$(date '+%Y-%m-%d %H:%M:%S')"
+
+MEM_JSON="$(awk '
+    /MemTotal:/ { total=$2 }
+    /MemAvailable:/ { avail=$2 }
+    END {
+        if (!total) total=0;
+        if (!avail) avail=0;
+        used=total-avail;
+        if (used < 0) used=0;
+        pct=(total>0 ? used*100/total : 0);
+        printf "\"total_kb\":%d,\"used_kb\":%d,\"available_kb\":%d,\"percent\":%.1f", total, used, avail, pct;
+    }
+' /proc/meminfo 2>/dev/null)"
+
+DF_LINE="$(df -k /overlay 2>/dev/null | awk 'NR==2 {print $2" "$3" "$4" "$5}' || true)"
+[ -n "$DF_LINE" ] || DF_LINE="$(df -k / 2>/dev/null | awk 'NR==2 {print $2" "$3" "$4" "$5}' || true)"
+
+set -- $DF_LINE
+ST_TOTAL="${1:-0}"
+ST_USED="${2:-0}"
+ST_AVAIL="${3:-0}"
+ST_PCT_RAW="${4:-0%}"
+ST_PCT="${ST_PCT_RAW%%%}"
+[ -n "$ST_PCT" ] || ST_PCT=0
+
+TEMP_RAW=""
+TEMP_LABEL=""
+
+for z in /sys/class/thermal/thermal_zone*; do
+    [ -f "$z/temp" ] || continue
+    t="$(cat "$z/temp" 2>/dev/null | tr -dc '0-9' || true)"
+    [ -n "$t" ] || continue
+
+    if [ -z "$TEMP_RAW" ] || [ "$t" -gt "$TEMP_RAW" ]; then
+        TEMP_RAW="$t"
+        if [ -f "$z/type" ]; then
+            TEMP_LABEL="$(cat "$z/type" 2>/dev/null | tr -d '\r\n' || true)"
+        else
+            TEMP_LABEL="$(basename "$z")"
+        fi
+    fi
+done
+
+if [ -z "$TEMP_RAW" ]; then
+    TEMP_JSON='"celsius":null,"label":"sensor not found"'
+else
+    TEMP_C="$(awk -v t="$TEMP_RAW" 'BEGIN { if (t > 1000) printf "%.1f", t/1000; else printf "%.1f", t }')"
+    TEMP_LABEL_ESC="$(json_escape "$TEMP_LABEL")"
+    TEMP_JSON="\"celsius\":$TEMP_C,\"label\":\"$TEMP_LABEL_ESC\""
+fi
+
+NOW_ESC="$(json_escape "$NOW")"
+
+printf '{'
+printf '"ok":true,'
+printf '"time":"%s",' "$NOW_ESC"
+printf '"memory":{%s},' "$MEM_JSON"
+printf '"storage":{"total_kb":%s,"used_kb":%s,"available_kb":%s,"percent":%s},' "$ST_TOTAL" "$ST_USED" "$ST_AVAIL" "$ST_PCT"
+printf '"temperature":{%s}' "$TEMP_JSON"
+printf '}\n'

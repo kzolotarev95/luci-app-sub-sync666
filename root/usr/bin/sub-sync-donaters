@@ -1,0 +1,94 @@
+#!/bin/sh
+# SUBSYNC_DONATERS_HELPER_V52
+
+FILE="/etc/sub-sync/donaters.tsv"
+MAX=12
+
+mkdir -p /etc/sub-sync
+
+clean_text() {
+    printf '%s' "${1:-}" | tr '\r\n\t' '   ' | cut -c1-80
+}
+
+clean_url() {
+    U="$(printf '%s' "${1:-}" | tr -d '\r\n\t' | cut -c1-512)"
+    case "$U" in
+        ""|http://*|https://*)
+            printf '%s' "$U"
+            ;;
+        *)
+            printf '%s' ""
+            ;;
+    esac
+}
+
+init_file() {
+    [ -f "$FILE" ] || : > "$FILE"
+
+    C="$(wc -l < "$FILE" 2>/dev/null | tr -d ' ')"
+    [ -n "$C" ] || C=0
+
+    while [ "$C" -lt "$MAX" ]; do
+        echo "0" >> "$FILE"
+        C=$((C + 1))
+    done
+}
+
+set_row() {
+    IDX="$1"
+    NICK="$(clean_text "$2")"
+    URL="$(clean_url "$3")"
+    EN="${4:-0}"
+
+    case "$IDX" in
+        ''|*[!0-9]*)
+            echo "ERROR: bad index"
+            exit 1
+            ;;
+    esac
+
+    [ "$IDX" -ge 1 ] 2>/dev/null || exit 1
+    [ "$IDX" -le "$MAX" ] 2>/dev/null || exit 1
+
+    [ "$EN" = "1" ] || EN="0"
+
+    init_file
+
+    TMP="/tmp/subsync-donaters.$$"
+    awk -F '\t' -v OFS='\t' -v idx="$IDX" -v en="$EN" -v nick="$NICK" -v url="$URL" '
+        NR == idx { print en, nick, url; next }
+        { print $1, $2, $3 }
+    ' "$FILE" > "$TMP"
+
+    mv "$TMP" "$FILE"
+    chmod 600 "$FILE" 2>/dev/null || true
+
+    logger -t sub-sync "donaters v52 set row=${IDX} enabled=${EN}"
+    echo "OK"
+}
+
+list_all() {
+    init_file
+    awk -F '\t' -v OFS='\t' '{ print $1, $2, $3 }' "$FILE"
+}
+
+list_enabled() {
+    init_file
+    awk -F '\t' -v OFS='\t' '$1 == "1" && $2 != "" { print $1, $2, $3 }' "$FILE"
+}
+
+case "${1:-}" in
+    list)
+        list_all
+        ;;
+    list-enabled)
+        list_enabled
+        ;;
+    set)
+        set_row "${2:-}" "${3:-}" "${4:-}" "${5:-0}"
+        ;;
+    *)
+        echo "Usage: sub-sync-donaters list | list-enabled | set <1-12> <nick> <url> <0|1>"
+        exit 1
+        ;;
+esac

@@ -1,0 +1,37 @@
+{
+    "luci-app-sub-sync": {
+        "description": "Grant access to Sub Sync",
+        "read": {
+            "ubus": {
+                "file": [ "exec" ],
+                "uci": [ "get", "changes" ]
+            },
+            "uci": [ "podkop" ],
+            "file": {
+                "/usr/bin/sub-sync": [ "exec" ],
+                "/usr/bin/sub-sync-autoadd": [ "exec" ],
+                "/usr/bin/sub-sync-section": [ "exec" ],
+                "/usr/bin/sub-sync-subs-info": [ "exec" ],
+                "/usr/bin/sub-sync-ensure-podkop-xhttp": [ "exec" ],
+                "/usr/bin/sub-sync-singbox-log": [ "exec" ],
+                "/usr/bin/sub-sync-system-info": [ "exec" ]
+            }
+        },
+        "write": {
+            "ubus": {
+                "file": [ "exec" ],
+                "uci": [ "add", "set", "delete", "apply", "confirm", "changes", "revert", "order" ]
+            },
+            "uci": [ "podkop" ],
+            "file": {
+                "/usr/bin/sub-sync": [ "exec" ],
+                "/usr/bin/sub-sync-autoadd": [ "exec" ],
+                "/usr/bin/sub-sync-section": [ "exec" ],
+                "/usr/bin/sub-sync-subs-info": [ "exec" ],
+                "/usr/bin/sub-sync-ensure-podkop-xhttp": [ "exec" ],
+                "/usr/bin/sub-sync-singbox-log": [ "exec" ],
+                "/usr/bin/sub-sync-system-info": [ "exec" ]
+            }
+        }
+    }
+}

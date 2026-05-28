@@ -1,5 +1,97 @@
 #!/bin/sh
 
+# SUBSYNC_STALE_JS_CLEANUP_V118B_BEGIN
+subsync_remove_file_v118b() {
+    f="$1"
+    [ -e "$f" ] || return 0
+    echo "[Sub Sync] remove stale JS: $f"
+    rm -f "$f" 2>/dev/null || true
+}
+
+subsync_cleanup_subsync_stale_dir_v118b() {
+    dir="$1"
+    [ -d "$dir" ] || return 0
+
+    for f in "$dir"/sub_sync_v*.js; do
+        subsync_remove_file_v118b "$f"
+    done
+
+    for f in "$dir"/sub_sync_live*.js; do
+        subsync_remove_file_v118b "$f"
+    done
+
+    for f in "$dir"/sub_sync_*.js; do
+        [ "$f" = "$dir/sub_sync.js" ] && continue
+        subsync_remove_file_v118b "$f"
+    done
+
+    for f in "$dir"/sub_sync-*.js; do
+        [ "$f" = "$dir/sub_sync.js" ] && continue
+        subsync_remove_file_v118b "$f"
+    done
+}
+
+subsync_cleanup_subsync_uninstall_live_dir_v118b() {
+    dir="$1"
+    [ -d "$dir" ] || return 0
+
+    for f in "$dir"/*.js; do
+        subsync_remove_file_v118b "$f"
+    done
+
+    rmdir "$dir" 2>/dev/null || true
+}
+
+subsync_cleanup_podkop_stale_dir_v118b() {
+    dir="$1"
+    [ -d "$dir" ] || return 0
+
+    for f in "$dir"/podkop_subsync_*.js; do
+        subsync_remove_file_v118b "$f"
+    done
+
+    for f in "$dir"/main_subsync_*.js; do
+        subsync_remove_file_v118b "$f"
+    done
+
+    for f in "$dir"/*_subsync_*.js; do
+        subsync_remove_file_v118b "$f"
+    done
+}
+
+subsync_cleanup_stale_luci_js_v118b() {
+    mode="${1:-install}"
+
+    echo "[Sub Sync] cleanup stale LuCI JS files v118b, mode=$mode"
+
+    live_subsync_dir="/www/luci-static/resources/view/sub_sync"
+    live_podkop_dir="/www/luci-static/resources/view/podkop"
+
+    repo_subsync_dir="/root/luci-app-sub-sync/htdocs/luci-static/resources/view/sub_sync"
+    repo_podkop_dir="/root/luci-app-sub-sync/htdocs/luci-static/resources/view/podkop"
+
+    if [ "$mode" = "uninstall" ]; then
+        subsync_cleanup_subsync_uninstall_live_dir_v118b "$live_subsync_dir"
+    else
+        subsync_cleanup_subsync_stale_dir_v118b "$live_subsync_dir"
+    fi
+
+    subsync_cleanup_podkop_stale_dir_v118b "$live_podkop_dir"
+
+    # Repo cleanup is always conservative:
+    # remove only old generated/versioned leftovers, never the main source file.
+    subsync_cleanup_subsync_stale_dir_v118b "$repo_subsync_dir"
+    subsync_cleanup_podkop_stale_dir_v118b "$repo_podkop_dir"
+
+    rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
+}
+
+subsync_cleanup_stale_luci_js_v118b "install"
+# SUBSYNC_STALE_JS_CLEANUP_V118B_END
+
+
+
+
 REPO="${SUBSYNC_REPO:-kzolotarev95/luci-app-sub-syncv2}"
 BRANCH="${SUBSYNC_BRANCH:-main}"
 RAW="https://raw.githubusercontent.com/${REPO}/${BRANCH}"

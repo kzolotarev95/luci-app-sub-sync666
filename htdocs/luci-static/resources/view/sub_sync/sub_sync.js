@@ -9,6 +9,55 @@
 'require view.podkop.section as section';
 'require view.podkop.dashboard as dashboard';
 'require view.podkop.diagnostic as diagnostic';
+/* SUBSYNC_DELETE_UI_REFRESH_V43 */
+(function() {
+        if (typeof window === 'undefined')
+                return;
+        if (window.__SUBSYNC_DELETE_UI_REFRESH_V43__)
+                return;
+
+        window.__SUBSYNC_DELETE_UI_REFRESH_V43__ = true;
+
+        function bodyText() {
+                return String((document.body && document.body.innerText) || '');
+        }
+
+        function reloadedRecently() {
+                try {
+                        var t = Number(sessionStorage.getItem('subsync_delete_refresh_v43') || 0);
+                        return t && Date.now() - t < 9000;
+                } catch(e) {
+                        return false;
+                }
+        }
+
+        function markReload() {
+                try {
+                        sessionStorage.setItem('subsync_delete_refresh_v43', String(Date.now()));
+                } catch(e) {}
+        }
+
+        window.setInterval(function() {
+                var t = bodyText();
+
+                if (/Подписка\s+#?\d+\s+удалена/.test(t) && /(^|\s)OK(\s|$)/.test(t)) {
+                        if (reloadedRecently())
+                                return;
+
+                        markReload();
+
+                        window.setTimeout(function() {
+                                try {
+                                        var u = new URL(window.location.href);
+                                        u.searchParams.set('_subsync_refresh', String(Date.now()));
+                                        window.location.replace(u.toString());
+                                } catch(e) {
+                                        window.location.reload();
+                                }
+                        }, 900);
+                }
+        }, 700);
+})();
 
 var SUB_SYNC_VERSION = 'v2';
 
@@ -349,6 +398,57 @@ function createSubSyncContent(section) {
 				return activeLinksBySection[sec] || [];
 			}
 
+var SUBSYNC_ACTIVE_BADGE_STICKY_V28 = true;
+function ssNormLinkV28(x) {
+return String(x || "").trim();
+}
+
+function ssLinkInListV28(link, list) {
+var nl = ssNormLinkV28(link);
+if (!nl) return false;
+list = list || [];
+for (var i = 0; i < list.length; i++) {
+if (ssNormLinkV28(list[i]) === nl) return true;
+}
+return false;
+}
+
+function ssHydrateActiveBadgesV28(sec3) {
+if (!serverTable || !sec3 || typeof fs === "undefined") return;
+var rows = serverTable.querySelectorAll(".tr[data-link]");
+var curLinks = activeLinksBySection[sec3] || [];
+for (var i = 0; i < rows.length; i++) {
+(function(row) {
+var btn = row.querySelector("button[data-idx]");
+if (!btn) return;
+var sid = btn.getAttribute("data-idx");
+if (!sid || row.dataset.link) return;
+fs.exec("/usr/bin/sub-sync", ["link", String(sid)]).then(function(res) {
+var link = (res.stdout || "").trim();
+if (!link || link.indexOf("://") === -1) return;
+row.dataset.link = link;
+if (ssLinkInListV28(link, curLinks)) {
+markBtnSelected(btn, link);
+row.style.borderLeft = "3px solid #4caf50";
+var badge2 = row.querySelector(".ss-active-badge");
+if (!badge2) {
+var nameCell = row.querySelector(".td[data-title=\"Имя\"]");
+if (nameCell) {
+var b = document.createElement("span");
+b.className = "ss-active-badge";
+b.style.cssText = "color:#4caf50;font-size:10px;margin-left:6px;font-weight:bold";
+b.textContent = "✔ используется";
+nameCell.appendChild(b);
+}
+}
+}
+syncAllBtnStates(sec3);
+}).catch(function() {});
+})(rows[i]);
+}
+syncAllBtnStates(sec3);
+}
+
 			var serverCount = info.servers_synced || servers.length || 0;
 			var statusEl = E('span', {});
 			switch (status.status) {
@@ -536,7 +636,7 @@ function createSubSyncContent(section) {
 									var out = (res.stdout || '').trim();
 									var lines = out.split('\n');
 									var lastLine = lines[lines.length - 1].trim();
-									if (lastLine === 'OK') {
+									if (lastLine === 'Активна') {
 										return fs.exec('/usr/bin/sub-sync', ['list-subs']).then(function(r) {
 											try {
 												var newSubs = JSON.parse((r.stdout || '[]').trim());
@@ -623,7 +723,7 @@ function createSubSyncContent(section) {
 						var out = (res.stdout || '').trim();
 						var lines = out.split('\n');
 						var lastLine = lines[lines.length - 1].trim();
-						if (lastLine === 'OK') {
+						if (lastLine === 'Активна') {
 							subInput.value = '';
 							return fs.exec('/usr/bin/sub-sync', ['list-subs']).then(function(r) {
 								try {
@@ -806,6 +906,262 @@ function createSubSyncContent(section) {
 				if (activeServerEl.childNodes[ci].classList && activeServerEl.childNodes[ci].classList.contains('ss-badge')) activeServerCount++;
 			}
 
+                    /* SUBSYNC_MANUAL_BLOCK_V53B */
+                    var manualBodyV53B = E('div', {
+                            'style': 'display:none;margin-top:12px;padding:12px;border-radius:10px;background:rgba(127,127,127,.08);line-height:1.55'
+                    }, [
+                            E('h3', { 'style': 'margin-top:0' }, 'Как пользоваться Sub Sync'),
+
+                            E('h4', {}, '1. Добавление подписки'),
+                            E('p', {}, 'Вставь ссылку подписки в поле подписок и нажми кнопку добавления. После добавления Sub Sync сам загрузит серверы и сохранит их в список.'),
+
+                            E('h4', {}, '2. Создание Podkop-секции'),
+                            E('p', {}, 'В блоке создания Podkop-секции введи имя секции латиницей, цифрами или подчёркиванием. Например: NetHavenE, urltest1, my_section. Нажми кнопку создания. Эта секция станет текущей target-секцией.'),
+
+                            E('h4', {}, '3. Выбор серверов'),
+                            E('p', {}, 'Серверы выбирай именно в Sub Sync, а не руками внутри обычных настроек Podkop. Можно выбирать xHTTP, TCP / Reality и другие серверы из списка. После выбора Sub Sync сам добавит их в выбранную секцию.'),
+
+                            E('h4', {}, '4. После выбора серверов'),
+                            E('p', {}, 'После добавления серверов просто обнови страницу. Нижнюю кнопку LuCI Сохранить/Применить обычно нажимать не нужно, потому что Sub Sync уже записывает серверы в конфиг сам.'),
+
+                            E('h4', {}, '5. Удаление подписки'),
+                            E('p', {}, 'Если удалить подписку, Sub Sync пересоберёт список серверов. В рабочей версии v51 тестовая target-секция с серверами удаляется безопасно, если после удаления подписки она больше не нужна.'),
+
+                            E('h4', {}, '6. AutoPick / AutoAdd'),
+                            E('p', {}, 'AutoPick помогает выбрать подходящие серверы по пингу. AutoAdd добавляет выбранные серверы в текущую target-секцию Podkop. Перед использованием проверь, что нужная секция выбрана.'),
+
+                            E('h4', {}, '7. Автосинхронизация'),
+                            E('p', {}, 'Автосинхронизация обновляет серверы из подписок по расписанию. Если подписка изменилась, Sub Sync подтянет свежий список серверов.'),
+
+                            E('h4', {}, '8. Что делать при ошибке'),
+                            E('p', {}, 'Если что-то пошло не так: не жми много раз подряд Применить. Сначала посмотри логи. Главные ошибки для проверки: fatal, jq invalid, Sing-box configuration invalid, Access denied, SyntaxError, TypeError.'),
+
+                            E('pre', { 'style': 'white-space:pre-wrap;overflow:auto' }, [
+                                    'logread | grep -Ei "sub-sync|subsync|sub_sync|podkop|sing-box|urltest|jq: invalid|configuration .* invalid|fatal|error|failed|SyntaxError|TypeError|Access denied|Доступ запрещ|invalid|Nice" | tail -n 220',
+                                    E('br'),
+                                    'logread -f',
+                                    E('br'),
+                                    E('br'),
+                                    'Откат стабильной точки:',
+                                    E('br'),
+                                    'sh /root/STABLE-SUBSYNC-V51-WORKING-20260528-020113/rollback-stable-subsync-v51-working.sh'
+                            ])
+                    ]);
+
+                    /* SUBSYNC_CONSOLE_MANUAL_ORANGE_FLAT_V89 */
+                    /* SUBSYNC_MANUAL_CONSOLE_ROW_V94 */
+                    var manualBtnV53B = E('button', {
+                            'class': 'cbi-button cbi-button-neutral',
+                            'style': 'display:inline-block!important;margin:0!important;padding:3px 10px!important;font-size:12px;border-radius:9px;border:1px solid #ff9800;background:transparent;color:#ff9800;font-weight:800;text-align:left!important',
+                            'click': function(ev) {
+                                    if (ev && ev.preventDefault)
+                                            ev.preventDefault();
+
+                                    var isHidden = manualBodyV53B.style.display === 'none';
+                                    manualBodyV53B.style.display = isHidden ? 'block' : 'none';
+                                    manualBtnV53B.textContent = isHidden ? 'Скрыть мануал' : 'Мануал: как пользоваться модулем';
+                            }
+                    }, 'Мануал: как пользоваться модулем');
+
+                    /* SUBSYNC_SINGBOX_CONSOLE_LOGS_V81 */
+                    var singboxConsoleTimerV81 = null;
+
+                    var singboxConsoleStatusV81 = E('span', {
+                            'class': 'ss-label',
+                            'style': 'font-size:12px;color:#888;display:inline-block;min-width:155px;text-align:left;font-family:monospace'
+                    }, 'выключено');
+
+                    var singboxConsolePreV81 = E('pre', {
+                            'style': 'margin:10px 0 0 0;max-height:360px;overflow:auto;white-space:pre-wrap;background:rgba(127,127,127,.10);color:inherit;border-radius:10px;padding:10px;font-size:11px;line-height:1.35;border:1px solid rgba(127,127,127,.25)'
+                    }, 'Нажми "Консоль Логи", чтобы открыть realtime sing-box логи.');
+
+                    /* SUBSYNC_CONSOLE_COPY_GREY_V82 */
+                    var singboxConsoleCopyBtnV82 = E('button', {
+                            'class': 'cbi-button cbi-button-neutral',
+                            'style': 'padding:3px 10px;font-size:12px;border-radius:9px;border:1px solid rgba(127,127,127,.35);background:rgba(127,127,127,.10);font-weight:800',
+                            'click': function(ev) {
+                                    if (ev && ev.preventDefault)
+                                            ev.preventDefault();
+
+                                    var text = singboxConsolePreV81 ? String(singboxConsolePreV81.textContent || '') : '';
+                                    if (!text)
+                                            text = 'Логи пустые';
+
+                                    function copiedOkV82() {
+                                            var old = singboxConsoleCopyBtnV82.textContent;
+                                            singboxConsoleCopyBtnV82.textContent = 'Скопировано';
+                                            window.setTimeout(function() { singboxConsoleCopyBtnV82.textContent = old || 'Копировать логи'; }, 1200);
+                                    }
+
+                                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                                            navigator.clipboard.writeText(text).then(copiedOkV82).catch(function() {
+                                                    var ta = document.createElement('textarea');
+                                                    ta.value = text;
+                                                    ta.style.position = 'fixed';
+                                                    ta.style.left = '-9999px';
+                                                    document.body.appendChild(ta);
+                                                    ta.focus();
+                                                    ta.select();
+                                                    try { document.execCommand('copy'); copiedOkV82(); } catch(e) { singboxConsoleCopyBtnV82.textContent = 'Ошибка копирования'; }
+                                                    document.body.removeChild(ta);
+                                            });
+                                    } else {
+                                            var ta2 = document.createElement('textarea');
+                                            ta2.value = text;
+                                            ta2.style.position = 'fixed';
+                                            ta2.style.left = '-9999px';
+                                            document.body.appendChild(ta2);
+                                            ta2.focus();
+                                            ta2.select();
+                                            try { document.execCommand('copy'); copiedOkV82(); } catch(e2) { singboxConsoleCopyBtnV82.textContent = 'Ошибка копирования'; }
+                                            document.body.removeChild(ta2);
+                                    }
+                            }
+                    }, 'Копировать логи');
+
+                    function stopSingboxConsoleV81() {
+                            if (singboxConsoleTimerV81) {
+                                    window.clearInterval(singboxConsoleTimerV81);
+                                    singboxConsoleTimerV81 = null;
+                            }
+                            singboxConsoleStatusV81.textContent = 'выключено';
+                    }
+
+                    function renderSingboxConsoleV81() {
+                            singboxConsoleStatusV81.textContent = 'обновление...';
+
+                            return fs.exec('/usr/bin/sub-sync-singbox-log', ['160']).then(function(res) {
+                                    var out = '';
+
+                                    if (res && res.stdout)
+                                            out = res.stdout;
+                                    else if (res && res.stderr)
+                                            out = res.stderr;
+
+                                    if (!out)
+                                            out = 'Лог пустой или sing-box пока ничего не писал.';
+
+                                    singboxConsolePreV81.textContent = out;
+
+                                    try {
+                                            singboxConsolePreV81.scrollTop = singboxConsolePreV81.scrollHeight;
+                                    } catch(e) {}
+
+                                    singboxConsoleStatusV81.textContent = 'обновлено ' + new Date().toLocaleTimeString();
+                            }).catch(function(err) {
+                                    singboxConsolePreV81.textContent = 'Ошибка чтения логов: ' + (err && err.message ? err.message : err);
+                                    singboxConsoleStatusV81.textContent = 'ошибка';
+                            });
+                    }
+
+                    var singboxConsoleBodyV81 = E('div', {
+                            'style': 'display:none;margin-top:10px;padding:10px;border-radius:10px;background:rgba(127,127,127,.08);border:1px solid rgba(76,175,80,.25)'
+                    }, [
+                            E('div', {
+                                    'style': 'display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap'
+                            }, [
+                                    E('div', { 'class': 'ss-label' }, 'Sing-box / Podkop логи. Автообновление каждые 15 секунд, только когда блок раскрыт.'),
+                            ]),
+                            singboxConsolePreV81,
+                            /* SUBSYNC_CONSOLE_FOOTER_STABLE_V83B */
+                            E('div', {
+                                    'style': 'margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:32px'
+                            }, [
+                                    singboxConsoleStatusV81,
+                                    E('div', {
+                                            'style': 'margin-left:auto;display:flex;justify-content:flex-end;min-width:145px'
+                                    }, [ singboxConsoleCopyBtnV82 ])
+                            ])
+                    ]);
+
+                    var singboxConsoleBtnV81 = E('button', {
+                            'class': 'cbi-button cbi-button-neutral',
+                            'style': 'display:inline-block!important;margin:0!important;padding:3px 10px!important;font-size:12px;border-radius:9px;border:1px solid #ff9800;background:transparent;color:#ff9800;font-weight:800;text-align:left!important',
+                            'click': function(ev) {
+                                    if (ev && ev.preventDefault)
+                                            ev.preventDefault();
+
+                                    var open = singboxConsoleBodyV81.style.display === 'none';
+                                    singboxConsoleBodyV81.style.display = open ? 'block' : 'none';
+                                    singboxConsoleBtnV81.textContent = open ? 'Скрыть Консоль Логи' : 'Консоль Логи';
+
+                                    if (open) {
+                                            renderSingboxConsoleV81();
+                                            if (singboxConsoleTimerV81)
+                                                    window.clearInterval(singboxConsoleTimerV81);
+                                            singboxConsoleTimerV81 = /* SUBSYNC_CONSOLE_REFRESH_15S_V84 */ window.setInterval(renderSingboxConsoleV81, 15000);
+                                    } else {
+                                            stopSingboxConsoleV81();
+                                    }
+                            }
+                    }, 'Консоль Логи');
+
+                    /* SUBSYNC_MANUAL_CONSOLE_ROW_FIX_V94B */
+                    /* SUBSYNC_MANUAL_CONSOLE_COLUMN_V95 */
+                    /* SUBSYNC_MANUAL_CONSOLE_ALIGN_LEFT_V95B */
+                    var singboxConsoleCardV81 = E('div', {
+                            'style': 'width:100%;margin-top:8px;padding:0!important'
+                    }, [
+                            E('div', {
+                                    'style': 'display:grid;grid-template-columns:max-content;justify-items:start;align-items:start;row-gap:6px;margin:0!important;padding:0!important'
+                            }, [
+                                    E('div', { 'style': 'display:block;margin:0!important;padding:0!important;text-align:left!important' }, [ manualBtnV53B ]),
+                                    E('div', { 'style': 'display:block;margin:0!important;padding:0!important;text-align:left!important' }, [ singboxConsoleBtnV81 ])
+                            ]),
+                            singboxConsoleBodyV81
+                    ]);
+
+                    var manualCardV53B = E('div', {
+                            'class': 'ss-manual-flat-v94',
+                           /* SUBSYNC_MANUAL_CARD_NO_LEFT_LINE_V62 */
+                            'style': 'background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important'
+                    }, [
+                            E('div', { 'style': 'display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap' }, [
+                                    E('div', {}, [
+                                            /* SUBSYNC_VERSION_CONSOLE_ORANGE_V92 */
+                                            E('div', {
+                                            /* SUBSYNC_VERSION_BORDER_V93 */
+                                                    'class': 'ss-version-orange-v92',
+                                                    'style': 'display:inline-block;margin:0 0 8px 0;padding:3px 10px;border-radius:9px;border:1px solid #ff9800;background:transparent;color:#ff9800!important;font-size:12px;font-weight:900;line-height:1.35;text-shadow:0 0 8px rgba(255,152,0,.28)'
+                                            }, [
+                                                    'Sub Sync Version 666. Автор Модуля ',
+                                                    E('a', {
+                                                            'href': 'https://t.me/kzolotarev95',
+                                                            'target': '_blank',
+                                                            'rel': 'noopener noreferrer',
+                                                            'style': 'color:#ff9800 !important;text-decoration:underline;font-weight:900'
+                                                    }, 'kzolotarev95')
+                                            ]),
+                                            E('h3', { 'style': 'margin:0 0 4px 0' }, [
+                                                'Помощь по ',
+                                                E('a', {
+                                                    'class': 'ss-subsync-shine-v115',
+                                                    'href': 'https://t.me/+LZDsQJhUfcNhYWEy',
+                                                    'target': '_blank',
+                                                    'rel': 'noopener noreferrer',
+                                                    'style': [
+                                                        'display:inline-block',
+                                                        'font-weight:900',
+                                                        'letter-spacing:.35px',
+                                                        'background-image:linear-gradient(90deg,#00d5ff,#ffffff,#ffd84d,#ff4fd8,#7c4dff,#00d5ff)',
+                                                        'background-size:320% 100%',
+                                                        'background-position:0% 50%',
+                                                        '-webkit-background-clip:text',
+                                                        'background-clip:text',
+                                                        '-webkit-text-fill-color:transparent',
+                                                        'color:transparent',
+                                                        'animation:ssSubSyncGradientFlowV115 2.2s linear infinite',
+                                                        'text-shadow:0 0 8px rgba(0,213,255,.35),0 0 16px rgba(255,79,216,.25)'
+                                                    ].join(';')
+                                                }, 'Sub Sync')
+                                            ]),
+                                            E('div', { 'class': 'ss-label' }, 'Краткая инструкция по подпискам, секциям, выбору серверов и логам.')
+                                    ]),
+                            ]),
+                            singboxConsoleCardV81,
+                            manualBodyV53B
+                    ]);
+
 			var wServerCard = E('div', { 'class': 'ss-card', 'style': 'margin-top:10px' }, [
 				E('div', { 'style': 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px' }, [
 					E('span', { 'class': 'ss-card__title' }, 'Активные серверы (' + activeServerCount + ')')
@@ -814,12 +1170,516 @@ function createSubSyncContent(section) {
 			]);
 
 			var widgetsRow = E('div', { 'class': 'ss-widgets' }, [wStatus, wConnection, wSingbox]);
+                    /* SUBSYNC_SYSTEM_WIDGETS_V96 */
+                    var sysMemValueV96 = E('div', { 'class': 'ss-widget__value' }, 'загрузка...');
+                    var sysStorageValueV96 = E('div', { 'class': 'ss-widget__value' }, 'загрузка...');
+                    var sysTempValueV96 = E('div', { 'class': 'ss-widget__value' }, 'загрузка...');
+
+                    function formatKbV96(kb) {
+                            var n = Number(kb || 0);
+                            if (!n || n < 0)
+                                    return '—';
+
+                            var mb = n / 1024;
+                            if (mb >= 1024)
+                                    return (mb / 1024).toFixed(2) + ' GB';
+
+                            return mb.toFixed(0) + ' MB';
+                    }
+
+                    function clearNodeV96(node) {
+                            while (node.firstChild)
+                                    node.removeChild(node.firstChild);
+                    }
+
+                    function setSysErrorV96(node, text) {
+                            clearNodeV96(node);
+                            node.appendChild(E('span', { 'style': 'color:#f44336;font-weight:800' }, text || 'ошибка'));
+                    }
+
+                    function renderSysInfoV96(data) {
+                            data = data || {};
+
+                            var mem = data.memory || {};
+                            var storage = data.storage || {};
+                            var temp = data.temperature || {};
+                            var updated = data.time || '';
+
+                            clearNodeV96(sysMemValueV96);
+                            sysMemValueV96.appendChild(E('div', { 'class': 'ss-row' }, [
+                                    E('span', { 'class': 'ss-dot ss-dot--ok' }, '●'),
+                                    E('span', { 'class': 'ss-val ss-val--ok' },
+                                            formatKbV96(mem.used_kb) + ' / ' + formatKbV96(mem.total_kb) + ' (' + Number(mem.percent || 0).toFixed(1) + '%)')
+                            ]));
+                            sysMemValueV96.appendChild(E('div', {
+                                    'style': 'color:#999;font-size:12px;margin-top:4px'
+                            }, 'свободно ' + formatKbV96(mem.available_kb) + (updated ? ' · ' + updated : '')));
+
+                            clearNodeV96(sysStorageValueV96);
+                            sysStorageValueV96.appendChild(E('div', { 'class': 'ss-row' }, [
+                                    E('span', { 'class': Number(storage.percent || 0) >= 90 ? 'ss-dot ss-dot--bad' : 'ss-dot ss-dot--ok' }, '●'),
+                                    E('span', { 'class': Number(storage.percent || 0) >= 90 ? 'ss-val ss-val--bad' : 'ss-val ss-val--ok' },
+                                            formatKbV96(storage.used_kb) + ' / ' + formatKbV96(storage.total_kb) + ' (' + Number(storage.percent || 0).toFixed(0) + '%)')
+                            ]));
+                            sysStorageValueV96.appendChild(E('div', {
+                                    'style': 'color:#999;font-size:12px;margin-top:4px'
+                            }, 'свободно ' + formatKbV96(storage.available_kb)));
+
+                            clearNodeV96(sysTempValueV96);
+                            if (temp.celsius === null || temp.celsius === undefined) {
+                                    sysTempValueV96.appendChild(E('div', { 'class': 'ss-row' }, [
+                                            E('span', { 'class': 'ss-dot' }, '●'),
+                                            E('span', { 'class': 'ss-label' }, 'датчик не найден')
+                                    ]));
+                            } else {
+                                    var tc = Number(temp.celsius || 0);
+                                    sysTempValueV96.appendChild(E('div', { 'class': 'ss-row' }, [
+                                            E('span', { 'class': tc >= 80 ? 'ss-dot ss-dot--bad' : 'ss-dot ss-dot--ok' }, '●'),
+                                            E('span', { 'class': tc >= 80 ? 'ss-val ss-val--bad' : 'ss-val ss-val--ok' }, tc.toFixed(1) + ' °C')
+                                    ]));
+                                    sysTempValueV96.appendChild(E('div', {
+                                            'style': 'color:#999;font-size:12px;margin-top:4px'
+                                    }, String(temp.label || 'thermal')));
+                            }
+                    }
+
+                    function refreshSysWidgetsV96() {
+                            return fs.exec('/usr/bin/sub-sync-system-info', []).then(function(res) {
+                                    var out = res && res.stdout ? String(res.stdout).trim() : '';
+                                    var data = out ? JSON.parse(out) : {};
+                                    renderSysInfoV96(data);
+                            }).catch(function(err) {
+                                    setSysErrorV96(sysMemValueV96, 'ошибка RAM');
+                                    setSysErrorV96(sysStorageValueV96, 'ошибка хранилища');
+                                    setSysErrorV96(sysTempValueV96, 'ошибка температуры');
+                            });
+                    }
+
+                    var sysWidgetsRowV96 = E('div', {
+                            'class': 'ss-widgets',
+                            'style': 'margin-top:10px'
+                    }, [
+                            E('div', { 'class': 'ss-widget' }, [
+                                    E('div', { 'class': 'ss-widget__title' }, 'Оперативная память'),
+                                    sysMemValueV96
+                            ]),
+                            E('div', { 'class': 'ss-widget' }, [
+                                    E('div', { 'class': 'ss-widget__title' }, 'Хранилище'),
+                                    sysStorageValueV96
+                            ]),
+                            E('div', { 'class': 'ss-widget' }, [
+                                    E('div', { 'class': 'ss-widget__title' }, 'Температура'),
+                                    sysTempValueV96
+                            ])
+                    ]);
+
+                    refreshSysWidgetsV96();
+
+                    if (window.subsyncSysWidgetsTimerV96)
+                            window.clearInterval(window.subsyncSysWidgetsTimerV96);
+
+                    window.subsyncSysWidgetsTimerV96 = window.setInterval(refreshSysWidgetsV96, 5000);
+
+                        var SUBSYNC_MULTI_SUBS_V16 = true;
+
+                        var subBulkInput = E('textarea', {
+                                'class': 'cbi-input-text',
+                                placeholder: 'https://example.com/sub-1\nhttps://example.com/sub-2\nhttps://example.com/sub-3',
+                                style: 'width:100%;min-height:78px;resize:vertical;font-family:monospace;font-size:12px'
+                        });
+
+                        var subBulkStatus = E('span', {
+                                'class': 'ss-label',
+                                style: 'color:#999'
+                        }, '');
+
+                        function subBulkUrlsV16() {
+                                var raw = String(subBulkInput.value || '');
+                                var parts = raw.split(/[\s,;]+/);
+                                var seen = {};
+                                var out = [];
+
+                                for (var i = 0; i < parts.length; i++) {
+                                        var u = String(parts[i] || '').trim();
+                                        if (!u) continue;
+                                        if (u.indexOf('http://') !== 0 && u.indexOf('https://') !== 0) continue;
+                                        if (seen[u]) continue;
+                                        seen[u] = true;
+                                        out.push(u);
+                                }
+
+                                return out;
+                        }
+
+                        function subBulkSetV16(txt, color) {
+                                subBulkStatus.textContent = txt || '';
+                                subBulkStatus.style.color = color || '#999';
+                        }
+
+                        function subBulkRefreshV16() {
+                                return fs.exec('/usr/bin/sub-sync', ['list-subs']).then(function(r) {
+                                        try {
+                                                var newSubs = JSON.parse((r.stdout || '[]').trim());
+                                                subscriptions = newSubs;
+                                                rebuildSubsList(newSubs);
+                                        } catch(e) {}
+                                });
+                        }
+
+                        function subBulkAddV16(doSync) {
+                                var urls = subBulkUrlsV16();
+
+                                if (urls.length === 0) {
+                                        ui.addNotification(null, E('p', {}, 'Вставь одну или несколько ссылок подписок'), 'warning');
+                                        return;
+                                }
+
+                                subBulkAddBtn.disabled = true;
+                                subBulkAddSyncBtn.disabled = true;
+
+                                var idx = 0;
+                                var added = 0;
+                                var skipped = 0;
+                                var errors = 0;
+
+                                subBulkSetV16('Добавление: 0 из ' + urls.length, '#999');
+
+                                function next() {
+                                        if (idx >= urls.length) {
+                                                subBulkRefreshV16().then(function() {
+                                                        subBulkAddBtn.disabled = false;
+                                                        subBulkAddSyncBtn.disabled = false;
+
+                                                        var msg = 'Добавлено: ' + added + ', пропущено: ' + skipped + ', ошибок: ' + errors;
+                                                        subBulkSetV16(msg, errors > 0 ? '#ff9800' : '#4caf50');
+
+                                                        if (!doSync) {
+                                                                ui.addNotification(null, E('p', {}, msg), 'info');
+                                                                return;
+                                                        }
+
+                                                        subBulkSetV16(msg + '. Загружаю серверы...', '#999');
+
+                                                        fs.exec('/usr/bin/sub-sync', ['sync']).then(function(r) {
+                                                                subBulkSetV16('Серверы загружены из всех рабочих подписок. Страница обновится...', '#4caf50');
+                                                                ui.addNotification(null, E('p', {}, 'Подписки добавлены, серверы загружены'), 'info');
+                                                                window.setTimeout(function() { window.location.reload(); }, 1200);
+                                                        }).catch(function(err) {
+                                                                subBulkSetV16('Подписки добавлены, но sync вернул ошибку', '#ff9800');
+                                                                ui.addNotification(null, E('p', {}, 'Sync failed: ' + (err.message || err)), 'danger');
+                                                        });
+                                                });
+
+                                                return;
+                                        }
+
+                                        var url = urls[idx++];
+
+                                        subBulkSetV16('Добавление: ' + idx + ' из ' + urls.length, '#999');
+
+                                        fs.exec('/usr/bin/sub-sync', ['add-sub', url]).then(function(res) {
+                                                var out = (res.stdout || '').trim();
+
+                                                if (out.split('\n').pop().trim() === 'Активна') {
+                                                        added++;
+                                                } else if (out.indexOf('уже добавлена') >= 0 || out.indexOf('подписка уже добавлена') >= 0) {
+                                                        skipped++;
+                                                } else {
+                                                        errors++;
+                                                }
+
+                                                window.setTimeout(next, 80);
+                                        }).catch(function(err) {
+                                                errors++;
+                                                window.setTimeout(next, 80);
+                                        });
+                                }
+
+                                next();
+                        }
+
+                        var subBulkAddBtn = E('button', {
+                                'class': 'cbi-button',
+                                style: 'padding:2px 10px;font-size:12px;background:transparent;color:#4caf50;border:1px solid #4caf50',
+                                click: function() { subBulkAddV16(false); }
+                        }, 'Добавить список');
+
+                        var subBulkAddSyncBtn = E('button', {
+                                'class': 'cbi-button cbi-button-action',
+                                style: 'padding:2px 10px;font-size:12px',
+                                click: function() { subBulkAddV16(true); }
+                        }, 'Добавить + загрузить серверы');
+
+                        var subBulkBox = E('div', {
+                                'class': 'ss-card',
+                                style: 'padding:8px;margin:8px 0;background:rgba(255,255,255,.025)'
+                        }, [
+                                E('div', { 'class': 'ss-card__title', style: 'font-size:13px;margin-bottom:6px' }, 'Добавить одну или несколько подписок'),
+                                E('div', { 'class': 'ss-label', style: 'margin-bottom:6px;color:#999' }, 'Вставь одну или несколько ссылок, каждую с новой строки. Если одна подписка просрочилась, остальные продолжат работать при загрузке серверов.'),
+                                subBulkInput,
+                                E('div', { 'class': 'ss-controls', style: 'margin-top:8px' }, [
+                                        subBulkAddBtn,
+                                        subBulkAddSyncBtn,
+                                        subBulkStatus
+                                ])
+                        ]);
+                        var SUBSYNC_SUB_INFO_UI_V17 = true;
+                        var SUBSYNC_SUB_INFO_LABELS_V27B = true;
+                        var SUBSYNC_SUB_INFO_LABELS_V27C = true;
+                        if (typeof window !== 'undefined' && !window.__SUBSYNC_LABELS_V27B) {
+                                window.__SUBSYNC_LABELS_V27B = true;
+                                window.setInterval(function() {
+                                        try {
+                                                var badges = document.querySelectorAll('.ss-badge');
+                                                for (var i = 0; i < badges.length; i++) {
+                                                        if ((badges[i].textContent || '').trim() === 'OK')
+                                                                badges[i].textContent = 'Активна';
+                                                }
+                                        } catch (e) {}
+                                }, 700);
+                        }
+                        var SUBSYNC_SUB_INFO_LABELS_V27 = true;
+                        var SUBSYNC_SUB_INFO_FAST_V23 = true;
+                        var SUBSYNC_HIDE_SINGLE_SUB_ROW_V26 = true;
+                        var SUBSYNC_SUB_INFO_MANUAL_EXPIRE_V25 = true;
+                        var SUBSYNC_SUB_INFO_TRUTH_V22 = true;
+
+                        var subInfoStatus = E('span', { 'class': 'ss-label', style: 'color:#999' }, '');
+                        var subInfoList = E('div', { style: 'display:flex;flex-direction:column;gap:8px;margin-top:8px' });
+
+                        function subInfoGbV17(bytes) {
+                                var n = Number(bytes || 0);
+                                if (!n || n <= 0) return 'нет данных';
+                                return (n / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+                        }
+
+                        function subInfoDateV17(epoch) {
+                                var n = Number(epoch || 0);
+                                if (!n || n <= 0) return 'нет данных';
+                                try {
+                                        return new Date(n * 1000).toLocaleString();
+                                } catch(e) {
+                                        return 'нет данных';
+                                }
+                        }
+
+                        function subInfoShortUrlV17(url) {
+                                var s = String(url || '');
+                                if (s.length <= 72) return s;
+                                return s.slice(0, 44) + '…' + s.slice(-18);
+                        }
+
+                        function subInfoDomainV17(url) {
+                                var m = String(url || '').match(/^https?:\/\/([^\/]+)/);
+                                return m ? m[1] : 'подписка';
+                        }
+
+                        function subInfoClearV17() {
+                                while (subInfoList.firstChild) subInfoList.removeChild(subInfoList.firstChild);
+                        }
+
+                        function subInfoCardV17(s) {
+                                var used = Number(s.upload || 0) + Number(s.download || 0);
+                                var total = Number(s.total || 0);
+                                var left = total > 0 ? Math.max(0, total - used) : 0;
+                                var expire = Number(s.expire || 0);
+                                var nowSec = Math.floor(Date.now() / 1000);
+                                var expired = expire > 0 && expire < nowSec;
+                                var warnSoon = expire > 0 && expire >= nowSec && expire < nowSec + 7 * 86400;
+
+                                var statusText = 'Активна';
+                                var statusColor = '#4caf50';
+
+                                if (s.status === 'no_userinfo') {
+                                        statusText = 'нет данных от провайдера';
+                                        statusColor = '#ff9800';
+                                }
+
+                                if (expired) {
+                                        statusText = 'истекла';
+                                        statusColor = '#f44336';
+                                } else if (warnSoon) {
+                                        statusText = 'скоро истекает';
+                                        statusColor = '#ff9800';
+                                }
+
+                                var percent = '';
+                                if (total > 0) {
+                                        percent = ' / ' + Math.round((used / total) * 100) + '%';
+                                }
+
+                                return E('div', {
+                                        'class': 'ss-card',
+                                        style: 'padding:8px;background:rgba(255,255,255,.025);border-left:3px solid ' + statusColor
+                                }, [
+                                        E('div', { style: 'display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap' }, [
+                                                E('div', { 'class': 'ss-card__title', style: 'font-size:13px' },
+                                                        'Подписка #' + String(s.index || '?') + ' — ' + (s.title || subInfoDomainV17(s.url))),
+                                                E('span', { 'class': 'ss-badge', style: 'color:' + statusColor }, statusText)
+                                        ]),
+                                        E('div', { 'class': 'ss-label', style: 'font-family:monospace;font-size:12px;margin-top:4px' }, subInfoShortUrlV17(s.url)),
+                                        E('div', { 'class': 'ss-controls', style: 'margin-top:8px' }, [
+                                                E('span', { 'class': 'ss-label' }, 'Проверено:'),
+                                                E('span', { 'class': 'ss-val' }, subInfoDateV17(s.checked_at)),
+                                                E('span', { 'class': 'ss-label' }, 'Добавлена локально:'),
+                                                E('span', { 'class': 'ss-val' }, subInfoDateV17(s.first_seen)),
+                                                E('span', { 'class': 'ss-label' }, 'Истекает:'),
+                                                E('span', { 'class': 'ss-val', style: 'color:' + statusColor }, subInfoDateV17(s.expire))
+                                        ]),
+                                        E('div', { 'class': 'ss-controls', style: 'margin-top:6px' }, [
+                                                E('span', { 'class': 'ss-label' }, 'Использовано:'),
+                                                E('span', { 'class': 'ss-val' }, subInfoGbV17(used) + percent),
+                                                E('span', { 'class': 'ss-label' }, 'Лимит:'),
+                                                E('span', { 'class': 'ss-val' }, subInfoGbV17(total)),
+                                                E('span', { 'class': 'ss-label' }, 'Осталось:'),
+                                                E('span', { 'class': 'ss-val', style: 'color:#4caf50' }, subInfoGbV17(left))
+                                        ]),
+                                        E('div', { 'class': 'ss-label', style: 'margin-top:4px;color:#999' },
+                                                s.status === 'no_userinfo'
+                                                        ? 'Провайдер не отдал subscription-userinfo header. URL всё равно может работать, просто нет данных по GB/сроку.'
+                                                        : ('Обновление профиля: ' + (s.profile_update_interval || 'нет данных')))
+                                ]);
+                        }
+
+                        function subInfoLoadV17() {
+                                subInfoStatus.textContent = 'Загружаю информацию по подпискам...';
+                                subInfoStatus.style.color = '#999';
+
+                                fs.exec('/usr/bin/sub-sync', ['subs-info']).then(function(r) {
+                                        var data = {};
+                                        try {
+                                                data = JSON.parse((r.stdout || '{}').trim());
+                                        } catch(e) {
+                                                data = {};
+                                        }
+
+                                        var list = data.subscriptions || [];
+                                        subInfoClearV17();
+
+                                        if (list.length === 0) {
+                                                subInfoList.appendChild(E('div', { 'class': 'ss-label' }, 'Подписок пока нет.'));
+                                                subInfoStatus.textContent = '';
+                                                return;
+                                        }
+
+                                        for (var i = 0; i < list.length; i++) {
+                                                subInfoList.appendChild(subInfoCardV17(list[i]));
+                                        }
+
+                                        subInfoStatus.textContent = 'Обновлено: ' + subInfoDateV17(data.checked_at);
+                                        subInfoStatus.style.color = '#4caf50';
+                                }).catch(function(err) {
+                                        subInfoStatus.textContent = 'Ошибка загрузки информации подписок';
+                                        subInfoStatus.style.color = '#f44336';
+                                        ui.addNotification(null, E('p', {}, 'subs-info failed: ' + (err.message || err)), 'danger');
+                                });
+                        }
+
+                        var subInfoRefreshBtn = E('button', {
+                                'class': 'cbi-button',
+                                style: 'padding:2px 10px;font-size:12px;background:transparent;color:#4caf50;border:1px solid #4caf50',
+                                click: subInfoLoadV17
+                        }, 'Обновить инфо');
+
+                        var subInfoBox = E('div', {
+                                'class': 'ss-card',
+                                style: 'padding:8px;margin:8px 0;background:rgba(255,255,255,.025)'
+                        }, [
+                                E('div', { style: 'display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap' }, [
+                                        E('div', { 'class': 'ss-card__title', style: 'font-size:13px' }, 'Информация по подпискам'),
+                                        E('div', { style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap' }, [subInfoRefreshBtn, subInfoStatus])
+                                ]),
+                                E('div', { 'class': 'ss-label', style: 'margin-top:6px;color:#999' },
+                                        ''),
+                                subInfoList
+                        ]);
+
+                        window.setTimeout(subInfoLoadV17, 800);
+                    /* SUBSYNC_SECTION_CREATE_UI_V45B */
+                    var sectionCreateStatusV45B = E('span', { 'class': 'ss-label', 'style': 'margin-left:8px;color:#888' }, '');
+                    var sectionCreateInputV45B = E('input', {
+                            'type': 'text',
+                            'placeholder': 'например urlzks95',
+                            'style': 'min-width:220px;margin-right:8px'
+                    });
+
+                    function ssCleanSectionNameV45B(v) {
+                            return String(v || '').trim().replace(/[^A-Za-z0-9_]/g, '');
+                    }
+
+                    function ssReloadPageV45B() {
+                            window.setTimeout(function() {
+                                    try {
+                                            var u = new URL(window.location.href);
+                                            u.searchParams.set('_subsync_section_v45b', String(Date.now()));
+                                            window.location.replace(u.toString());
+                                    } catch(e) {
+                                            window.location.reload();
+                                    }
+                            }, 900);
+                    }
+
+                    function ssCreatePodkopSectionV45B(ev) {
+                            if (ev && ev.preventDefault)
+                                    ev.preventDefault();
+
+                            var raw = String(sectionCreateInputV45B.value || '').trim();
+                            var name = ssCleanSectionNameV45B(raw);
+
+                            if (!name) {
+                                    sectionCreateStatusV45B.textContent = 'Введите имя секции';
+                                    return;
+                            }
+
+                            if (name !== raw) {
+                                    sectionCreateInputV45B.value = name;
+                                    sectionCreateStatusV45B.textContent = 'Имя очищено: ' + name;
+                            }
+
+                            sectionCreateStatusV45B.textContent = 'Создаю...';
+
+                            return fs.exec('/usr/bin/sub-sync-section', [ 'create', name ]).then(function(res) {
+                                    var out = String((res && res.stdout) || '').trim();
+                                    sectionCreateStatusV45B.textContent = out || 'OK';
+
+                                    ui.addNotification(null, E('p', {}, 'Podkop-секция создана и выбрана как AutoAdd target: ' + name), 'info');
+                                    ssReloadPageV45B();
+                            }).catch(function(e) {
+                                    sectionCreateStatusV45B.textContent = 'Ошибка создания';
+                                    ui.addNotification(null, E('p', {}, 'Ошибка создания секции: ' + (e && e.message ? e.message : e)), 'danger');
+                            });
+                    }
+
+                           /* SUBSYNC_SECTION_CARD_NO_LEFT_LINE_V63 */
+                    var sectionCreateCardV45B = E('div', { 'class': 'ss-card', 'style': 'margin-top:10px' }, [
+                            E('h3', {}, 'Создать Podkop-секцию'),
+                            E('div', { 'class': 'ss-label', 'style': 'margin-bottom:8px' },
+                                    'Порядок: создай секцию → выбери серверы ниже в Sub Sync → серверы сразу попадут в выбранную секцию → обнови страницу. Нижнюю кнопку LuCI "Сохранить/Применить" не нажимай.'),
+                            E('div', { 'class': 'ss-controls' }, [
+                                    sectionCreateInputV45B,
+                                    E('button', {
+                                            'class': 'btn cbi-button cbi-button-positive',
+                                            'click': ssCreatePodkopSectionV45B
+                                    }, 'Создать и выбрать секцию'),
+                                    sectionCreateStatusV45B
+                            ])
+                    ]);
+
+                    window.setTimeout(function() {
+                            fs.exec('/usr/bin/sub-sync-section', [ 'target' ]).then(function(res) {
+                                    var t = String((res && res.stdout) || '').trim();
+                                    if (t && !sectionCreateInputV45B.value)
+                                            sectionCreateInputV45B.value = t;
+                            }).catch(function() {});
+                    }, 150);
 
 			var subsCard = E('div', { 'class': 'ss-card' }, [
 				E('div', { 'class': 'ss-card__header' }, [
 					E('div', { 'class': 'ss-card__title' }, 'Подписки (' + subscriptions.length + ')')
 				]),
-				E('div', { 'style': 'display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:8px' }, [subInput, subAddBtn]),
+                                /* SUBSYNC_HIDE_SINGLE_SUB_ROW_V26: old single subscription input row hidden; use bulk add block only */
+                                subInfoBox,
+                                subBulkBox,
 				subsListEl,
 				E('div', { 'class': 'ss-controls' }, [
 					E('span', { 'class': 'ss-label' }, 'Автообновление:'),
@@ -875,6 +1735,17 @@ function createSubSyncContent(section) {
 			var sRows = [headerRow];
 
 			var serverTable;
+            var xhttpTable = null;
+            var xhttpHeading = null;
+            var xhttpTableContainer = null;
+            var xhttpEmptyMsg = null;
+            var xhttpSectionSelect = null;
+            var ssXhttpAutoApplyBtn = null;
+            var SUBSYNC_XHTTP_URLTEST_V5 = true;
+            var SUBSYNC_XHTTP_USED_STATUS_V6 = true;
+            var SUBSYNC_XHTTP_GREEN_BUTTON_V7 = true;
+            var SUBSYNC_XHTTP_PING_BUTTON_V9 = true;
+            var SUBSYNC_XHTTP_PING_BADGE_V8 = true;
 			function resetAllSelectBtns() {
 				if (!serverTable) return;
 				var allBtns = serverTable.querySelectorAll('button[data-selected="1"]');
@@ -891,11 +1762,13 @@ function createSubSyncContent(section) {
 			function updateXhttpButtons() {
 				if (!serverTable) return;
 				var mode = sectionTypeSelect ? sectionTypeSelect.value : 'url';
-				var xhttpBtns = serverTable.querySelectorAll('button[data-xhttp="1"]');
+                var xhttpBtns = [];
+                if (serverTable) xhttpBtns = xhttpBtns.concat(Array.prototype.slice.call(serverTable.querySelectorAll('button[data-xhttp="1"]')));
+                if (xhttpTable) xhttpBtns = xhttpBtns.concat(Array.prototype.slice.call(xhttpTable.querySelectorAll('button[data-xhttp="1"]')));
 				for (var xbi = 0; xbi < xhttpBtns.length; xbi++) {
 					var xb = xhttpBtns[xbi];
 					if (xb.dataset.selected === '1') continue;
-					if (mode !== 'outbound') {
+                                            if (xb.dataset.urltest !== '1' && mode !== 'outbound') {
 						xb.disabled = true;
 						xb.className = 'cbi-button cbi-button-neutral';
 						xb.style.cssText = 'padding:2px 6px;font-size:11px;min-width:62px;opacity:0.5;cursor:not-allowed';
@@ -915,7 +1788,7 @@ function createSubSyncContent(section) {
 	
 				updateTypeSelect();
 				var sec3 = globalSectionSelect.value;
-				if (sec3) syncAllBtnStates(sec3);
+if (sec3) { syncAllBtnStates(sec3); ssHydrateActiveBadgesV28(sec3); }
 				updateXhttpButtons();
 			});
 			sectionTypeSelect.addEventListener('change', function() {
@@ -963,7 +1836,8 @@ function createSubSyncContent(section) {
 				while (serverTable.firstChild) serverTable.removeChild(serverTable.firstChild);
 				if (header) serverTable.appendChild(header);
 				for (var j = 0; j < rows.length; j++) {
-					rows[j].className = 'tr ' + (j % 2 === 0 ? 'cbi-rowstyle-1' : 'cbi-rowstyle-2');
+					/* SUBSYNC_PING_SORT_NO_JUMP_V80 */
+rows[j].className = 'tr ' + (j % 2 === 0 ? 'cbi-rowstyle-1' : 'cbi-rowstyle-2') + (!serverLimitExpandedV79 && j >= LIMIT ? ' ss-server-hidden-v79' : '');
 					serverTable.appendChild(rows[j]);
 					var numCell = rows[j].querySelector('.td[data-title="#"]');
 					if (numCell) numCell.textContent = String(j + 1);
@@ -1022,7 +1896,7 @@ function createSubSyncContent(section) {
 				if (proto === 'ss' && t) {
 					parts.push(t);
 				} else if (t) {
-					parts.push(t === 'xhttp' ? 'xHTTP' : t === 'quic' ? 'QUIC' : t.toUpperCase());
+                                   parts.push(t === 'xhttp' ? 'xHTTP' : t === 'quic' ? 'QUIC' : t === 'ok' ? 'Активна' : String(t || '?').toUpperCase());
 				}
 				if (sec && sec !== 'none') {
 					parts.push(sec === 'reality' ? 'Reality' : sec === 'tls' ? 'TLS' : sec);
@@ -1046,7 +1920,7 @@ function createSubSyncContent(section) {
 
 			function markBtnSelected(btn, link2) {
 				btn.dataset.selected = '1';
-				btn.dataset.link = link2;
+btn.dataset.link = ssNormLinkV28(link2 || btn.dataset.link || "");
 				btn.textContent = 'Выбрано';
 				btn.className = 'cbi-button cbi-button-neutral';
 				btn.style.cssText = 'padding:2px 6px;font-size:11px;min-width:62px;border-color:#4caf50;color:#4caf50';
@@ -1063,6 +1937,45 @@ function createSubSyncContent(section) {
 			}
 
 			function showApplyNeeded() {
+                        if (ssXhttpAutoApplyBtn) {
+                                var apBtn = ssXhttpAutoApplyBtn;
+                                ssXhttpAutoApplyBtn = null;
+                                apBtn.disabled = true;
+                                apBtn.textContent = 'Applying...';
+                                uci.save().then(function() {
+                                        return uci.apply();
+                                }).then(function() {
+                                        apBtn.disabled = false;
+                                        if (apBtn.dataset.selected === '1') {
+                                                apBtn.className = 'cbi-button cbi-button-neutral';
+                                                apBtn.style.cssText = 'padding:2px 6px;font-size:11px;min-width:62px;border-color:#4caf50;color:#4caf50';
+                                                apBtn.title = 'Этот сервер выбран в URL Test';
+                                                apBtn.textContent = 'Выбрано';
+                                        } else {
+                                                apBtn.className = 'cbi-button cbi-button-action';
+                                                apBtn.style.cssText = 'padding:2px 6px;font-size:11px;min-width:62px';
+                                                apBtn.title = 'Нажми, чтобы применить в URL Test';
+                                                apBtn.textContent = 'Выбрать';
+                                        }
+                                        ui.addNotification(null, E('p', {}, 'xHTTP applied to URL Test'), 'info');
+                                        try { ssRebuildXhttpCardV2(servers); } catch(e) {}
+                                }).catch(function(err) {
+                                        apBtn.disabled = false;
+                                        if (apBtn.dataset.selected === '1') {
+                                                apBtn.className = 'cbi-button cbi-button-neutral';
+                                                apBtn.style.cssText = 'padding:2px 6px;font-size:11px;min-width:62px;border-color:#4caf50;color:#4caf50';
+                                                apBtn.title = 'Этот сервер выбран в URL Test';
+                                                apBtn.textContent = 'Выбрано';
+                                        } else {
+                                                apBtn.className = 'cbi-button cbi-button-action';
+                                                apBtn.style.cssText = 'padding:2px 6px;font-size:11px;min-width:62px';
+                                                apBtn.title = 'Нажми, чтобы применить в URL Test';
+                                                apBtn.textContent = 'Выбрать';
+                                        }
+                                        ui.addNotification(null, E('p', {}, 'URL Test apply error: ' + (err.message || err)), 'danger');
+                                });
+                                return;
+                        }
 				debouncedSave();
 			}
 
@@ -1074,7 +1987,7 @@ function createSubSyncContent(section) {
 				for (var ri2 = 0; ri2 < rows.length; ri2++) {
 					var row = rows[ri2];
 					var rowLink = row.dataset.link;
-					var isAct = rowLink && curLinks.indexOf(rowLink) >= 0;
+var isAct = ssLinkInListV28(rowLink, curLinks);
 					row.style.borderLeft = isAct ? '3px solid #4caf50' : '';
 					var badge2 = row.querySelector('.ss-active-badge');
 					if (isAct && !badge2) {
@@ -1112,16 +2025,17 @@ function createSubSyncContent(section) {
 					'data-selected': '0', 'data-link': '', 'data-idx': String(s.id || idx), 'data-xhttp': isXhttp ? '1' : '0',
 					'click': function(ev) {
 						var btn = ev.currentTarget || ev.target;
+                            var btnXhttpUrlTest = btn.dataset.urltest === '1';
 						if (btn.disabled) return;
-						var sec3 = globalSectionSelect.value;
+                            var sec3 = btnXhttpUrlTest && xhttpSectionSelect ? xhttpSectionSelect.value : globalSectionSelect.value;
 						if (!sec3) { ui.addNotification(null, E('p', {}, 'Выберите секцию'), 'danger'); return; }
-						var secType = sectionTypeSelect ? sectionTypeSelect.value : 'url';
+                            var secType = btnXhttpUrlTest ? 'urltest' : (sectionTypeSelect ? sectionTypeSelect.value : 'url');
 						var isMulti = (secType === 'selector' || secType === 'urltest');
 						var listKey = secType === 'selector' ? 'selector_proxy_links' : 'urltest_proxy_links';
 
 
 						if (btn.dataset.selected === '1') {
-							var savedLink = btn.dataset.link;
+var savedLink = btn.dataset.link || (btn.closest(".tr") ? btn.closest(".tr").dataset.link : "");
 
 							btn.disabled = true; btn.textContent = '...';
 							if (secType === 'outbound') {
@@ -1131,7 +2045,7 @@ function createSubSyncContent(section) {
 								uci.unset('podkop', sec3, 'proxy_string');
 								activeLinksBySection[sec3] = [];
 							} else {
-								var myLinks = (activeLinksBySection[sec3] || []).filter(function(l) { return l !== savedLink; });
+								var myLinks = (activeLinksBySection[sec3] || []).filter(function(l) { return ssNormLinkV28(l) !== ssNormLinkV28(savedLink); });
 								activeLinksBySection[sec3] = myLinks;
 								if (myLinks.length > 0) uci.set('podkop', sec3, listKey, myLinks);
 								else uci.unset('podkop', sec3, listKey);
@@ -1139,6 +2053,7 @@ function createSubSyncContent(section) {
 							if (isMulti) {
 								markBtnDeselected(btn);
 								syncAllBtnStates(sec3);
+                                                                    if (btnXhttpUrlTest) ssXhttpAutoApplyBtn = btn;
 								showApplyNeeded();
 
 							} else {
@@ -1184,7 +2099,7 @@ function createSubSyncContent(section) {
 							} else {
 								sectionTypes[sec3] = secType;
 								var myLinks = (activeLinksBySection[sec3] || []).slice();
-								if (myLinks.indexOf(link2) === -1) {
+if (!ssLinkInListV28(link2, myLinks)) {
 									myLinks.push(link2);
 								}
 								activeLinksBySection[sec3] = myLinks;
@@ -1258,12 +2173,12 @@ function createSubSyncContent(section) {
 				}
 
 				return E('div', {
-					'class': 'tr' + (idx % 2 === 0 ? ' cbi-rowstyle-1' : ' cbi-rowstyle-2'),
-					'style': (idx >= LIMIT ? 'display:none' : '') + (isActive ? ';border-left:3px solid #4caf50' : ''),
+                                   'class': 'tr' + (idx % 2 === 0 ? ' cbi-rowstyle-1' : ' cbi-rowstyle-2') + (!serverLimitExpandedV79 && idx >= LIMIT ? ' ss-server-hidden-v79' : ''),
+                                   'style': (isActive ? 'border-left:3px solid #4caf50' : ''),
 					'data-link': s.link || ''
 				}, [
 					E('div', { 'class': 'td', 'data-title': '#' }, String(s.id || idx + 1)),
-					E('div', { 'class': 'td', 'data-title': 'Протокол' }, (s.proto || '?').toUpperCase()),
+                                   E('div', { 'class': 'td', 'data-title': 'Протокол' }, (s.proto || '?') === 'ok' ? 'Активна' : (s.proto || '?').toUpperCase()),
 					E('div', { 'class': 'td', 'data-title': 'Транспорт', 'style': 'font-size:12px' }, formatTransport(s)),
 					E('div', { 'class': 'td', 'data-title': 'Имя' }, nameChildren),
 					E('div', { 'class': 'td', 'data-title': 'Адрес', 'style': 'font-family:monospace;font-size:12px' },
@@ -1275,11 +2190,13 @@ function createSubSyncContent(section) {
 
 			var currentActiveLinks = getCurrentActiveLinks();
 			for (var ri = 0; ri < servers.length; ri++) {
-				var isActive = servers[ri].link ? currentActiveLinks.indexOf(servers[ri].link.trim()) >= 0 : false;
+var isActive = ssLinkInListV28(servers[ri].link, currentActiveLinks);
 				sRows.push(createServerRow(servers[ri], ri, isActive));
 			}
 
 			serverTable = E('div', { 'class': 'table' }, sRows);
+/* SUBSYNC_ACTIVE_BADGE_STICKY_V28_RENDER_CALL */
+if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrateActiveBadgesV28(globalSectionSelect ? globalSectionSelect.value : ""); } catch(e) {} }, 350);
 			var serversHeading = E('h3', {}, 'Серверы (' + servers.length + ')');
 
 			var pingAllBtn = E('button', {
@@ -1289,7 +2206,18 @@ function createSubSyncContent(section) {
 					if (pingAllBtn.disabled) return;
 					pingAllBtn.disabled = true;
 					pingAllBtn.textContent = 'Проверка...';
-					var pingCells = serverTable.querySelectorAll('.td[data-title="Пинг"] span');
+                                   /* SUBSYNC_SERVER_LIMIT_PING_V79_PING */
+                                   var pingCells = [];
+                                   var pingRowsV79 = serverTable.querySelectorAll('.tr[data-link]');
+                                   var expandedPingV79 = !!serverLimitExpandedV79;
+                                   var maxPingV79 = expandedPingV79 ? pingRowsV79.length : Math.min(LIMIT, pingRowsV79.length);
+                                   try { if (!expandedPingV79 && typeof applyServerLimitV79 === 'function') applyServerLimitV79(); } catch(e) {}
+                                   for (var prV79 = 0; prV79 < pingRowsV79.length; prV79++) {
+                                           if (!expandedPingV79 && prV79 >= LIMIT) break;
+                                           var cellV79 = pingRowsV79[prV79].querySelector('.td[data-title="Пинг"] span');
+                                           if (cellV79) pingCells.push(cellV79);
+                                           if (pingCells.length >= maxPingV79) break;
+                                   }
 					var idx2 = 0;
 					function pingNext() {
 						if (idx2 >= pingCells.length) {
@@ -1298,6 +2226,13 @@ function createSubSyncContent(section) {
 							return;
 						}
 						pingCells[idx2].click();
+                                           try {
+                                                   if (!serverLimitExpandedV79 && typeof applyServerLimitV79 === 'function') {
+                                                           window.setTimeout(applyServerLimitV79, 20);
+                                                           window.setTimeout(applyServerLimitV79, 200);
+                                                           window.setTimeout(applyServerLimitV79, 700);
+                                                   }
+                                           } catch(e) {}
 						idx2++;
 						window.setTimeout(pingNext, 300);
 					}
@@ -1305,22 +2240,43 @@ function createSubSyncContent(section) {
 				}
 			}, 'Проверить пинг');
 
-			var toggleBtnContainer = E('span', {});
-			if (servers.length > LIMIT) {
-				toggleBtnContainer.appendChild(E('button', {
-					'class': 'cbi-button cbi-button-neutral',
-					'style': 'margin-top:10px',
-					'data-expanded': '0',
-					'click': function(ev) {
-						var rows = serverTable.querySelectorAll('.tr:not(.table-titles)');
-						var exp = ev.target.dataset.expanded === '1';
-						for (var hi = LIMIT; hi < rows.length; hi++) { rows[hi].style.display = exp ? 'none' : ''; }
-						ev.target.dataset.expanded = exp ? '0' : '1';
-						ev.target.textContent = exp ? 'Показать все (' + rows.length + ')' : 'Свернуть';
-					}
-				}, 'Показать все (' + servers.length + ')'));
-			}
+                   /* SUBSYNC_SERVER_LIMIT_PING_V79 */
+                   var serverLimitExpandedV79 = false;
+                   var toggleBtnContainer = E('div', { 'style': 'margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-start' });
 
+                   function setServerRowHiddenV79(row, hidden) {
+                           if (!row) return;
+                           var cls = row.className || '';
+                           if (hidden) {
+                                   if ((' ' + cls + ' ').indexOf(' ss-server-hidden-v79 ') < 0)
+                                           row.className = cls + ' ss-server-hidden-v79';
+                           } else {
+                                   row.className = (' ' + cls + ' ').replace(/ ss-server-hidden-v79 /g, ' ').replace(/^\s+|\s+$/g, '');
+                           }
+                   }
+
+                   function renderServerLimitButtonV79(total) {
+                           while (toggleBtnContainer.firstChild) toggleBtnContainer.removeChild(toggleBtnContainer.firstChild);
+                           if (total <= LIMIT) return;
+                           toggleBtnContainer.appendChild(E('button', {
+                                   'class': 'cbi-button cbi-button-neutral',
+                                   'style': 'margin-top:0',
+                                   'click': function() {
+                                           serverLimitExpandedV79 = !serverLimitExpandedV79;
+                                           applyServerLimitV79();
+                                   }
+                           }, serverLimitExpandedV79 ? 'Свернуть' : 'Показать все (' + total + ')'));
+                   }
+
+                   function applyServerLimitV79() {
+                           var rows = serverTable.querySelectorAll('.tr[data-link]');
+                           for (var hi = 0; hi < rows.length; hi++) {
+                                   setServerRowHiddenV79(rows[hi], !serverLimitExpandedV79 && hi >= LIMIT);
+                           }
+                           renderServerLimitButtonV79(rows.length);
+                   }
+
+                   applyServerLimitV79();
 			function rebuildServerTable(newServers) {
 				while (serverTable.firstChild) serverTable.removeChild(serverTable.firstChild);
 				serverTable.appendChild(headerRow);
@@ -1330,29 +2286,464 @@ function createSubSyncContent(section) {
 					serverTable.appendChild(createServerRow(newServers[ni], ni, nsActive));
 				}
 				serversHeading.textContent = 'Серверы (' + newServers.length + ')';
+                ssRebuildXhttpCardV2(newServers);
 				if (tableContainer) tableContainer.style.display = newServers.length > 0 ? '' : 'none';
 				if (emptyMsg) emptyMsg.style.display = newServers.length > 0 ? 'none' : '';
-				while (toggleBtnContainer.firstChild) toggleBtnContainer.removeChild(toggleBtnContainer.firstChild);
-				if (newServers.length > LIMIT) {
-					toggleBtnContainer.appendChild(E('button', {
-						'class': 'cbi-button cbi-button-neutral',
-						'style': 'margin-top:10px',
-						'data-expanded': '0',
-						'click': function(ev) {
-							var rows = serverTable.querySelectorAll('.tr:not(.table-titles)');
-							var exp = ev.target.dataset.expanded === '1';
-							for (var hi = LIMIT; hi < rows.length; hi++) { rows[hi].style.display = exp ? 'none' : ''; }
-							ev.target.dataset.expanded = exp ? '0' : '1';
-							ev.target.textContent = exp ? 'Показать все (' + newServers.length + ')' : 'Свернуть';
-						}
-					}, 'Показать все (' + newServers.length + ')'));
-				}
+                           serverLimitExpandedV79 = false;
+                           applyServerLimitV79();
 			}
 
 			var emptyMsg = E('em', { 'style': servers.length > 0 ? 'display:none' : '', 'class': 'ss-label' }, 'Серверы ещё не загружены. Добавьте подписку и нажмите "Загрузить серверы".');
 			var tableContainer = E('div', { 'style': servers.length > 0 ? '' : 'display:none' }, [
-				E('div', { 'class': 'ss-table-wrap' }, [serverTable]), toggleBtnContainer
+                   E('style', {}, '.ss-table-wrap .table .tr.ss-server-hidden-v79{display:none!important;}'),
+                   E('div', { 'class': 'ss-table-wrap' }, [serverTable]),
+                   toggleBtnContainer
 			]);
+                        var SUBSYNC_AUTOPICK_UI_V13 = true;
+                        var SUBSYNC_AUTOPICK_CLEAN_V15 = true;
+
+                        var apSection = E('select', { 'class': 'cbi-input-select ss-select' });
+                        for (var apSi = 0; apSi < sections.length; apSi++) {
+                                apSection.appendChild(E('option', { value: sections[apSi].name }, sections[apSi].name + ' (' + (sections[apSi].type || 'urltest') + ')'));
+                        }
+                        if (sections.length === 0) {
+                                apSection.appendChild(E('option', { value: 'TEST123' }, 'TEST123'));
+                        }
+
+                        var apOldMode = E('select', { 'class': 'cbi-input-select ss-select' }, [
+                                E('option', { value: 'replace' }, 'заменить'),
+                                E('option', { value: 'append' }, 'добавить')
+                        ]);
+
+                        var apMaxPing = E('input', { type: 'text', value: '700', style: 'width:90px' });
+                        var apLimit = E('input', { type: 'text', value: '60', style: 'width:90px' });
+
+                        var apUsePing = E('input', { type: 'checkbox' });
+                        var apUseTransport = E('input', { type: 'checkbox' });
+                        var apUseProto = E('input', { type: 'checkbox' });
+                        var apUseCountry = E('input', { type: 'checkbox' });
+                        var apAutoLogic = E('input', { type: 'checkbox' });
+
+                        var apTransport = E('select', { 'class': 'cbi-input-select ss-select' }, [
+                                E('option', { value: 'any' }, 'любой'),
+                                E('option', { value: 'xhttp' }, 'xHTTP'),
+                                E('option', { value: 'ws' }, 'WS'),
+                                E('option', { value: 'tcp' }, 'TCP'),
+                                E('option', { value: 'grpc' }, 'gRPC'),
+                                E('option', { value: 'quic' }, 'QUIC')
+                        ]);
+
+                        var apProto = E('select', { 'class': 'cbi-input-select ss-select' }, [
+                                E('option', { value: 'any' }, 'любой'),
+                                E('option', { value: 'vless' }, 'VLESS'),
+                                E('option', { value: 'trojan' }, 'TROJAN'),
+                                E('option', { value: 'ss' }, 'SS'),
+                                E('option', { value: 'hy2' }, 'HY2')
+                        ]);
+
+                        var apCountry = E('input', {
+                                type: 'text',
+                                value: 'ru, de, nl, turkey',
+                                placeholder: 'ru, de, nl, turkey',
+                                style: 'width:190px'
+                        });
+
+                        var apStatus = E('div', { 'class': 'ss-label', style: 'margin-top:8px' }, '');
+                        var apRows = E('div', { 'class': 'table', style: 'margin-top:10px' });
+                        var apSelected = [];
+
+                        function apInt(v, def) {
+                                var n = parseInt(String(v || '').replace(/[^0-9]/g, ''), 10);
+                                return isNaN(n) ? def : n;
+                        }
+
+                        function apList(v) {
+                                return String(v || '').split(',').map(function(x) {
+                                        return x.trim().toLowerCase();
+                                }).filter(function(x) { return x.length > 0; });
+                        }
+
+                        function apTransportOf(s) {
+                                return String((s && s.type) || '').toLowerCase() || 'tcp';
+                        }
+
+                        function apProtoOf(s) {
+                                return String((s && s.proto) || '').toLowerCase();
+                        }
+
+                        function apCountryTextOf(s) {
+                                return String((s && (s.name || s.tag || s.addr)) || '').toLowerCase();
+                        }
+
+                        function apMatchBase(s) {
+                                if (apUseTransport.checked && apTransport.value !== 'any') {
+                                        if (apTransportOf(s) !== apTransport.value) return false;
+                                }
+
+                                if (apUseProto.checked && apProto.value !== 'any') {
+                                        if (apProtoOf(s) !== apProto.value) return false;
+                                }
+
+                                if (apUseCountry.checked) {
+                                        var lst = apList(apCountry.value);
+                                        var text = apCountryTextOf(s);
+                                        var ok = false;
+                                        for (var i = 0; i < lst.length; i++) {
+                                                if (text.indexOf(lst[i]) >= 0) { ok = true; break; }
+                                        }
+                                        if (!ok) return false;
+                                }
+
+                                return true;
+                        }
+
+                        function apClearRows() {
+                                while (apRows.firstChild) apRows.removeChild(apRows.firstChild);
+                                apRows.appendChild(E('div', { 'class': 'tr table-titles' }, [
+                                        E('div', { 'class': 'th', style: 'width:38px' }, ''),
+                                        E('div', { 'class': 'th', style: 'width:55px' }, '#'),
+                                        E('div', { 'class': 'th', style: 'width:70px' }, 'Пинг'),
+                                        E('div', { 'class': 'th', style: 'width:90px' }, 'Транспорт'),
+                                        E('div', { 'class': 'th' }, 'Сервер'),
+                                        E('div', { 'class': 'th', style: 'width:70px' }, 'Протокол')
+                                ]));
+                        }
+
+                        function apAddRow(s, ms, checked) {
+                                var cb = E('input', { type: 'checkbox' });
+                                cb.checked = checked !== false;
+                                cb.dataset.id = String(s.id || '');
+
+                                apRows.appendChild(E('div', { 'class': 'tr' }, [
+                                        E('div', { 'class': 'td', style: 'width:38px' }, cb),
+                                        E('div', { 'class': 'td', style: 'width:55px' }, '#' + String(s.id || '')),
+                                        E('div', { 'class': 'td', style: 'width:70px;color:#4caf50;font-weight:700;font-family:monospace' }, ms ? (ms + 'мс') : '—'),
+                                        E('div', { 'class': 'td', style: 'width:90px' }, apTransportOf(s)),
+                                        E('div', { 'class': 'td' }, s.name || s.addr || ''),
+                                        E('div', { 'class': 'td', style: 'width:70px' }, apProtoOf(s) === 'ok' ? 'Активна' : apProtoOf(s).toUpperCase())
+                                ]));
+                        }
+
+                        function apPickCandidates() {
+                                var out = [];
+                                var limit = apInt(apLimit.value, 60);
+
+                                for (var i = 0; i < servers.length; i++) {
+                                        if (!apMatchBase(servers[i])) continue;
+                                        out.push(servers[i]);
+                                        if (out.length >= limit) break;
+                                }
+
+                                return out;
+                        }
+
+                        function apPingAndPick() {
+                                apClearRows();
+                                apSelected = [];
+
+                                var candidates = apPickCandidates();
+                                var maxPing = apInt(apMaxPing.value, 700);
+                                var usePing = apUsePing.checked;
+                                var idx = 0;
+                                var okCount = 0;
+
+                                apStatus.textContent = 'Проверка: 0 из ' + candidates.length;
+
+                                function next() {
+                                        if (idx >= candidates.length) {
+                                                apStatus.textContent = 'Готово. Найдено рабочих/подходящих: ' + okCount + '. Проверь галки и нажми применить.';
+                                                return;
+                                        }
+
+                                        var s = candidates[idx++];
+                                        if (!usePing) {
+                                                apSelected.push(s);
+                                                apAddRow(s, 0, true);
+                                                okCount++;
+                                                apStatus.textContent = 'Отобрано: ' + okCount + ' из ' + candidates.length;
+                                                window.setTimeout(next, 20);
+                                                return;
+                                        }
+
+                                        fs.exec('/usr/bin/sub-sync', ['ping', String(s.id)]).then(function(r) {
+                                                var data = {};
+                                                try { data = JSON.parse((r.stdout || '{}').trim()); } catch(e) { data = {}; }
+
+                                                var ms = parseInt(data.ms || 0, 10);
+                                                if (data.status === 'ok' && ms > 0 && ms <= maxPing) {
+                                                        apSelected.push(s);
+                                                        apAddRow(s, ms, true);
+                                                        okCount++;
+                                                }
+
+                                                apStatus.textContent = 'Проверка: ' + idx + ' из ' + candidates.length + ', подходит: ' + okCount;
+                                                window.setTimeout(next, 120);
+                                        }).catch(function() {
+                                                apStatus.textContent = 'Проверка: ' + idx + ' из ' + candidates.length + ', подходит: ' + okCount;
+                                                window.setTimeout(next, 120);
+                                        });
+                                }
+
+                                next();
+                        }
+
+                        function apCheckedIds() {
+                                var ids = [];
+                                var boxes = apRows.querySelectorAll('input[type="checkbox"][data-id]');
+                                for (var i = 0; i < boxes.length; i++) {
+                                        if (boxes[i].checked && boxes[i].dataset.id)
+                                                ids.push(boxes[i].dataset.id);
+                                }
+                                return ids;
+                        }
+
+                        function apSaveConfig() {
+                                var transports = apTransport.value === 'any' ? 'xhttp,ws,tcp,grpc,quic' : apTransport.value;
+                                var protos = apProto.value === 'any' ? 'vless,trojan,ss,hy2' : apProto.value;
+
+                                var args = [
+                                        'config-set',
+                                        apAutoLogic.checked ? '1' : '0',
+                                        apSection.value || 'TEST123',
+                                        apOldMode.value || 'replace',
+                                        String(apInt(apLimit.value, 60)),
+                                        apUsePing.checked ? '1' : '0',
+                                        String(apInt(apMaxPing.value, 700)),
+                                        apUseTransport.checked ? '1' : '0',
+                                        transports,
+                                        apUseProto.checked ? '1' : '0',
+                                        protos,
+                                        apUseCountry.checked ? '1' : '0',
+                                        apCountry.value || '',
+                                        '1'
+                                ];
+
+                                return fs.exec('/usr/bin/sub-sync-autoadd', args).then(function(r) {
+                                        apStatus.textContent = 'Автологика сохранена.';
+                                        return r;
+                                });
+                        }
+
+                        function apApplySelected() {
+                                var ids = apCheckedIds();
+                                if (ids.length === 0) {
+                                        ui.addNotification(null, E('p', {}, 'Ничего не выбрано'), 'warning');
+                                        return;
+                                }
+
+                                var args = ['apply-ids', apSection.value || 'TEST123', apOldMode.value || 'replace'].concat(ids);
+
+                                apStatus.textContent = 'Применяю выбранные...';
+
+                                fs.exec('/usr/bin/sub-sync-autoadd', args).then(function(r) {
+                                        apStatus.textContent = (r.stdout || '').trim() || 'Применено.';
+                                        ui.addNotification(null, E('p', {}, apStatus.textContent), 'info');
+                                }).catch(function(err) {
+                                        apStatus.textContent = 'Ошибка применения.';
+                                        ui.addNotification(null, E('p', {}, 'AutoPick apply failed: ' + (err.message || err)), 'danger');
+                                });
+                        }
+
+                        function apUpdatePickApply() {
+                                apStatus.textContent = 'Сохраняю автологику и обновляю подписки...';
+                                apSaveConfig().then(function() {
+                                        return fs.exec('/usr/bin/sub-sync', ['sync']);
+                                }).then(function(r) {
+                                        apStatus.textContent = 'Обновление выполнено. AutoAdd применит текущую автологику.';
+                                        ui.addNotification(null, E('p', {}, 'Обновлено и применено по автологике'), 'info');
+                                }).catch(function(err) {
+                                        apStatus.textContent = 'Ошибка обновления.';
+                                        ui.addNotification(null, E('p', {}, 'Update failed: ' + (err.message || err)), 'danger');
+                                });
+                        }
+
+                        var apPingBtn = E('button', {
+                                'class': 'cbi-button',
+                                style: 'padding:2px 10px;font-size:12px;background:transparent;color:#4caf50;border:1px solid #4caf50',
+                                click: apPingAndPick
+                        }, 'Пинг + отобрать');
+
+                        var apApplyBtn = E('button', {
+                                'class': 'cbi-button cbi-button-action',
+                                style: 'padding:2px 10px;font-size:12px',
+                                click: apApplySelected
+                        }, 'Применить выбранные в urltest');
+
+                        var apUpdateBtn = E('button', {
+                                'class': 'cbi-button',
+                                style: 'padding:2px 10px;font-size:12px',
+                                click: apUpdatePickApply
+                        }, 'Обновить + отобрать + применить');
+
+                        var apSaveBtn = E('button', {
+                                'class': 'cbi-button',
+                                style: 'padding:2px 10px;font-size:12px;background:transparent;color:#4caf50;border:1px solid #4caf50',
+                                click: function() {
+                                        apSaveConfig().then(function() {
+                                                ui.addNotification(null, E('p', {}, 'Автологика сохранена'), 'info');
+                                        });
+                                }
+                        }, 'Сохранить автологику');
+
+                        var autoPickCard = E('div', { 'class': 'ss-card', style: 'margin-top:10px' }, [
+                                E('div', { 'class': 'ss-card__header' }, [
+                                        E('div', { 'class': 'ss-card__title' }, 'Автоподбор серверов после обновления')
+                                ]),
+                                E('div', { 'class': 'ss-label', style: 'margin-bottom:10px' },
+                                        'Меню для рутины: обновить подписки, отфильтровать серверы, пропинговать рабочие и применить выбранные в urltest. Фильтр по стране ищет текст в названии/адресе/ссылке, если страна есть в подписке.'),
+                                E('div', { 'class': 'ss-controls' }, [
+                                        E('span', { 'class': 'ss-label' }, 'Секция Podkop'), apSection,
+                                        E('span', { 'class': 'ss-label' }, 'Старые серверы'), apOldMode,
+                                        E('span', { 'class': 'ss-label' }, 'Макс. пинг, мс'), apMaxPing,
+                                        E('span', { 'class': 'ss-label' }, 'Сколько проверять'), apLimit
+                                ]),
+                                E('div', { 'class': 'ss-controls' }, [
+                                        apUsePing, E('span', { 'class': 'ss-label' }, 'отфильтрованные по пингу'),
+                                        apUseTransport, E('span', { 'class': 'ss-label' }, 'тип транспорта'),
+                                        apTransport,
+                                        apUseProto, E('span', { 'class': 'ss-label' }, 'тип протокола'),
+                                        apProto
+                                ]),
+                                E('div', { 'class': 'ss-controls' }, [
+                                        apUseCountry, E('span', { 'class': 'ss-label' }, 'страна / текст'),
+                                        apCountry,
+                                        apPingBtn,
+                                        apApplyBtn,
+                                        apUpdateBtn
+                                ]),
+                                E('div', { 'class': 'ss-card', style: 'padding:8px;margin-top:8px' }, [
+                                        E('div', { 'class': 'ss-controls' }, [
+                                                apAutoLogic,
+                                                E('span', { 'class': 'ss-label' }, 'применять эту логику при автообновлении подписок'),
+                                                apSaveBtn
+                                        ]),
+                                        /* SUBSYNC_AUTO_LOGIC_BLOCK_V32 */
+                                        E('div', { 'class': 'ss-label' },
+                                                'При включении cron-обновление sub-sync после загрузки подписок само отберёт серверы по текущим фильтрам и применит их.'),
+                                        E('div', {
+                                                'class': 'ss-label',
+                                                'style': 'color:#f44336;font-weight:bold;margin-top:4px;animation:ssAutologicWarningBlinkV59 5s ease-in-out infinite'
+                                        }, 'Важно: при включении автологики Podkop/sing-box может перезапускаться.'),
+                                        E('div', {
+                                                'class': 'ss-label',
+                                                'style': 'margin-top:4px'
+                                        }, 'Если cron стоит каждый час - перезапуск может быть каждый час. Лучше ставить автообновление раз в сутки ночью или запускать вручную.'),
+                                        E('div', {
+                                                'class': 'ss-controls',
+                                                'style': 'margin-top:8px'
+                                        }, [
+                                                E('span', { 'class': 'ss-label' }, 'Время автообновления подписок:'),
+                                                E('input', {
+                                                        'id': 'subsync-cron-time-v32',
+                                                        'type': 'time',
+                                                        'value': '04:10',
+                                                        'style': 'height:24px;max-width:105px'
+                                                }),
+                                                E('button', {
+                                                        'class': 'cbi-button',
+                                                        'style': 'padding:2px 10px;font-size:12px;background:transparent;color:#4caf50;border:1px solid #4caf50',
+                                                        'click': function() {
+                                                                var inp = document.getElementById('subsync-cron-time-v32');
+                                                                var msg = document.getElementById('subsync-cron-msg-v32');
+                                                                var tm = String((inp && inp.value) || '').trim();
+                                                                var p = tm.split(':');
+
+                                                                if (!/^[0-2][0-9]:[0-5][0-9]$/.test(tm) || Number(p[0]) > 23) {
+                                                                        if (msg) msg.textContent = 'Неверное время cron';
+                                                                        return;
+                                                                }
+
+                                                                if (msg) msg.textContent = 'Сохраняю время cron...';
+
+                                                                fs.exec('/usr/bin/sub-sync-autoadd', ['cron-set', tm]).then(function() {
+                                                                        if (msg) msg.textContent = 'Время cron сохранено: ' + tm + '. Обновление будет раз в сутки.';
+                                                                }).catch(function() {
+                                                                        if (msg) msg.textContent = 'Ошибка сохранения cron';
+                                                                });
+                                                        }
+                                                }, 'Сохранить время')
+                                        ]),
+                                        E('div', {
+                                                'id': 'subsync-cron-msg-v32',
+                                                'class': 'ss-label',
+                                                'style': 'margin-top:4px;font-size:11px;opacity:.85'
+                                        }, 'Сохранение времени включает ежедневное cron-обновление подписок.')
+                                ]),
+                                apStatus,
+                                apRows
+                        ]);
+
+                        apClearRows();
+                        /* SUBSYNC_ADD_BUTTONS_V33B */
+                        window.setTimeout(function subsyncAddButtonsV33BStart() {
+                                function run(n) {
+                                        try {
+                                                var btns = document.querySelectorAll('button');
+                                                var foundAddOnly = 0;
+                                                var foundAddLoad = 0;
+
+                                                for (var i = 0; i < btns.length; i++) {
+                                                        var txt = String(btns[i].textContent || '').trim();
+
+                                                        if (txt === 'Добавить список') {
+                                                                btns[i].style.display = 'none';
+                                                                foundAddOnly = 1;
+                                                        }
+
+                                                        if (txt === 'Добавить + загрузить серверы') {
+                                                                btns[i].style.cssText =
+                                                                        'padding:2px 10px;font-size:12px;' +
+                                                                        'background:transparent;color:#4caf50;' +
+                                                                        'border:1px solid #4caf50';
+                                                                foundAddLoad = 1;
+                                                        }
+                                                }
+
+                                                var els = document.querySelectorAll('.ss-label,h1,h2,h3,h4,p,legend,span');
+                                                for (var j = 0; j < els.length; j++) {
+                                                        var t = String(els[j].textContent || '').trim();
+
+                                                        if (t === 'Добавить несколько подписок') {
+                                                                els[j].textContent = 'Добавить одну или несколько подписок';
+                                                        }
+
+                                                        if (t.indexOf('Вставь несколько ссылок, каждую с новой строки.') === 0) {
+                                                                els[j].textContent =
+                                                                        'Вставь одну или несколько ссылок, каждую с новой строки. ' +
+                                                                        'Если одна подписка просрочилась, остальные продолжат работать при загрузке серверов.';
+                                                        }
+                                                }
+
+                                                if ((foundAddOnly === 0 || foundAddLoad === 0) && n < 20) {
+                                                        window.setTimeout(function() { run(n + 1); }, 300);
+                                                }
+                                        } catch(e) {}
+                                }
+
+                                run(0);
+                        }, 300);
+
+                        window.setTimeout(function() {
+                                fs.exec('/usr/bin/sub-sync-autoadd', ['config-get']).then(function(r) {
+                                        var cfg = {};
+                                        try { cfg = JSON.parse((r.stdout || '{}').trim()); } catch(e) { cfg = {}; }
+
+                                        if (cfg.target_section) apSection.value = cfg.target_section;
+                                        if (cfg.mode) apOldMode.value = cfg.mode;
+                                        if (cfg.max_ping) apMaxPing.value = String(cfg.max_ping);
+                                        if (cfg.limit) apLimit.value = String(cfg.limit);
+
+                                        apUsePing.checked = cfg.use_ping_filter === 1 || cfg.use_ping_filter === '1';
+                                        apUseTransport.checked = cfg.use_transport_filter === 1 || cfg.use_transport_filter === '1';
+                                        apUseProto.checked = cfg.use_proto_filter === 1 || cfg.use_proto_filter === '1';
+                                        apUseCountry.checked = cfg.use_country_filter === 1 || cfg.use_country_filter === '1';
+                                        apAutoLogic.checked = cfg.enabled === 1 || cfg.enabled === '1';
+
+                                        if (cfg.transports && String(cfg.transports).indexOf(',') < 0) apTransport.value = cfg.transports;
+                                        if (cfg.protocols && String(cfg.protocols).indexOf(',') < 0) apProto.value = cfg.protocols;
+                                        if (cfg.countries) apCountry.value = cfg.countries;
+                                });
+                        }, 100);
 			var serversCard = E('div', { 'class': 'ss-card' }, [
 				E('div', { 'class': 'ss-card__header' }, [
 					serversHeading,
@@ -1371,10 +2762,158 @@ function createSubSyncContent(section) {
 
 
 
+            function ssIsXhttpServerV2(s) {
+                var t = String((s && s.type) || "").toLowerCase();
+                return t === "xhttp" || t === "splithttp";
+            }
+
+            function ssBuildXhttpListV2(list) {
+                var out = [];
+                for (var xi = 0; xi < list.length; xi++) {
+                    if (ssIsXhttpServerV2(list[xi])) out.push(list[xi]);
+                }
+                return out;
+            }
+
+            function ssGetXhttpActiveLinksV6() {
+                var sec = xhttpSectionSelect && xhttpSectionSelect.value ? xhttpSectionSelect.value : '';
+                if (!sec) return [];
+                var links = uci.get('podkop', sec, 'urltest_proxy_links') || activeLinksBySection[sec] || [];
+                if (!Array.isArray(links)) links = links ? [links] : [];
+                var out = [];
+                for (var ai = 0; ai < links.length; ai++) {
+                    var v = String(links[ai] || '').trim();
+                    if (v) out.push(v);
+                }
+                return out;
+            }
+
+            function ssRebuildXhttpCardV2(list) {
+                var xs = ssBuildXhttpListV2(list || []);
+                if (!xhttpTable) return;
+                while (xhttpTable.firstChild) xhttpTable.removeChild(xhttpTable.firstChild);
+                xhttpTable.appendChild(headerRow.cloneNode(true));
+                var curActiveX = ssGetXhttpActiveLinksV6();
+                for (var xri = 0; xri < xs.length; xri++) {
+                    var xa = xs[xri].link ? curActiveX.indexOf(xs[xri].link.trim()) >= 0 : false;
+                    var xrNode = createServerRow(xs[xri], xri, xa);
+                    var xrBtn = xrNode.querySelector('button[data-xhttp="1"]');
+                    if (xrBtn) {
+                            xrBtn.dataset.urltest = '1';
+                            xrBtn.disabled = false;
+                            if (xrBtn.dataset.selected === '1') {
+                                    xrBtn.className = 'cbi-button cbi-button-neutral';
+                                    xrBtn.style.cssText = 'padding:2px 6px;font-size:11px;min-width:62px;border-color:#4caf50;color:#4caf50';
+                                    xrBtn.title = 'Этот сервер выбран в URL Test';
+                                    xrBtn.textContent = 'Выбрано';
+                            } else {
+                                    xrBtn.className = 'cbi-button cbi-button-action';
+                                    xrBtn.style.cssText = 'padding:2px 6px;font-size:11px;min-width:62px';
+                                    xrBtn.title = 'Нажми, чтобы применить в URL Test';
+                                    xrBtn.textContent = 'Выбрать';
+                            }
+                    }
+                    xhttpTable.appendChild(xrNode);
+                }
+                if (xhttpHeading) xhttpHeading.textContent = "xHTTP серверы (" + xs.length + ", используется " + curActiveX.length + ")";
+                if (xhttpTableContainer) xhttpTableContainer.style.display = xs.length > 0 ? "" : "none";
+                if (xhttpEmptyMsg) xhttpEmptyMsg.style.display = xs.length > 0 ? "none" : "";
+                updateXhttpButtons();
+            }
+
+            xhttpSectionSelect = globalSectionSelect.cloneNode(true);
+            xhttpSectionSelect.disabled = globalSectionSelect.disabled;
+            for (var xoi = 0; xoi < xhttpSectionSelect.options.length; xoi++) {
+                    var xo = xhttpSectionSelect.options[xoi];
+                    var xt = sectionTypes[xo.value] || '';
+                    var xn = String(xo.value || '').toLowerCase().replace(/[ _-]/g, '');
+                    if (xt === 'urltest' || xn.indexOf('urltest') >= 0) {
+                            xhttpSectionSelect.value = xo.value;
+                            break;
+                    }
+            }
+            xhttpSectionSelect.addEventListener('change', function() {
+                    ssRebuildXhttpCardV2(servers);
+            });
+            xhttpHeading = E('h3', {}, 'xHTTP серверы (0)');
+            xhttpTable = E('div', { 'class': 'table' }, [headerRow.cloneNode(true)]);
+            xhttpTableContainer = E('div', { 'style': 'display:none' }, [
+                E('div', { 'class': 'ss-table-wrap' }, [xhttpTable])
+            ]);
+            xhttpEmptyMsg = E('em', { 'class': 'ss-label' }, 'xHTTP серверы не найдены. Добавь подписку и нажми "Загрузить серверы".');
+            var xhttpCard = E('div', { 'class': 'ss-card ss-xhttp-card-v2', 'style': 'border-left:3px solid #4caf50' }, [
+                E('div', { 'class': 'ss-card__header' }, [
+                    /* SUBSYNC_XHTTP_TITLE_NOTE_V69C */
+                    E('div', { 'style': 'display:flex;flex-direction:column;gap:3px;align-items:flex-start' }, [
+                        xhttpHeading,
+                        E('div', {
+                            'class': 'ss-label',
+                            'style': 'font-size:12px;line-height:1.35;margin-top:-2px;color:#888'
+                        }, [
+                            '⚠️ xHTTP серверы требуют sing-box extended. Установить можно его ',
+                            E('a', {
+                                'href': 'https://github.com/EikeiDev/OpenWRT-sing-box-extended',
+                                'target': '_blank',
+                                'rel': 'noopener noreferrer',
+                                'style': 'color:#4caf50;font-weight:900;text-decoration:underline'
+                            }, 'ТУТ'),
+                            '.'
+                        ])
+                    ]),
+                E('button', {
+                    'class': 'cbi-button ss-xhttp-ping-v9',
+                    'style': 'padding:2px 10px;font-size:12px;background:transparent;color:#4caf50;border:1px solid #4caf50',
+                    'title': 'Проверить пинг xHTTP серверов',
+                    'click': function(ev) {
+                        var pb = ev.currentTarget || ev.target;
+                        if (pb.disabled) return;
+                        pb.disabled = true;
+                        pb.textContent = 'Пинг...';
+                        var cells = xhttpTable ? xhttpTable.querySelectorAll('.td[data-title="Пинг"] span') : [];
+                        var pi = 0;
+                        function pingNextXhttpV8() {
+                            if (pi >= cells.length) {
+                                pb.disabled = false;
+                                pb.textContent = 'Проверить пинг';
+                                return;
+                            }
+                            if (cells[pi] && cells[pi].click) cells[pi].click();
+                            pi++;
+                            window.setTimeout(pingNextXhttpV8, 350);
+                        }
+                        pingNextXhttpV8();
+                    }
+                }, 'Проверить пинг')
+                ]),
+                E('div', { 'class': 'ss-toolbar', 'style': 'margin-bottom:8px' }, [
+                    E('span', { 'class': 'ss-label' }, 'URL Test section:'),
+                    xhttpSectionSelect
+                ]),
+                xhttpTableContainer,
+                xhttpEmptyMsg
+            ]);
+            ssRebuildXhttpCardV2(servers);
+
 			var ssPage = E('div', { 'class': 'ss-page' }, [
-				widgetsRow, wServerCard, subsCard, serversCard,
+                           E('style', {}, '/* SUBSYNC_AUTOLOGIC_WARNING_BLINK_V59 */ @keyframes ssAutologicWarningBlinkV59{0%,86%,100%{opacity:1;text-shadow:none}90%{opacity:.20;text-shadow:0 0 12px rgba(244,67,54,.95)}94%{opacity:1;text-shadow:0 0 18px rgba(244,67,54,.75)}}'),
+                           E('style', {}, [
+                                   '/* SUBSYNC_STATUS_WIDGETS_V60B */',
+                                   '.ss-widgets{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))!important;gap:12px!important;margin:12px 0 14px 0!important}',
+                                   '.ss-widget{position:relative!important;overflow:hidden!important;border-radius:15px!important;padding:14px!important;border:1px solid rgba(127,127,127,.20)!important;background:linear-gradient(180deg,rgba(127,127,127,.10),rgba(127,127,127,.045))!important;box-shadow:0 8px 22px rgba(0,0,0,.16)!important}',
+                                   '.ss-widget:before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:linear-gradient(90deg,#4caf50,#03a9f4,#00bcd4)!important}',
+                                   '.ss-widget:hover{box-shadow:0 10px 26px rgba(0,0,0,.24)!important;border-color:rgba(76,175,80,.42)!important}',
+                                   '.ss-widget__title{font-size:12px!important;text-transform:uppercase!important;letter-spacing:.08em!important;color:#9aa0a6!important;font-weight:900!important;margin-bottom:10px!important}',
+                                   '.ss-widget__value{font-size:14px!important;line-height:1.55!important}',
+                                   '.ss-widget__value strong{font-size:18px!important;line-height:1.2!important}',
+                                   '.ss-widget__value .ss-row{display:flex!important;align-items:center!important;gap:4px!important;flex-wrap:wrap!important}',
+                                   '.ss-widget__value .ss-dot{font-size:12px!important;margin-right:2px!important}',
+                                   '.ss-widget__value .ss-val--ok{font-weight:800!important}',
+                                   '.ss-widget__value .ss-label{color:#aeb4bb!important}',
+                                   '.ss-widget__value .ss-val{word-break:break-word!important}'
+                           ].join('\n')),
+				manualCardV53B, widgetsRow, sysWidgetsRowV96, wServerCard, sectionCreateCardV45B, subsCard, xhttpCard, autoPickCard, serversCard,
 				E('div', { 'style': 'text-align:right;margin-top:8px' }, [
-					E('span', { 'class': 'ss-version' }, 'by kzolotarev95 ' + SUB_SYNC_VERSION)
+                                        E('span', { 'class': 'ss-version ss-version-hidden-v90', 'style': 'display:none!important' }, '')
 				])
 			]);
 
@@ -1463,7 +3002,7 @@ function createMonitorContent(section) {
 							'class': 'tr' + (ci3 % 2 === 0 ? ' cbi-rowstyle-1' : ' cbi-rowstyle-2')
 						}, [
 							E('div', { 'class': 'td', 'style': 'word-break:break-all;font-size:12px', 'title': meta.host || '' }, host),
-							E('div', { 'class': 'td', 'style': 'font-size:11px' }, (meta.network || '?').toUpperCase()),
+                                                   E('div', { 'class': 'td', 'style': 'font-size:11px' }, (meta.network || '?') === 'ok' ? 'Активна' : (meta.network || '?').toUpperCase()),
 							E('div', { 'class': 'td', 'style': 'font-size:11px' }, (cn.chains || ['—'])[0]),
 							E('div', { 'class': 'td', 'style': 'font-size:11px' }, formatDuration(cn.start)),
 							E('div', { 'class': 'td', 'style': 'text-align:right;font-family:monospace;font-size:11px;color:#4caf50' }, cn._dlSpeed > 0 ? formatSpeed(cn._dlSpeed) : '—'),
