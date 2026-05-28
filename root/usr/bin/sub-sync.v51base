@@ -1,0 +1,172 @@
+#!/bin/sh
+# SUBSYNC_DELETE_SECTION_REFRESH_WRAPPER_V43
+
+REAL="/usr/bin/sub-sync.real"
+INFO="/usr/bin/sub-sync-subs-info"
+
+[ -x "$REAL" ] || {
+    echo "ERROR: /usr/bin/sub-sync.real not found"
+    exit 1
+}
+
+if [ "${1:-}" = "subs-info" ]; then
+    shift
+    exec "$INFO" "$@"
+fi
+
+if [ "${1:-}" != "del-sub" ]; then
+    exec "$REAL" "$@"
+fi
+
+DATA="/etc/sub-sync"
+SUBS="$DATA/subscriptions.txt"
+SERVERS="$DATA/servers.json"
+LINKS="$DATA/links.txt"
+AUTOADD="$DATA/autoadd.conf"
+
+OLD="/tmp/subsync-v43-old.$$"
+NEW="/tmp/subsync-v43-new.$$"
+CAND="/tmp/subsync-v43-candidates.$$"
+FLAG="/tmp/subsync-v43-changed.$$"
+
+mkdir -p "$DATA"
+: > "$OLD"
+: > "$NEW"
+: > "$CAND"
+: > "$FLAG"
+
+[ -f "$LINKS" ] && cat "$LINKS" >> "$OLD" || true
+
+if [ -f "$SERVERS" ]; then
+    grep -o '"url":"[^"]*"' "$SERVERS" 2>/dev/null | sed 's/^"url":"//;s/"$//;s#\\/#/#g' >> "$OLD" || true
+fi
+
+TARGET="TEST123"
+if [ -f "$AUTOADD" ]; then
+    T="$(sed -n 's/^TARGET_SECTION=//p' "$AUTOADD" | head -n 1)"
+    [ -n "$T" ] && TARGET="$T"
+fi
+
+add_candidate() {
+    S="$1"
+    [ -n "$S" ] || return 0
+    echo "$S" >> "$CAND"
+}
+
+add_sections_matching() {
+    P="$1"
+    [ -n "$P" ] || return 0
+    uci show podkop 2>/dev/null | grep -F "$P" | sed -n 's/^podkop\.\([^.=]*\)\..*/\1/p' >> "$CAND" || true
+}
+
+add_candidate "$TARGET"
+add_candidate "TEST123"
+add_candidate "vlessreal"
+
+while IFS= read -r L; do
+    case "$L" in
+        *://*) add_sections_matching "$L" ;;
+    esac
+done < "$OLD"
+
+add_sections_matching "furkbalancer.net"
+add_sections_matching "ovh.furkbalancer.net"
+add_sections_matching "vlessreal"
+
+OUT="$("$REAL" "$@" 2>&1)"
+RC="$?"
+printf '%s\n' "$OUT"
+
+if [ "$RC" != "0" ]; then
+    rm -f "$OLD" "$NEW" "$CAND" "$FLAG"
+    exit "$RC"
+fi
+
+REMAIN="$(sed '/^[[:space:]]*$/d' "$SUBS" 2>/dev/null | wc -l | tr -d ' ')"
+[ -n "$REMAIN" ] || REMAIN=0
+
+: > "$LINKS"
+printf '[]\n' > "$SERVERS"
+
+if [ "$REMAIN" != "0" ]; then
+    "$REAL" sync >/tmp/sub-sync-delete-v43-resync.log 2>&1 || true
+fi
+
+[ -f "$LINKS" ] && cat "$LINKS" >> "$NEW" || true
+
+mark_changed() {
+    echo 1 > "$FLAG"
+}
+
+delete_section() {
+    S="$1"
+    [ -n "$S" ] || return 0
+    uci -q show "podkop.${S}" >/dev/null 2>&1 || return 0
+    uci -q delete "podkop.${S}" 2>/dev/null && mark_changed || true
+}
+
+clean_link() {
+    L="$1"
+    [ -n "$L" ] || return 0
+
+    SECS="$(uci show podkop 2>/dev/null | sed -n 's/^podkop\.\([^.=]*\)\..*/\1/p' | sort -u)"
+
+    for S in $SECS; do
+        uci -q del_list "podkop.${S}.urltest_proxy_links=${L}" 2>/dev/null && mark_changed || true
+        uci -q del_list "podkop.${S}.selector_proxy_links=${L}" 2>/dev/null && mark_changed || true
+
+        CUR="$(uci -q get "podkop.${S}.proxy_string" 2>/dev/null || true)"
+        if [ "$CUR" = "$L" ]; then
+            uci -q delete "podkop.${S}.proxy_string" 2>/dev/null || true
+            mark_changed
+        fi
+    done
+}
+
+while IFS= read -r L; do
+    case "$L" in
+        *://*)
+            if ! grep -Fxq "$L" "$NEW" 2>/dev/null; then
+                clean_link "$L"
+            fi
+            ;;
+    esac
+done < "$OLD"
+
+if [ "$REMAIN" = "0" ]; then
+    sort -u "$CAND" | while IFS= read -r S; do
+        delete_section "$S"
+    done
+
+    for S in $(uci show podkop 2>/dev/null | sed -n 's/^podkop\.\([^.=]*\)\..*/\1/p' | sort -u); do
+        CT="$(uci -q get "podkop.${S}.connection_type" 2>/dev/null || true)"
+        [ "$CT" = "urltest" ] || [ "$CT" = "selector" ] || continue
+
+        A="$(uci -q get "podkop.${S}.urltest_proxy_links" 2>/dev/null || true)"
+        B="$(uci -q get "podkop.${S}.selector_proxy_links" 2>/dev/null || true)"
+        C="$(uci -q get "podkop.${S}.proxy_string" 2>/dev/null || true)"
+
+        if [ -z "$A$B$C" ]; then
+            delete_section "$S"
+        fi
+    done
+fi
+
+# Всегда удаляем зависшие секции furkbalancer/vlessreal перед рестартом Podkop
+uci show podkop 2>/dev/null | grep -Ei 'furkbalancer\.net|vlessreal' | sed -n 's/^podkop\.\([^.=]*\)\..*/\1/p' | sort -u | while IFS= read -r S; do
+    delete_section "$S"
+done
+
+if [ -s "$FLAG" ]; then
+    uci commit podkop 2>/dev/null || true
+    /etc/init.d/podkop restart 2>/dev/null || true
+    PODKOP_CHANGED=1
+else
+    PODKOP_CHANGED=0
+fi
+
+rm -f "$OLD" "$NEW" "$CAND" "$FLAG"
+
+logger -t sub-sync "delete section refresh v43: remain=$REMAIN target=$TARGET podkop_changed=$PODKOP_CHANGED"
+echo "OK"
+exit 0

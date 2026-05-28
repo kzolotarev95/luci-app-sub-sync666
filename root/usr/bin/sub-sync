@@ -1,581 +1,137 @@
 #!/bin/sh
+# SUBSYNC_DELETE_TARGET_SECTION_V51
 
-PODKOP_CONFIG="/etc/config/podkop"
-LOG_TAG="sub-sync"
-DATA_DIR="/etc/sub-sync"
-SERVERS_FILE="$DATA_DIR/servers.json"
-SUBS_FILE="$DATA_DIR/subscriptions.txt"
-STATUS_FILE="/tmp/sub-sync-status"
-TMP_FILE="/tmp/sub-sync-response"
-TMP_DECODED="/tmp/sub-sync-decoded"
+BASE="/usr/bin/sub-sync.v51base"
+AUTO_CONF="/etc/sub-sync/autoadd.conf"
+DATA="/etc/sub-sync"
+LINKS="$DATA/links.txt"
+SERVERS="$DATA/servers.json"
 
-urldecode() {
-    local _hex
-    _hex=$(echo "$1" | sed 's/+/ /g;s/%/\\x/g')
-    /usr/bin/printf "$_hex" 2>/dev/null | tr -d '\r'
-}
-
-json_escape() {
-    echo "$1" | sed 's/\\/\\\\/g;s/"/\\"/g' | tr -d '\n\r'
-}
-
-log() {
-    logger -t "$LOG_TAG" "$1"
-    echo "$(date '+%Y-%m-%d %H:%M:%S') $1"
-}
-
-plural_servers() {
-    local n=$1 m
-    m=$((n % 100))
-    if [ $m -ge 11 ] && [ $m -le 19 ]; then echo "серверов"; return; fi
-    case $((n % 10)) in
-        1) echo "сервер" ;;
-        2|3|4) echo "сервера" ;;
-        *) echo "серверов" ;;
-    esac
-}
-
-write_status() {
-    local _st="$1" _msg="$2" _cnt="${3:-0}" _now
-    _now="$(date '+%Y-%m-%d %H:%M:%S')"
-    printf '{"status":"%s","message":"%s","servers":%s,"time":"%s"}\n' \
-        "$_st" "$_msg" "$_cnt" "$_now" > "$STATUS_FILE"
-    cp -f "$STATUS_FILE" "$DATA_DIR/last-status" 2>/dev/null
-}
-
-ensure_data_dir() {
-    mkdir -p "$DATA_DIR"
-    [ -f "$SUBS_FILE" ] || touch "$SUBS_FILE"
-}
-
-cmd_status() {
-    if [ -f "$STATUS_FILE" ]; then
-        cat "$STATUS_FILE"
-    elif [ -f "$DATA_DIR/last-status" ]; then
-        cp -f "$DATA_DIR/last-status" "$STATUS_FILE" 2>/dev/null
-        cat "$DATA_DIR/last-status"
-    else
-        echo '{"status":"idle","message":"Ещё не запускалось","servers":0,"time":""}'
-    fi
-}
-
-cmd_info() {
-    local _interval _sub_count=0 _server_count=0
-    _interval=$(crontab -l 2>/dev/null | grep '/usr/bin/sub-sync' | sed 's|0 \*/\([0-9]*\).*|\1|')
-    [ -z "$_interval" ] && _interval="0"
-    if [ -f "$DATA_DIR/links.txt" ]; then
-        _server_count=$(grep -c '://' "$DATA_DIR/links.txt" 2>/dev/null) || true
-        _server_count=${_server_count:-0}
-    fi
-    if [ -f "$SUBS_FILE" ]; then
-        _sub_count=$(grep -c '[^ ]' "$SUBS_FILE" 2>/dev/null) || true
-        _sub_count=${_sub_count:-0}
-    fi
-    printf '{"interval_hours":%s,"servers_synced":%s,"subscriptions":%s}\n' \
-        "$_interval" "$_server_count" "$_sub_count"
-}
-
-cmd_servers() {
-    if [ -f "$SERVERS_FILE" ]; then
-        cat "$SERVERS_FILE"
-    else
-        echo '[]'
-    fi
-}
-
-cmd_sections() {
-    echo '['
-    local _first=1
-    for _sec in $(uci show podkop 2>/dev/null | grep '=section$' | sed 's|podkop\.\([^=]*\)=.*|\1|'); do
-        local _ptype _lcount=0
-        _ptype=$(uci -q get "podkop.${_sec}.proxy_config_type" 2>/dev/null)
-        case "$_ptype" in
-            url)      [ -n "$(uci -q get "podkop.${_sec}.proxy_string" 2>/dev/null)" ] && _lcount=1 ;;
-            outbound) [ -n "$(uci -q get "podkop.${_sec}.outbound_json" 2>/dev/null)" ] && _lcount=1 ;;
-            selector) _lcount=$(uci -q get "podkop.${_sec}.selector_proxy_links" 2>/dev/null | grep -c '://') ;;
-            *)        _lcount=$(uci -q get "podkop.${_sec}.urltest_proxy_links" 2>/dev/null | grep -c '://') ;;
-        esac
-        [ "$_first" = "1" ] && _first=0 || printf ','
-        printf '{"name":"%s","type":"%s","servers":%d}' "$_sec" "$_ptype" "$_lcount"
-    done
-    echo ']'
-}
-
-section_has_link() {
-    local _target="$1" _link="$2" _ptype _current
-    _ptype=$(uci -q get "podkop.${_target}.proxy_config_type" 2>/dev/null)
-    case "$_ptype" in
-        url)
-            _current=$(uci -q get "podkop.${_target}.proxy_string" 2>/dev/null)
-            [ "$_current" = "$_link" ]
-            return
-            ;;
-        selector)
-            _current=$(uci -q get "podkop.${_target}.selector_proxy_links" 2>/dev/null)
-            ;;
-        *)
-            _current=$(uci -q get "podkop.${_target}.urltest_proxy_links" 2>/dev/null)
-            ;;
-    esac
-    printf '%s\n' "$_current" | tr ' ' '\n' | grep -Fxq "$_link"
-}
-
-cmd_apply() {
-    local _target="$1"
-    if [ -z "$_target" ]; then
-        echo "ОШИБКА: укажите имя секции"
-        return 1
-    fi
-    if [ ! -f "$DATA_DIR/links.txt" ]; then
-        echo "ОШИБКА: серверы не загружены, сначала выполните sync"
-        return 1
-    fi
-    local _exists
-    _exists=$(uci -q get "podkop.${_target}" 2>/dev/null)
-    if [ -z "$_exists" ]; then
-        echo "ОШИБКА: секция '$_target' не найдена"
-        return 1
-    fi
-    local _ptype
-    _ptype=$(uci -q get "podkop.${_target}.proxy_config_type" 2>/dev/null)
-    local _added=0
-    case "$_ptype" in
-        url)
-            local _first_link=""
-            while IFS= read -r _line; do
-                case "$_line" in
-                    vless://*|ss://*|trojan://*|hy2://*|hysteria2://*)
-                        _first_link="$_line"
-                        break
-                        ;;
-                esac
-            done < "$DATA_DIR/links.txt"
-            if [ -n "$_first_link" ]; then
-                uci set "podkop.${_target}.proxy_string=${_first_link}"
-                _added=1
-            fi
-            ;;
-        selector)
-            uci -q delete "podkop.${_target}.selector_proxy_links" 2>/dev/null || true
-            while IFS= read -r _line; do
-                case "$_line" in
-                    vless://*|ss://*|trojan://*|hy2://*|hysteria2://*)
-                        uci add_list "podkop.${_target}.selector_proxy_links=${_line}"
-                        _added=$((_added + 1))
-                        ;;
-                esac
-            done < "$DATA_DIR/links.txt"
-            ;;
-        *)
-            uci -q delete "podkop.${_target}.urltest_proxy_links" 2>/dev/null || true
-            while IFS= read -r _line; do
-                case "$_line" in
-                    vless://*|ss://*|trojan://*|hy2://*|hysteria2://*)
-                        uci add_list "podkop.${_target}.urltest_proxy_links=${_line}"
-                        _added=$((_added + 1))
-                        ;;
-                esac
-            done < "$DATA_DIR/links.txt"
-            ;;
-    esac
-    if [ "$_added" = "0" ]; then
-        echo "ОШИБКА: нет валидных ссылок"
-        return 1
-    fi
-    uci commit podkop
-    /etc/init.d/podkop restart 2>/dev/null || true
-    log "Применено $_added сервер(ов) в секцию '$_target'"
-    echo "OK: $_added"
-}
-
-cmd_apply_one() {
-    local _target="$1" _id="$2"
-    if [ -z "$_target" ] || [ -z "$_id" ]; then
-        echo "ОШИБКА: использование: apply-one <секция> <id>"
-        return 1
-    fi
-    case "$_id" in
-        ''|*[!0-9]*) echo "ОШИБКА: неверный id"; return 1 ;;
-    esac
-    if [ ! -f "$DATA_DIR/links.txt" ]; then
-        echo "ОШИБКА: серверы не загружены"
-        return 1
-    fi
-    local _exists
-    _exists=$(uci -q get "podkop.${_target}" 2>/dev/null)
-    if [ -z "$_exists" ]; then
-        echo "ОШИБКА: секция '$_target' не найдена"
-        return 1
-    fi
-    local _link="" _idx=0
-    while IFS= read -r _line; do
-        case "$_line" in
-            vless://*|ss://*|trojan://*|hy2://*|hysteria2://*)
-                _idx=$((_idx + 1))
-                if [ "$_idx" = "$_id" ]; then
-                    _link="$_line"
-                    break
-                fi
-                ;;
-        esac
-    done < "$DATA_DIR/links.txt"
-    if [ -z "$_link" ]; then
-        echo "ОШИБКА: сервер #$_id не найден"
-        return 1
-    fi
-    if section_has_link "$_target" "$_link"; then
-        echo "SKIP: уже существует"
-        return 0
-    fi
-    local _ptype
-    _ptype=$(uci -q get "podkop.${_target}.proxy_config_type" 2>/dev/null)
-    case "$_ptype" in
-        url)
-            uci set "podkop.${_target}.proxy_string=${_link}"
-            ;;
-        selector)
-            uci add_list "podkop.${_target}.selector_proxy_links=${_link}"
-            ;;
-        *)
-            uci add_list "podkop.${_target}.urltest_proxy_links=${_link}"
-            ;;
-    esac
-    uci commit podkop
-    log "Применён сервер #$_id в секцию '$_target'"
-    echo "OK"
-}
-
-cmd_interval() {
-    local _hours="$1"
-    if [ -z "$_hours" ] || [ "$_hours" -lt 1 ] || [ "$_hours" -gt 48 ] 2>/dev/null; then
-        echo "ОШИБКА: интервал должен быть 1-48 часов"
-        return 1
-    fi
-    sed -i '/\/usr\/bin\/sub-sync/d' /etc/crontabs/root 2>/dev/null
-    echo "0 */${_hours} * * * /usr/bin/sub-sync sync" >> /etc/crontabs/root
-    /etc/init.d/cron restart 2>/dev/null
-    log "Интервал изменён на ${_hours}ч"
-    echo "OK: interval=${_hours}h"
-}
-
-cmd_interval_off() {
-    sed -i '/\/usr\/bin\/sub-sync/d' /etc/crontabs/root 2>/dev/null
-    /etc/init.d/cron restart 2>/dev/null
-    log "Автообновление выключено"
-    echo "OK"
-}
-
-cmd_link() {
-    local _id="$1"
-    case "$_id" in
-        ''|*[!0-9]*) echo "ОШИБКА: неверный id"; return 1 ;;
-    esac
-    if [ ! -f "$DATA_DIR/links.txt" ]; then
-        echo "ОШИБКА: нет загруженных данных"
-        return 1
-    fi
-    local _idx=0
-    while IFS= read -r _line; do
-        case "$_line" in
-            vless://*|ss://*|trojan://*|hy2://*|hysteria2://*)
-                _idx=$((_idx + 1))
-                if [ "$_idx" = "$_id" ]; then
-                    echo "$_line"
-                    return 0
-                fi
-                ;;
-        esac
-    done < "$DATA_DIR/links.txt"
-    echo "ОШИБКА: не найдено"
-    return 1
-}
-
-cmd_ping() {
-    local _id="$1"
-    case "$_id" in
-        ''|*[!0-9]*) echo '{"error":"id required"}'; return 1 ;;
-    esac
-    if [ ! -f "$SERVERS_FILE" ]; then
-        echo '{"error":"no servers"}'
-        return 1
-    fi
-    local _addr _port
-    if command -v jq >/dev/null 2>&1; then
-        _addr=$(jq -r ".[] | select(.id == ${_id}) | .addr" "$SERVERS_FILE" 2>/dev/null)
-        _port=$(jq -r ".[] | select(.id == ${_id}) | .port" "$SERVERS_FILE" 2>/dev/null)
-    else
-        _addr=$(grep "\"id\":${_id}," "$SERVERS_FILE" | sed 's/.*"addr":"\([^"]*\)".*/\1/' | head -1)
-        _port=$(grep "\"id\":${_id}," "$SERVERS_FILE" | sed 's/.*"port":"\([^"]*\)".*/\1/' | head -1)
-    fi
-    if [ -z "$_addr" ] || [ -z "$_port" ]; then
-        echo '{"error":"server not found"}'
-        return 1
-    fi
-    case "$_addr" in
-        *[!a-zA-Z0-9._-]*) echo '{"error":"invalid addr"}'; return 1 ;;
-    esac
-    case "$_port" in
-        *[!0-9]*) echo '{"error":"invalid port"}'; return 1 ;;
-    esac
-    local _time
-    _time=$(curl -sk -o /dev/null -w '%{time_connect}' --connect-timeout 3 "https://${_addr}:${_port}/" 2>/dev/null)
-    case "$_time" in
-        0.000*|"")
-            echo "{\"status\":\"error\",\"ms\":0,\"addr\":\"$_addr\",\"port\":\"$_port\"}"
-            return 0
-            ;;
-    esac
-    local _ms
-    _ms=$(echo "$_time" | awk '{printf "%d", $1 * 1000}')
-    [ "$_ms" = "0" ] && _ms=1
-    echo "{\"status\":\"ok\",\"ms\":$_ms,\"addr\":\"$_addr\",\"port\":\"$_port\"}"
-}
-
-cmd_podkop_status() {
-    local _pk='{"enabled":0,"status":"unknown"}'
-    local _sb='{"running":0,"status":"unknown"}'
-    if [ -x /usr/bin/podkop ]; then
-        _pk=$(/usr/bin/podkop get_status 2>/dev/null || echo '{"enabled":0,"status":"error"}')
-        _sb=$(/usr/bin/podkop get_sing_box_status 2>/dev/null || echo '{"running":0,"status":"error"}')
-    fi
-    printf '{"podkop":%s,"sing_box":%s}\n' "$_pk" "$_sb"
-}
-
-cmd_connections() {
-    local _clash_addr=""
-    _clash_addr=$(netstat -tlnp 2>/dev/null | grep sing-box | grep ':9090' | awk '{print $4}' | head -1)
-    [ -z "$_clash_addr" ] && _clash_addr=$(ss -tlnp 2>/dev/null | grep sing-box | grep ':9090' | awk '{print $4}' | sed 's/\[//;s/\]//' | head -1)
-    [ -z "$_clash_addr" ] && _clash_addr="127.0.0.1:9090"
-    case "$_clash_addr" in
-        0.0.0.0:*) _clash_addr="127.0.0.1:${_clash_addr#*:}" ;;
-    esac
-    curl -s --connect-timeout 2 --max-time 5 "http://${_clash_addr}/connections" 2>/dev/null || echo '{"error":"Clash API недоступен ('$_clash_addr')"}'
-}
-
-cmd_add_sub() {
-    local _url="$1"
-    if [ -z "$_url" ]; then
-        echo "ОШИБКА: укажите URL подписки"
-        return 1
-    fi
-    case "$_url" in
-        http://*|https://*) ;;
-        *) echo "ОШИБКА: URL должен начинаться с http:// или https://"; return 1 ;;
-    esac
-    ensure_data_dir
-    if grep -Fxq "$_url" "$SUBS_FILE" 2>/dev/null; then
-        echo "ОШИБКА: подписка уже добавлена"
-        return 1
-    fi
-    echo "$_url" >> "$SUBS_FILE"
-    log "Подписка добавлена: $_url"
-    echo "OK"
-}
-
-cmd_del_sub() {
-    local _id="$1"
-    case "$_id" in
-        ''|*[!0-9]*) echo "ОШИБКА: неверный id"; return 1 ;;
-    esac
-    if [ ! -f "$SUBS_FILE" ]; then
-        echo "ОШИБКА: нет подписок"
-        return 1
-    fi
-    local _total
-    _total=$(grep -c '[^ ]' "$SUBS_FILE" 2>/dev/null) || true
-    _total=${_total:-0}
-    if [ "$_id" -lt 1 ] || [ "$_id" -gt "$_total" ]; then
-        echo "ОШИБКА: подписка #$_id не найдена"
-        return 1
-    fi
-    sed -i "${_id}d" "$SUBS_FILE"
-    sed -i '/^$/d' "$SUBS_FILE"
-    log "Подписка #$_id удалена"
-    echo "OK"
-}
-
-cmd_list_subs() {
-    ensure_data_dir
-    if [ ! -s "$SUBS_FILE" ]; then
-        echo '[]'
-        return 0
-    fi
-    printf '['
-    local _first=1 _idx=0
-    while IFS= read -r _line; do
-        _line=$(printf '%s' "$_line" | tr -d '\r\n')
-        [ -z "$_line" ] && continue
-        _idx=$((_idx + 1))
-        _escaped=$(json_escape "$_line")
-        [ "$_first" = "1" ] && _first=0 || printf ','
-        printf '{"id":%d,"url":"%s"}' "$_idx" "$_escaped"
-    done < "$SUBS_FILE"
-    printf ']\n'
-}
-
-cmd_singbox_info() {
-    local _ver _tags _xhttp="false"
-    _ver=$(sing-box version 2>/dev/null | head -1 | sed 's/.*version //')
-    _tags=$(sing-box version 2>/dev/null | grep 'Tags:' | sed 's/Tags: //')
-    case "$_tags" in *xhttp*|*XHTTP*) _xhttp="true" ;; esac
-    printf '{"version":"%s","tags":"%s","xhttp":%s}\n' "$_ver" "$_tags" "$_xhttp"
-}
-
-cleanup() {
-    rm -f "$TMP_FILE" "$TMP_DECODED"
-}
-trap cleanup EXIT
-
-case "$1" in
-    status)        cmd_status; exit 0 ;;
-    info)          cmd_info; exit 0 ;;
-    servers)       cmd_servers; exit 0 ;;
-    sections)      cmd_sections; exit 0 ;;
-    apply)         cmd_apply "$2"; exit $? ;;
-    apply-one)     cmd_apply_one "$2" "$3"; exit $? ;;
-    interval)      cmd_interval "$2"; exit $? ;;
-    interval-off)  cmd_interval_off; exit $? ;;
-    link)          cmd_link "$2"; exit $? ;;
-    ping)          cmd_ping "$2"; exit $? ;;
-    podkop-status) cmd_podkop_status; exit 0 ;;
-    connections)   cmd_connections; exit 0 ;;
-    singbox-info)  cmd_singbox_info; exit 0 ;;
-    add-sub)       cmd_add_sub "$2"; exit $? ;;
-    del-sub)       cmd_del_sub "$2"; exit $? ;;
-    list-subs)     cmd_list_subs; exit 0 ;;
-    sync)          ;;
-    "")            ;;
-    *) echo "Usage: $0 [sync|status|info|servers|sections|apply <sec>|apply-one <sec> <id>|interval <h>|interval-off|link <id>|ping <id>|podkop-status|connections|add-sub <url>|del-sub <id>|list-subs]"; exit 1 ;;
-esac
-
-ensure_data_dir
-
-if [ ! -s "$SUBS_FILE" ]; then
-    log "ОШИБКА: нет подписок. Добавьте через 'add-sub <url>'"
-    write_status "error" "Нет подписок" "0"
-    exit 1
+if [ "${1:-}" != "del-sub" ]; then
+    exec "$BASE" "$@"
 fi
 
-log "Загрузка серверов из подписок..."
-write_status "syncing" "Синхронизация..." "0"
+target_section() {
+    T="$(sed -n 's/^TARGET_SECTION=//p' "$AUTO_CONF" 2>/dev/null | tail -n 1)"
+    [ -n "$T" ] || T="TEST123"
+    echo "$T"
+}
 
-> "$DATA_DIR/links.txt.tmp"
+add_unique_file() {
+    F="$1"
+    sort -u "$F" -o "$F" 2>/dev/null || true
+}
 
-_sub_idx=0
-_sub_errors=0
-while IFS= read -r _sub_url; do
-    _sub_url=$(printf '%s' "$_sub_url" | tr -d '\r\n')
-    [ -z "$_sub_url" ] && continue
-    _sub_idx=$((_sub_idx + 1))
+collect_remaining_subsync_links() {
+    OUT="$1"
+    : > "$OUT"
 
-    log "Подписка #$_sub_idx: $_sub_url"
+    [ -f "$LINKS" ] && sed '/^[[:space:]]*$/d' "$LINKS" >> "$OUT" || true
 
-    HTTP_CODE=$(curl -sk -o "$TMP_FILE" -w "%{http_code}" \
-        -H 'User-Agent: v2rayN/6.42' \
-        --connect-timeout 15 --max-time 30 \
-        "$_sub_url" 2>/dev/null)
-
-    if [ "$HTTP_CODE" != "200" ]; then
-        log "ВНИМАНИЕ: подписка #$_sub_idx вернула HTTP $HTTP_CODE"
-        _sub_errors=$((_sub_errors + 1))
-        continue
+    if [ -f "$SERVERS" ]; then
+        grep -o '"url":"[^"]*"' "$SERVERS" 2>/dev/null | sed 's/^"url":"//;s/"$//;s#\\/#/#g' >> "$OUT" || true
+        grep -o '"link":"[^"]*"' "$SERVERS" 2>/dev/null | sed 's/^"link":"//;s/"$//;s#\\/#/#g' >> "$OUT" || true
     fi
 
-    if [ ! -s "$TMP_FILE" ]; then
-        log "ВНИМАНИЕ: подписка #$_sub_idx — пустой ответ"
-        _sub_errors=$((_sub_errors + 1))
-        continue
+    add_unique_file "$OUT"
+}
+
+collect_target_links() {
+    SEC="$1"
+    OUT="$2"
+    : > "$OUT"
+
+    [ -n "$SEC" ] || return 0
+    uci -q show "podkop.${SEC}" >/dev/null 2>&1 || return 0
+
+    uci -q get "podkop.${SEC}.urltest_proxy_links" 2>/dev/null | tr ' ' '\n' | sed '/^[[:space:]]*$/d' >> "$OUT" || true
+    uci -q get "podkop.${SEC}.selector_proxy_links" 2>/dev/null | tr ' ' '\n' | sed '/^[[:space:]]*$/d' >> "$OUT" || true
+
+    P="$(uci -q get "podkop.${SEC}.proxy_string" 2>/dev/null || true)"
+    [ -n "$P" ] && echo "$P" >> "$OUT"
+
+    add_unique_file "$OUT"
+}
+
+target_has_links() {
+    SEC="$1"
+    A="$(uci -q get "podkop.${SEC}.urltest_proxy_links" 2>/dev/null || true)"
+    B="$(uci -q get "podkop.${SEC}.selector_proxy_links" 2>/dev/null || true)"
+    C="$(uci -q get "podkop.${SEC}.proxy_string" 2>/dev/null || true)"
+    [ -n "$A$B$C" ]
+}
+
+remove_link_from_target() {
+    SEC="$1"
+    P="$2"
+
+    [ -n "$SEC" ] || return 0
+    [ -n "$P" ] || return 0
+    uci -q show "podkop.${SEC}" >/dev/null 2>&1 || return 0
+
+    uci -q del_list "podkop.${SEC}.urltest_proxy_links=${P}" 2>/dev/null && echo 1 > "$CHANGED" || true
+    uci -q del_list "podkop.${SEC}.selector_proxy_links=${P}" 2>/dev/null && echo 1 > "$CHANGED" || true
+
+    CUR="$(uci -q get "podkop.${SEC}.proxy_string" 2>/dev/null || true)"
+    if [ "$CUR" = "$P" ]; then
+        uci -q delete "podkop.${SEC}.proxy_string" 2>/dev/null || true
+        echo 1 > "$CHANGED"
     fi
+}
 
-    base64 -d < "$TMP_FILE" > "$TMP_DECODED" 2>/dev/null
+T="$(target_section)"
+OLD="/tmp/subsync-v51-old.$$"
+NEW="/tmp/subsync-v51-new.$$"
+CHANGED="/tmp/subsync-v51-changed.$$"
 
-    _dec_links=$(grep -c '://' "$TMP_DECODED" 2>/dev/null) || true
-    _dec_links=${_dec_links:-0}
-    if [ "$_dec_links" = "0" ]; then
-        cp "$TMP_FILE" "$TMP_DECODED"
-    fi
+: > "$OLD"
+: > "$NEW"
+: > "$CHANGED"
 
-    _found=$(grep -c '://' "$TMP_DECODED" 2>/dev/null) || true
-    _found=${_found:-0}
-    if [ "$_found" = "0" ]; then
-        log "ВНИМАНИЕ: подписка #$_sub_idx — нет прокси-ссылок"
-        _sub_errors=$((_sub_errors + 1))
-        continue
-    fi
+collect_target_links "$T" "$OLD"
 
-    sed 's/\r$//' "$TMP_DECODED" >> "$DATA_DIR/links.txt.tmp"
-    echo >> "$DATA_DIR/links.txt.tmp"
-    log "Подписка #$_sub_idx: найдено $_found ссылок"
+OUT="$("$BASE" "$@" 2>&1)"
+RC="$?"
+printf '%s\n' "$OUT"
 
-done < "$SUBS_FILE"
-
-awk 'NF && !seen[$0]++' "$DATA_DIR/links.txt.tmp" > "$DATA_DIR/links.txt"
-rm -f "$DATA_DIR/links.txt.tmp"
-
-LINK_COUNT=$(grep -c '://' "$DATA_DIR/links.txt" 2>/dev/null) || true
-LINK_COUNT=${LINK_COUNT:-0}
-if [ "$LINK_COUNT" = "0" ]; then
-    log "ОШИБКА: не найдено прокси-ссылок ни в одной подписке"
-    write_status "error" "Нет прокси-ссылок" "0"
-    exit 1
+if [ "$RC" != "0" ]; then
+    rm -f "$OLD" "$NEW" "$CHANGED"
+    exit "$RC"
 fi
 
-log "Получено $LINK_COUNT уникальных сервер(ов) из $_sub_idx $(plural_servers $_sub_idx)"
+"$BASE" sync >/tmp/sub-sync-delete-v51-resync.log 2>&1 || true
+collect_remaining_subsync_links "$NEW"
 
-{
-    printf '['
-    _first=1
-    _idx=0
-    while IFS= read -r _line; do
-        _line=$(printf '%s' "$_line" | tr -d '\r\n')
-        case "$_line" in
-            vless://*|ss://*|trojan://*|hy2://*|hysteria2://*|socks://*|socks4://*|socks5://*)
-                _idx=$((_idx + 1))
-                _proto="${_line%%://*}"
-                _raw_frag=""
-                case "$_line" in *"#"*) _raw_frag="${_line##*#}" ;; esac
-                _name=""
-                if [ -n "$_raw_frag" ]; then
-                    _name=$(urldecode "$_raw_frag" | tr -d '\r\n')
-                fi
-                [ -z "$_name" ] && _name=$(printf '%s' "$_line" | sed 's|.*://[^@]*@||;s|:.*||;s|?.*||')
-                _name=$(json_escape "$_name")
-                _addr=$(printf '%s' "$_line" | sed 's|.*://[^@]*@||;s|:.*||;s|?.*||' | tr -d '\r\n\t ')
-                _port=$(printf '%s' "$_line" | sed 's|.*://[^@]*@[^:]*:||;s|[?/\#].*||' | tr -d '\r\n\t ')
-                _query=""
-                case "$_line" in *"?"*) _query=$(printf '%s' "$_line" | sed 's|[^?]*?||;s|#.*||') ;; esac
-                _type="" _security=""
-                if [ -n "$_query" ]; then
-                    _type=$(printf '%s' "$_query" | tr '&' '\n' | sed -n 's/^type=//p' | head -1)
-                    _security=$(printf '%s' "$_query" | tr '&' '\n' | sed -n 's/^security=//p' | head -1)
-                fi
-                case "$_proto" in
-                    ss)
-                        _userinfo=$(printf '%s' "$_line" | sed 's|^ss://||;s|@.*||;s|#.*||')
-                        _cipher=$(printf '%s' "$_userinfo" | base64 -d 2>/dev/null | sed 's|:.*||')
-                        [ -n "$_cipher" ] && _type="$_cipher"
-                        ;;
-                    hy2|hysteria2)
-                        [ -z "$_type" ] && _type="quic"
-                        if [ -n "$_query" ]; then
-                            _obfs=$(printf '%s' "$_query" | tr '&' '\n' | sed -n 's/^obfs=//p' | head -1)
-                            [ -n "$_obfs" ] && _security="$_obfs"
-                        fi
-                        ;;
-                esac
-                _link_escaped=$(json_escape "$_line")
-                [ "$_first" = "1" ] && _first=0 || printf ','
-                printf '\n{"id":%d,"proto":"%s","name":"%s","addr":"%s","port":"%s","type":"%s","security":"%s","link":"%s"}' \
-                    "$_idx" "$_proto" "$_name" "$_addr" "$_port" "$_type" "$_security" "$_link_escaped"
-                ;;
-        esac
-    done < "$DATA_DIR/links.txt"
-    printf '\n]\n'
-} > "$SERVERS_FILE"
+while IFS= read -r P; do
+    [ -n "$P" ] || continue
 
-if [ "$_sub_errors" -gt 0 ]; then
-    write_status "ok" "OK (ошибок: $_sub_errors)" "$LINK_COUNT"
+    if ! grep -Fxq "$P" "$NEW" 2>/dev/null; then
+        remove_link_from_target "$T" "$P"
+    fi
+done < "$OLD"
+
+if uci -q show "podkop.${T}" >/dev/null 2>&1; then
+    if ! target_has_links "$T"; then
+        uci -q delete "podkop.${T}" 2>/dev/null || true
+        echo 1 > "$CHANGED"
+        DELETED=1
+    else
+        DELETED=0
+    fi
 else
-    write_status "ok" "OK" "$LINK_COUNT"
+    DELETED=0
 fi
-log "Синхронизация завершена — серверы сохранены в $SERVERS_FILE"
+
+if [ -s "$CHANGED" ]; then
+    uci commit podkop 2>/dev/null || true
+    /etc/init.d/podkop restart 2>/dev/null || true
+    DID=1
+else
+    DID=0
+fi
+
+logger -t sub-sync "delete target section v51: target=${T} changed=${DID} deleted=${DELETED:-0}"
+echo "OK: target cleaned: ${T}"
+
+rm -f "$OLD" "$NEW" "$CHANGED"
+exit 0

@@ -229,23 +229,35 @@ for helper in \
     sub-sync-autoadd \
     sub-sync-subs-info \
     sub-sync-system-info \
-    sub-sync-singbox-log \
-    sub-sync-donaters
+    sub-sync-singbox-log
 do
     echo "  - /usr/bin/$helper"
-    wget -qO "/usr/bin/$helper" "$RAW/root/usr/bin/$helper?v=$(date +%s)" || {
-        echo "  ! helper не скачался: $helper"
-        continue
+    if ! wget -qO "/usr/bin/$helper" "$RAW/root/usr/bin/$helper?v=$(date +%s)"; then
+        echo "ERROR: helper не скачался: $helper"
+        exit 1
+    fi
+    chmod 755 "/usr/bin/$helper"
+    sh -n "/usr/bin/$helper" || {
+        echo "ERROR: helper syntax bad: $helper"
+        exit 1
     }
-    chmod 755 "/usr/bin/$helper" 2>/dev/null || true
 done
+
+echo "  - /usr/bin/sub-sync-donaters optional"
+if wget -qO "/usr/bin/sub-sync-donaters" "$RAW/root/usr/bin/sub-sync-donaters?v=$(date +%s)"; then
+    chmod 755 "/usr/bin/sub-sync-donaters" 2>/dev/null || true
+    sh -n "/usr/bin/sub-sync-donaters" || rm -f "/usr/bin/sub-sync-donaters"
+else
+    rm -f "/usr/bin/sub-sync-donaters" 2>/dev/null || true
+fi
 
 echo "→ Установка полного ACL Podcop Sub v666..."
 mkdir -p /usr/share/rpcd/acl.d
 if wget -qO /tmp/luci-app-sub-sync.acl "$RAW/root/usr/share/rpcd/acl.d/luci-app-sub-sync.json?v=$(date +%s)"; then
     cp -f /tmp/luci-app-sub-sync.acl /usr/share/rpcd/acl.d/luci-app-sub-sync.json
 else
-    echo "  ! ACL из GitHub не скачался, оставляю текущий"
+    echo "ERROR: ACL из GitHub не скачался"
+    exit 1
 fi
 
 chmod 644 /usr/share/rpcd/acl.d/luci-app-sub-sync.json 2>/dev/null || true
