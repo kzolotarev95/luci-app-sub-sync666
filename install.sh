@@ -263,55 +263,69 @@ fi
 chmod 644 /usr/share/rpcd/acl.d/luci-app-sub-sync.json 2>/dev/null || true
 # SUBSYNC_INSTALL_HELPERS_ACL_V120_END
 
-# SUBSYNC_PODCOP_SUB_V666_SHINE_INSTALL_V122_BEGIN
-echo "→ Установка CSS анимации Podcop Sub v666..."
 
-cat > /tmp/podcop-sub-v666-shine-v122.css <<'CSS'
+# SUBSYNC_OLD_WORKING_GRADIENT_INSTALL_V115_BEGIN
+echo "→ Установка старого рабочего градиентного перелива Podcop Sub v666 v115..."
 
-/* SUBSYNC_PODCOP_SUB_V666_SHINE_V122_BEGIN */
+cat > /tmp/podcop666-old-gradient-v115.css <<'CSS'
+
+/* SUBSYNC_OLD_WORKING_GRADIENT_V115_BEGIN */
 @keyframes ssSubSyncGradientFlowV115 {
-    0%   { background-position: 0% 50%; }
-    100% { background-position: 320% 50%; }
-}
-
-@keyframes ssPodcopSubV666GradientFlowV122 {
-    0%   { background-position: 0% 50%; }
-    100% { background-position: 320% 50%; }
+    0% {
+        background-position: 0% 50%;
+        filter: hue-rotate(0deg) brightness(1.15);
+    }
+    50% {
+        background-position: 160% 50%;
+        filter: hue-rotate(120deg) brightness(1.35);
+    }
+    100% {
+        background-position: 320% 50%;
+        filter: hue-rotate(360deg) brightness(1.15);
+    }
 }
 
 .ss-subsync-shine-v115,
-.ss-podcop-sub-v666-shine-v122 {
+.ss-podcop-sub-v666-shine-v115,
+a.ss-subsync-shine-v115,
+a.ss-podcop-sub-v666-shine-v115 {
     display: inline-block !important;
     font-weight: 900 !important;
     letter-spacing: .35px !important;
+    text-decoration: none !important;
+
     background-image: linear-gradient(90deg,#00d5ff,#ffffff,#ffd84d,#ff4fd8,#7c4dff,#00d5ff) !important;
     background-size: 320% 100% !important;
     background-position: 0% 50% !important;
+
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     color: transparent !important;
-    animation: ssPodcopSubV666GradientFlowV122 2.2s linear infinite !important;
-    text-shadow: 0 0 8px rgba(0,213,255,.35), 0 0 16px rgba(255,79,216,.25) !important;
-}
 
-@media (prefers-reduced-motion: reduce) {
-    .ss-subsync-shine-v115,
-    .ss-podcop-sub-v666-shine-v122 {
-        animation: none !important;
-    }
+    animation-name: ssSubSyncGradientFlowV115 !important;
+    animation-duration: 1.15s !important;
+    animation-timing-function: linear !important;
+    animation-iteration-count: infinite !important;
+
+    will-change: background-position, filter !important;
+    text-shadow: 0 0 10px rgba(0,213,255,.55), 0 0 22px rgba(255,79,216,.45) !important;
 }
-/* SUBSYNC_PODCOP_SUB_V666_SHINE_V122_END */
+/* SUBSYNC_OLD_WORKING_GRADIENT_V115_END */
 CSS
 
 for css in /www/luci-static/*/cascade.css; do
     [ -f "$css" ] || continue
+
+    sed -i '/SUBSYNC_OLD_WORKING_GRADIENT_V115_BEGIN/,/SUBSYNC_OLD_WORKING_GRADIENT_V115_END/d' "$css"
     sed -i '/SUBSYNC_PODCOP_SUB_V666_SHINE_V122_BEGIN/,/SUBSYNC_PODCOP_SUB_V666_SHINE_V122_END/d' "$css"
-    cat /tmp/podcop-sub-v666-shine-v122.css >> "$css"
+    sed -i '/SUBSYNC_PODCOP_SUB_V666_GRADIENT_V124_BEGIN/,/SUBSYNC_PODCOP_SUB_V666_GRADIENT_V124_END/d' "$css"
+
+    cat /tmp/podcop666-old-gradient-v115.css >> "$css"
 done
 
-rm -f /tmp/podcop-sub-v666-shine-v122.css
-# SUBSYNC_PODCOP_SUB_V666_SHINE_INSTALL_V122_END
+rm -f /tmp/podcop666-old-gradient-v115.css
+# SUBSYNC_OLD_WORKING_GRADIENT_INSTALL_V115_END
 
 # SUBSYNC_PODCOP_XHTTP_INSTALL_V123_BEGIN
 echo "→ Установка xHTTP patch Podkop для Podcop Sub v666..."

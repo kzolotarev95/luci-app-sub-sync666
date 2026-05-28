@@ -1135,7 +1135,7 @@ syncAllBtnStates(sec3);
                                             E('h3', { 'style': 'margin:0 0 4px 0' }, [
                                                 'Помощь по ',
                                                 E('a', {
-                                                    'class': 'ss-subsync-shine-v115 ss-podcop-sub-v666-shine-v122',
+                                                    'class': 'ss-subsync-shine-v115 ss-podcop-sub-v666-shine-v115',
                                                     'href': 'https://t.me/+LZDsQJhUfcNhYWEy',
                                                     'target': '_blank',
                                                     'rel': 'noopener noreferrer',
