@@ -1,0 +1,57 @@
+#!/bin/sh
+# SUBSYNC_MANUAL_LINK_IMPORT_V167
+set -u
+
+LINK="${1:-${SUBSYNC_MANUAL_LINK:-}}"
+NAME="${2:-${SUBSYNC_MANUAL_NAME:-Manual server}}"
+
+mask_link() {
+  printf '%s\n' "$1" | sed -E 's#^(vless|trojan|ss|hy2|hysteria2)://[^@]+@#\1://***@#'
+}
+
+usage() {
+  echo "Usage:"
+  echo "  $0 'hy2://...' 'Name'"
+  echo "  $0 'hysteria2://...' 'Name'"
+  echo "  $0 'vless://...' 'Name'"
+  echo
+  echo "Or:"
+  echo "  export SUBSYNC_MANUAL_LINK='hy2://...'"
+  echo "  export SUBSYNC_MANUAL_NAME='Manual HY2'"
+  echo "  $0"
+}
+
+[ -n "$LINK" ] || {
+  usage
+  exit 1
+}
+
+case "$LINK" in
+  vless://*|trojan://*|ss://*|hy2://*|hysteria2://*) ;;
+  *)
+    echo "ERROR: unsupported link protocol. Supported: vless, trojan, ss, hy2, hysteria2"
+    exit 1
+    ;;
+esac
+
+[ -x /usr/bin/sub-sync-manual-link ] || {
+  echo "ERROR: /usr/bin/sub-sync-manual-link not found or not executable"
+  exit 1
+}
+
+echo "Adding manual server: $NAME"
+echo "Link: $(mask_link "$LINK")"
+
+/usr/bin/sub-sync-manual-link add-link "$LINK" "$NAME"
+/usr/bin/sub-sync-manual-link merge
+
+echo
+echo "=== selectable URLTest servers ==="
+if [ -x /usr/bin/sub-sync-urltest ]; then
+  /usr/bin/sub-sync-urltest list
+else
+  echo "WARN: /usr/bin/sub-sync-urltest not found"
+fi
+
+echo
+echo "Manual link import v167 done"

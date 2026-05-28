@@ -568,3 +568,49 @@ fi
 
 echo "[Sub Sync] Public UI force patch no-python v166c installed"
 # SUBSYNC_PUBLIC_UI_FORCE_INSTALL_V166C_END
+
+# SUBSYNC_MANUAL_LINK_IMPORT_INSTALL_V167_BEGIN
+SUBSYNC_REPO="${SUBSYNC_REPO:-kzolotarev95/luci-app-sub-sync666}"
+SUBSYNC_BRANCH="${SUBSYNC_BRANCH:-main}"
+SUBSYNC_RAW="https://raw.githubusercontent.com/${SUBSYNC_REPO}/${SUBSYNC_BRANCH}"
+SUBSYNC_CACHEBUST="$(date +%s 2>/dev/null || echo now)"
+
+subsync_install_manual_import_v167() {
+  _tmp="/tmp/sub-sync-manual-import.v167.$$"
+  if wget -qO "$_tmp" "$SUBSYNC_RAW/usr/bin/sub-sync-manual-import?v=$SUBSYNC_CACHEBUST"; then
+    cp -f "$_tmp" /usr/bin/sub-sync-manual-import
+    chmod 755 /usr/bin/sub-sync-manual-import
+    echo "[Sub Sync] Manual link import v167 installed"
+  else
+    echo "[Sub Sync] WARN: failed to download sub-sync-manual-import"
+  fi
+  rm -f "$_tmp"
+}
+
+subsync_install_manual_import_v167
+
+if [ -f /usr/share/rpcd/acl.d/luci-app-sub-sync.json ] && command -v jq >/dev/null 2>&1; then
+  _acl="/usr/share/rpcd/acl.d/luci-app-sub-sync.json"
+  _tmp="/tmp/luci-app-sub-sync.acl.v167.$$"
+  jq '
+    .["luci-app-sub-sync"] = (.["luci-app-sub-sync"] // {}) |
+    .["luci-app-sub-sync"].read = (.["luci-app-sub-sync"].read // {}) |
+    .["luci-app-sub-sync"].write = (.["luci-app-sub-sync"].write // {}) |
+    .["luci-app-sub-sync"].read.file = (.["luci-app-sub-sync"].read.file // {}) |
+    .["luci-app-sub-sync"].write.file = (.["luci-app-sub-sync"].write.file // {}) |
+    .["luci-app-sub-sync"].read.file["/usr/bin/sub-sync-manual-import"] = ["exec"] |
+    .["luci-app-sub-sync"].write.file["/usr/bin/sub-sync-manual-import"] = ["exec"]
+  ' "$_acl" > "$_tmp" && jq empty "$_tmp" && cp -f "$_tmp" "$_acl"
+  rm -f "$_tmp"
+fi
+
+if [ -n "${SUBSYNC_MANUAL_LINK:-}" ] && [ -x /usr/bin/sub-sync-manual-import ]; then
+  /usr/bin/sub-sync-manual-import "$SUBSYNC_MANUAL_LINK" "${SUBSYNC_MANUAL_NAME:-Manual server}" || true
+fi
+
+rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
+/etc/init.d/rpcd restart || true
+/etc/init.d/uhttpd restart || true
+
+echo "[Sub Sync] Manual link import support v167 ready"
+# SUBSYNC_MANUAL_LINK_IMPORT_INSTALL_V167_END
