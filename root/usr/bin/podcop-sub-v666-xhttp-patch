@@ -1,0 +1,208 @@
+#!/bin/sh
+set -eu
+
+MODE="${1:-apply}"
+
+F="/usr/lib/podkop/sing_box_config_facade.sh"
+M="/usr/lib/podkop/sing_box_config_manager.sh"
+
+BF="$F.bak.podcop-sub-v666-xhttp-v123"
+BM="$M.bak.podcop-sub-v666-xhttp-v123"
+
+apply_patch() {
+    [ -f "$F" ] || { echo "ERROR: missing $F"; exit 1; }
+    [ -f "$M" ] || { echo "ERROR: missing $M"; exit 1; }
+
+    cp -n "$F" "$BF" 2>/dev/null || true
+    cp -n "$M" "$BM" 2>/dev/null || true
+
+    echo "[Podcop Sub v666] patch Podkop xHTTP facade"
+
+    if ! grep -q 'xhttp|http)' "$F"; then
+        awk '
+        /^_add_outbound_transport\(\) \{/ { in_func=1 }
+        in_func && /case "\$transport" in/ { in_case=1 }
+        in_case && /^[[:space:]]*\*\)/ {
+            print "    xhttp|http)"
+            print "        local p=$(url_get_query_param \"$url\" path)"
+            print "        local h=$(url_get_query_param \"$url\" host)"
+            print "        local s=$(url_get_query_param \"$url\" sni)"
+            print "        local m=$(url_get_query_param \"$url\" mode)"
+            print "        local xp=$(url_get_query_param \"$url\" x_padding_bytes)"
+            print "        local extra=$(url_get_query_param \"$url\" extra)"
+            print "        config=$(sing_box_cm_set_xhttp_transport \"$config\" \"$outbound_tag\" \"$p\" \"$h\" \"$s\" \"$m\" \"$xp\" \"$extra\")"
+            print "        ;;"
+            in_case=0
+        }
+        in_func && /^}/ { in_func=0 }
+        { print }
+        ' "$F" > "$F.tmp" && mv "$F.tmp" "$F"
+    fi
+
+    if ! grep -q 'transport_type=$(url_get_query_param "$url" type)' "$F"; then
+        awk '
+        /^_add_outbound_security\(\) \{/ { in_func=1 }
+        in_func && /alpn=\$\(comma_string_to_json_array/ {
+            print
+            print "        local transport_type=$(url_get_query_param \"$url\" type)"
+            print "        if [ \"$alpn\" = \"[]\" ] && [ \"$transport_type\" = \"xhttp\" ]; then"
+            print "            alpn='\''[\"h2\",\"http/1.1\"]'\''"
+            print "        fi"
+            next
+        }
+        in_func && /^}/ { in_func=0 }
+        { print }
+        ' "$F" > "$F.tmp" && mv "$F.tmp" "$F"
+    fi
+
+    echo "[Podcop Sub v666] patch Podkop xHTTP manager"
+
+    if ! grep -q '^sing_box_cm_set_xhttp_transport()' "$M"; then
+        cat >> "$M" <<'MANAGER_XHTTP'
+
+sing_box_cm_set_xhttp_transport() {
+    local config="$1"
+    local tag="$2"
+    local path="$3"
+    local host="$4"
+    local sni="$5"
+    local mode="$6"
+    local x_padding_bytes="$7"
+    local extra_json="$8"
+
+    [ -z "$path" ] && path="/"
+    [ -z "$host" ] && host="$sni"
+    [ -z "$mode" ] && mode="auto"
+    [ -z "$x_padding_bytes" ] && x_padding_bytes="100-1000"
+
+    local no_grpc_header=""
+    local sc_max_each_post_bytes=""
+    local sc_min_posts_interval_ms=""
+    local sc_stream_up_server_secs=""
+    local xmux_max_concurrency=""
+    local xmux_max_connections=""
+    local xmux_c_max_reuse_times=""
+    local xmux_h_max_request_times=""
+    local xmux_h_max_reusable_secs=""
+    local xmux_h_keep_alive_period=""
+
+    if [ -n "$extra_json" ]; then
+        local decoded_extra
+
+        decoded_extra=$(printf '%s' "$extra_json" | sed \
+            -e 's/%22/"/g' \
+            -e 's/%2C/,/g' \
+            -e 's/%3A/:/g' \
+            -e 's/%7B/{/g' \
+            -e 's/%7D/}/g' \
+            -e 's/%20/ /g' \
+            -e 's/%2F/\//g' \
+            -e 's/%3D/=/g' \
+            -e 's/%26/\&/g' \
+            -e 's/%3F/?/g' \
+            -e 's/%23/#/g')
+
+        if printf '%s' "$decoded_extra" | jq . >/dev/null 2>&1; then
+            no_grpc_header=$(printf '%s' "$decoded_extra" | jq -r '.noGRPCHeader // empty' 2>/dev/null)
+            sc_max_each_post_bytes=$(printf '%s' "$decoded_extra" | jq -r '.scMaxEachPostBytes // empty' 2>/dev/null)
+            sc_min_posts_interval_ms=$(printf '%s' "$decoded_extra" | jq -r '.scMinPostsIntervalMs // empty' 2>/dev/null)
+            sc_stream_up_server_secs=$(printf '%s' "$decoded_extra" | jq -r '.scStreamUpServerSecs // empty' 2>/dev/null)
+
+            xmux_max_concurrency=$(printf '%s' "$decoded_extra" | jq -r '.xmux.maxConcurrency // empty' 2>/dev/null)
+            xmux_max_connections=$(printf '%s' "$decoded_extra" | jq -r '.xmux.maxConnections // empty' 2>/dev/null)
+            xmux_c_max_reuse_times=$(printf '%s' "$decoded_extra" | jq -r '.xmux.cMaxReuseTimes // empty' 2>/dev/null)
+            xmux_h_max_request_times=$(printf '%s' "$decoded_extra" | jq -r '.xmux.hMaxRequestTimes // empty' 2>/dev/null)
+            xmux_h_max_reusable_secs=$(printf '%s' "$decoded_extra" | jq -r '.xmux.hMaxReusableSecs // empty' 2>/dev/null)
+            xmux_h_keep_alive_period=$(printf '%s' "$decoded_extra" | jq -r '.xmux.hKeepAlivePeriod // empty' 2>/dev/null)
+
+            local extra_padding
+            extra_padding=$(printf '%s' "$decoded_extra" | jq -r '.xPaddingBytes // empty' 2>/dev/null)
+            [ -n "$extra_padding" ] && x_padding_bytes="$extra_padding"
+        fi
+    fi
+
+    printf '%s' "$config" | jq \
+        --arg tag "$tag" \
+        --arg path "$path" \
+        --arg mode "$mode" \
+        --arg host "$host" \
+        --arg x_padding_bytes "$x_padding_bytes" \
+        --arg no_grpc_header "$no_grpc_header" \
+        --arg sc_max_each_post_bytes "$sc_max_each_post_bytes" \
+        --arg sc_min_posts_interval_ms "$sc_min_posts_interval_ms" \
+        --arg sc_stream_up_server_secs "$sc_stream_up_server_secs" \
+        --arg xmux_max_concurrency "$xmux_max_concurrency" \
+        --arg xmux_max_connections "$xmux_max_connections" \
+        --arg xmux_c_max_reuse_times "$xmux_c_max_reuse_times" \
+        --arg xmux_h_max_request_times "$xmux_h_max_request_times" \
+        --arg xmux_h_max_reusable_secs "$xmux_h_max_reusable_secs" \
+        --arg xmux_h_keep_alive_period "$xmux_h_keep_alive_period" \
+        '.outbounds |= map(
+            if .tag == $tag then
+                . + {
+                    transport: (
+                        {
+                            type: "xhttp",
+                            path: $path,
+                            mode: $mode,
+                            x_padding_bytes: $x_padding_bytes
+                        } +
+                        (if $host != "" then {host: $host} else {} end) +
+                        (if $no_grpc_header != "" then {no_grpc_header: ($no_grpc_header == "true")} else {} end) +
+                        (if $sc_max_each_post_bytes != "" then {sc_max_each_post_bytes: ($sc_max_each_post_bytes | tonumber)} else {} end) +
+                        (if $sc_min_posts_interval_ms != "" then {sc_min_posts_interval_ms: ($sc_min_posts_interval_ms | tonumber)} else {} end) +
+                        (if $sc_stream_up_server_secs != "" then {sc_stream_up_server_secs: $sc_stream_up_server_secs} else {} end) +
+                        (if $xmux_max_concurrency != "" or $xmux_max_connections != "" or $xmux_c_max_reuse_times != "" or $xmux_h_max_request_times != "" or $xmux_h_max_reusable_secs != "" or $xmux_h_keep_alive_period != "" then
+                            {
+                                xmux: (
+                                    {} +
+                                    (if $xmux_max_concurrency != "" then {max_concurrency: $xmux_max_concurrency} else {} end) +
+                                    (if $xmux_max_connections != "" then {max_connections: ($xmux_max_connections | tonumber)} else {} end) +
+                                    (if $xmux_c_max_reuse_times != "" then {c_max_reuse_times: $xmux_c_max_reuse_times} else {} end) +
+                                    (if $xmux_h_max_request_times != "" then {h_max_request_times: $xmux_h_max_request_times} else {} end) +
+                                    (if $xmux_h_max_reusable_secs != "" then {h_max_reusable_secs: $xmux_h_max_reusable_secs} else {} end) +
+                                    (if $xmux_h_keep_alive_period != "" then {h_keep_alive_period: ($xmux_h_keep_alive_period | tonumber)} else {} end)
+                                )
+                            }
+                        else {} end)
+                    )
+                }
+            else . end
+        )'
+}
+MANAGER_XHTTP
+    fi
+
+    sh -n "$F"
+    sh -n "$M"
+
+    echo "[Podcop Sub v666] xHTTP patch OK"
+}
+
+restore_patch() {
+    if [ -f "$BF" ]; then
+        cp -f "$BF" "$F"
+        echo "[Podcop Sub v666] restored $F"
+    fi
+
+    if [ -f "$BM" ]; then
+        cp -f "$BM" "$M"
+        echo "[Podcop Sub v666] restored $M"
+    fi
+
+    [ -f "$F" ] && sh -n "$F" || true
+    [ -f "$M" ] && sh -n "$M" || true
+}
+
+case "$MODE" in
+    apply)
+        apply_patch
+        ;;
+    restore|uninstall)
+        restore_patch
+        ;;
+    *)
+        echo "Usage: $0 apply|restore"
+        exit 1
+        ;;
+esac

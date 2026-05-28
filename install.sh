@@ -313,6 +313,19 @@ done
 rm -f /tmp/podcop-sub-v666-shine-v122.css
 # SUBSYNC_PODCOP_SUB_V666_SHINE_INSTALL_V122_END
 
+# SUBSYNC_PODCOP_XHTTP_INSTALL_V123_BEGIN
+echo "→ Установка xHTTP patch Podkop для Podcop Sub v666..."
+
+if wget -qO /usr/bin/podcop-sub-v666-xhttp-patch "$RAW/root/usr/bin/podcop-sub-v666-xhttp-patch?v=$(date +%s)"; then
+    chmod 755 /usr/bin/podcop-sub-v666-xhttp-patch
+    sh -n /usr/bin/podcop-sub-v666-xhttp-patch
+    /usr/bin/podcop-sub-v666-xhttp-patch apply
+else
+    echo "ERROR: xHTTP patch helper не скачался"
+    exit 1
+fi
+# SUBSYNC_PODCOP_XHTTP_INSTALL_V123_END
+
 echo "→ Очистка LuCI кэша..."
 rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
 touch /usr/lib/opkg/status 2>/dev/null || touch /lib/apk/db/installed 2>/dev/null || true

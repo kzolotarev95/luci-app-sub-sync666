@@ -156,6 +156,14 @@ rm -f /tmp/sub-sync-status /tmp/sub-sync-response /tmp/sub-sync-decoded
 rm -rf /tmp/sub-sync* /tmp/subsync-* /tmp/luci-app-sub-sync* 2>/dev/null || true
 
 # SUBSYNC_UNINSTALL_HELPERS_ACL_V120_BEGIN
+# SUBSYNC_PODCOP_XHTTP_UNINSTALL_V123_BEGIN
+echo "→ Восстановление Podkop xHTTP patch, если был установлен Podcop Sub v666..."
+if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
+    /usr/bin/podcop-sub-v666-xhttp-patch restore || true
+fi
+rm -f /usr/bin/podcop-sub-v666-xhttp-patch 2>/dev/null || true
+# SUBSYNC_PODCOP_XHTTP_UNINSTALL_V123_END
+
 echo "→ Удаление helper файлов Podcop Sub v666..."
 rm -f \
     /usr/bin/sub-sync \
