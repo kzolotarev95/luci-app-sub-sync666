@@ -1,0 +1,15 @@
+#!/bin/sh
+# SUBSYNC_MANUAL_HY2_VISIBLE_WRAPPER_V164
+BASE="/usr/bin/sub-sync.v164manualbase"
+HELPER="/usr/bin/sub-sync-manual-link"
+
+"$BASE" "$@"
+rc="$?"
+
+case "${1:-}" in
+  sync|update|refresh)
+    [ -x "$HELPER" ] && "$HELPER" merge >/dev/null 2>&1 || true
+    ;;
+esac
+
+exit "$rc"

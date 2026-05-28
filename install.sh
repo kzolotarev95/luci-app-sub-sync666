@@ -452,3 +452,70 @@ grep -q "cmd_singbox_info" /usr/bin/sub-sync.real
 
 echo "Real backend v138 installed: /usr/bin/sub-sync.real"
 # SUBSYNC_REAL_BACKEND_V138_END
+
+# SUBSYNC_MIXED_URLTEST_INSTALL_V165B_BEGIN
+# Install mixed URLTest helpers: VLESS/SS/Trojan/HY2/Hysteria2 -> Podkop URL Test.
+SUBSYNC_REPO="${SUBSYNC_REPO:-kzolotarev95/luci-app-sub-sync666}"
+SUBSYNC_BRANCH="${SUBSYNC_BRANCH:-main}"
+SUBSYNC_RAW="https://raw.githubusercontent.com/${SUBSYNC_REPO}/${SUBSYNC_BRANCH}"
+SUBSYNC_CACHEBUST="$(date +%s 2>/dev/null || echo now)"
+
+subsync_install_bin_v165b() {
+  _name="$1"
+  _url="$SUBSYNC_RAW/usr/bin/$_name?v=$SUBSYNC_CACHEBUST"
+  _tmp="/tmp/$_name.v165b.$$"
+
+  echo "[Sub Sync] installing $_name"
+  if wget -qO "$_tmp" "$_url"; then
+    cp -f "$_tmp" "/usr/bin/$_name"
+    chmod 755 "/usr/bin/$_name"
+    rm -f "$_tmp"
+  else
+    rm -f "$_tmp"
+    echo "[Sub Sync] WARN: failed to download $_url"
+    return 1
+  fi
+}
+
+for _subsync_bin in \
+  sub-sync.real \
+  sub-sync.v164manualbase \
+  sub-sync \
+  sub-sync-autoadd \
+  sub-sync-manual-link \
+  sub-sync-urltest \
+  sub-sync-hy2-urltest \
+  sub-sync-xhttp-guard \
+  podcop-sub-v666-xhttp-patch
+do
+  subsync_install_bin_v165b "$_subsync_bin" || true
+done
+
+if [ -f /usr/share/rpcd/acl.d/luci-app-sub-sync.json ] && command -v jq >/dev/null 2>&1; then
+  _acl="/usr/share/rpcd/acl.d/luci-app-sub-sync.json"
+  _tmp="/tmp/luci-app-sub-sync.acl.v165b.$$"
+  jq '
+    .["luci-app-sub-sync"] = (.["luci-app-sub-sync"] // {}) |
+    .["luci-app-sub-sync"].read = (.["luci-app-sub-sync"].read // {}) |
+    .["luci-app-sub-sync"].write = (.["luci-app-sub-sync"].write // {}) |
+    .["luci-app-sub-sync"].read.file = (.["luci-app-sub-sync"].read.file // {}) |
+    .["luci-app-sub-sync"].write.file = (.["luci-app-sub-sync"].write.file // {}) |
+    .["luci-app-sub-sync"].read.file["/usr/bin/sub-sync-urltest"] = ["exec"] |
+    .["luci-app-sub-sync"].write.file["/usr/bin/sub-sync-urltest"] = ["exec"] |
+    .["luci-app-sub-sync"].read.file["/usr/bin/sub-sync-hy2-urltest"] = ["exec"] |
+    .["luci-app-sub-sync"].write.file["/usr/bin/sub-sync-hy2-urltest"] = ["exec"] |
+    .["luci-app-sub-sync"].read.file["/usr/bin/sub-sync-manual-link"] = ["exec"] |
+    .["luci-app-sub-sync"].write.file["/usr/bin/sub-sync-manual-link"] = ["exec"]
+  ' "$_acl" > "$_tmp" && jq empty "$_tmp" && cp -f "$_tmp" "$_acl"
+  rm -f "$_tmp"
+fi
+
+[ -x /usr/bin/sub-sync-xhttp-guard ] && /usr/bin/sub-sync-xhttp-guard || true
+[ -x /usr/bin/sub-sync-manual-link ] && /usr/bin/sub-sync-manual-link merge >/dev/null 2>&1 || true
+
+rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
+/etc/init.d/rpcd restart || true
+/etc/init.d/uhttpd restart || true
+
+echo "[Sub Sync] Mixed URLTest v165b installed"
+# SUBSYNC_MIXED_URLTEST_INSTALL_V165B_END

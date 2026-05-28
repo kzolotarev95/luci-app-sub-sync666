@@ -1,0 +1,239 @@
+#!/bin/sh
+# SUBSYNC_MIXED_URLTEST_HELPER_V165
+set -u
+
+SERVERS="/etc/sub-sync/servers.json"
+SUBSYNC_REAL="/usr/bin/sub-sync.real"
+SINGBOX_CONFIG="/etc/sing-box/config.json"
+
+safe_section() {
+  case "$1" in
+    ''|*[!A-Za-z0-9_]*)
+      echo "ERROR: bad section name '$1'. Use only A-Z a-z 0-9 _" >&2
+      return 1
+      ;;
+  esac
+  return 0
+}
+
+mask_link() {
+  printf '%s\n' "$1" | sed -E 's#^(vless|trojan|ss|hy2|hysteria2)://[^@]+@#\1://***@#'
+}
+
+is_urltest_link() {
+  case "$1" in
+    vless://*|trojan://*|ss://*|hy2://*|hysteria2://*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+cmd_list() {
+  [ -s "$SERVERS" ] || {
+    echo '[]'
+    return 0
+  }
+
+  jq -c '
+    def p: ((.proto // "") | ascii_downcase);
+    def l: ((.link // "") | ascii_downcase);
+    [
+      .[] |
+      select(
+        p == "vless" or
+        p == "trojan" or
+        p == "ss" or
+        p == "hy2" or
+        p == "hysteria2" or
+        (l | startswith("vless://")) or
+        (l | startswith("trojan://")) or
+        (l | startswith("ss://")) or
+        (l | startswith("hy2://")) or
+        (l | startswith("hysteria2://"))
+      ) |
+      {
+        id: .id,
+        name: .name,
+        proto: .proto,
+        type: .type,
+        security: .security,
+        addr: .addr,
+        port: .port
+      }
+    ]
+  ' "$SERVERS"
+}
+
+link_by_id() {
+  id="$1"
+
+  link=""
+  [ -x "$SUBSYNC_REAL" ] && link="$("$SUBSYNC_REAL" link "$id" 2>/dev/null || true)"
+
+  if ! is_urltest_link "$link"; then
+    link="$(jq -r --argjson id "$id" '.[] | select((.id | tonumber?) == $id) | .link // empty' "$SERVERS" 2>/dev/null | head -1)"
+  fi
+
+  printf '%s\n' "$link"
+}
+
+apply_links_file() {
+  sec="$1"
+  file="$2"
+
+  safe_section "$sec" || return 1
+
+  clean="/tmp/subsync-urltest-v165-clean.$$"
+  : > "$clean"
+
+  while IFS= read -r link; do
+    is_urltest_link "$link" || continue
+    grep -Fxq "$link" "$clean" 2>/dev/null && continue
+    printf '%s\n' "$link" >> "$clean"
+  done < "$file"
+
+  count="$(grep -c . "$clean" 2>/dev/null || echo 0)"
+
+  if [ "$count" -le 0 ]; then
+    rm -f "$clean"
+    echo "ERROR: no valid URLTest links selected; empty URLTest section was NOT created"
+    return 1
+  fi
+
+  uci -q delete "podkop.$sec" 2>/dev/null || true
+
+  uci set "podkop.$sec=section"
+  uci set "podkop.$sec.connection_type=proxy"
+  uci set "podkop.$sec.proxy_config_type=urltest"
+
+  uci -q delete "podkop.$sec.proxy_string" 2>/dev/null || true
+  uci -q delete "podkop.$sec.outbound_json" 2>/dev/null || true
+  uci -q delete "podkop.$sec.selector_proxy_links" 2>/dev/null || true
+  uci -q delete "podkop.$sec.urltest_proxy_links" 2>/dev/null || true
+
+  while IFS= read -r link; do
+    uci add_list "podkop.$sec.urltest_proxy_links=$link"
+  done < "$clean"
+
+  uci set "podkop.$sec.urltest_check_interval=3m"
+  uci set "podkop.$sec.urltest_tolerance=50"
+  uci set "podkop.$sec.urltest_testing_url=https://www.gstatic.com/generate_204"
+
+  uci set "podkop.$sec.enable_udp_over_tcp=0"
+  uci set "podkop.$sec.user_domain_list_type=text"
+  uci set "podkop.$sec.user_domains_text=hy2-urltest-v165.invalid"
+  uci set "podkop.$sec.user_subnet_list_type=disabled"
+  uci set "podkop.$sec.resolve_real_ip_for_routing=0"
+  uci set "podkop.$sec.mixed_proxy_enabled=0"
+
+  uci commit podkop
+
+  logger -t sub-sync "Mixed URLTest v165: applied $count link(s) to section $sec" 2>/dev/null || true
+
+  /etc/init.d/podkop restart || return 1
+  sleep 5
+
+  /etc/init.d/podkop status >/dev/null 2>&1 || true
+  sing-box check -c "$SINGBOX_CONFIG" || return 1
+
+  if grep -q "\"tag\": \"$sec-urltest-out\"" "$SINGBOX_CONFIG" 2>/dev/null; then
+    :
+  else
+    echo "WARN: $sec-urltest-out not found in generated config"
+  fi
+
+  rm -f "$clean"
+
+  printf '{"ok":true,"section":"%s","mode":"urltest","count":%s}\n' "$sec" "$count"
+}
+
+cmd_apply_ids() {
+  sec="$1"
+  shift || true
+
+  tmp="/tmp/subsync-urltest-v165-links.$$"
+  : > "$tmp"
+
+  for id in "$@"; do
+    case "$id" in ''|*[!0-9]*) continue ;; esac
+    link="$(link_by_id "$id")"
+    is_urltest_link "$link" || continue
+    printf '%s\n' "$link" >> "$tmp"
+  done
+
+  apply_links_file "$sec" "$tmp"
+  rc="$?"
+  rm -f "$tmp"
+  return "$rc"
+}
+
+cmd_apply_link() {
+  sec="$1"
+  shift || true
+
+  tmp="/tmp/subsync-urltest-v165-link.$$"
+  : > "$tmp"
+
+  for link in "$@"; do
+    is_urltest_link "$link" || continue
+    printf '%s\n' "$link" >> "$tmp"
+  done
+
+  apply_links_file "$sec" "$tmp"
+  rc="$?"
+  rm -f "$tmp"
+  return "$rc"
+}
+
+cmd_remove_section() {
+  sec="$1"
+  safe_section "$sec" || return 1
+
+  uci -q delete "podkop.$sec" 2>/dev/null || true
+  uci commit podkop
+  /etc/init.d/podkop restart || true
+
+  printf '{"ok":true,"removed":"%s"}\n' "$sec"
+}
+
+cmd="${1:-list}"
+shift || true
+
+case "$cmd" in
+  list)
+    cmd_list
+    ;;
+  apply)
+    sec="${1:-}"
+    shift || true
+    [ -n "$sec" ] || {
+      echo "Usage: $0 apply SECTION ID [ID...]"
+      exit 1
+    }
+    cmd_apply_ids "$sec" "$@"
+    ;;
+  apply-link)
+    sec="${1:-}"
+    shift || true
+    [ -n "$sec" ] || {
+      echo "Usage: $0 apply-link SECTION 'vless://...' ['hysteria2://...']"
+      exit 1
+    }
+    cmd_apply_link "$sec" "$@"
+    ;;
+  remove-section)
+    sec="${1:-}"
+    [ -n "$sec" ] || {
+      echo "Usage: $0 remove-section SECTION"
+      exit 1
+    }
+    cmd_remove_section "$sec"
+    ;;
+  *)
+    echo "Usage:"
+    echo "  $0 list"
+    echo "  $0 apply SECTION ID [ID...]"
+    echo "  $0 apply-link SECTION 'vless://...' ['hysteria2://...']"
+    echo "  $0 remove-section SECTION"
+    exit 1
+    ;;
+esac

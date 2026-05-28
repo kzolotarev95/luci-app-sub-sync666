@@ -1,0 +1,3 @@
+#!/bin/sh
+# SUBSYNC_MIXED_URLTEST_COMPAT_V165
+exec /usr/bin/sub-sync-urltest "$@"

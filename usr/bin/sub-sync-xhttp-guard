@@ -1,0 +1,48 @@
+#!/bin/sh
+# SUBSYNC_XHTTP_AUTOGUARD_V160
+# Проверяет xHTTP patch Podkop и восстанавливает его, если Podkop обновлением перезаписал файлы.
+
+FACADE="/usr/lib/podkop/sing_box_config_facade.sh"
+MANAGER="/usr/lib/podkop/sing_box_config_manager.sh"
+PATCH="/usr/bin/podcop-sub-v666-xhttp-patch"
+
+log() {
+  logger -t sub-sync "$*"
+  echo "$*"
+}
+
+facade_ok=0
+manager_ok=0
+
+[ -f "$FACADE" ] && grep -Fq 'xhttp|http)' "$FACADE" && facade_ok=1
+[ -f "$MANAGER" ] && grep -Fq 'sing_box_cm_set_xhttp_transport' "$MANAGER" && manager_ok=1
+
+if [ "$facade_ok" = "1" ] && [ "$manager_ok" = "1" ]; then
+  log "xHTTP patch check: OK"
+  exit 0
+fi
+
+log "xHTTP patch check: missing, re-applying"
+
+if [ ! -x "$PATCH" ]; then
+  log "xHTTP patch check: ERROR helper not executable: $PATCH"
+  exit 0
+fi
+
+if "$PATCH"; then
+  facade_ok=0
+  manager_ok=0
+
+  [ -f "$FACADE" ] && grep -Fq 'xhttp|http)' "$FACADE" && facade_ok=1
+  [ -f "$MANAGER" ] && grep -Fq 'sing_box_cm_set_xhttp_transport' "$MANAGER" && manager_ok=1
+
+  if [ "$facade_ok" = "1" ] && [ "$manager_ok" = "1" ]; then
+    log "xHTTP patch check: restored OK"
+  else
+    log "xHTTP patch check: ERROR restore finished but markers still missing"
+  fi
+else
+  log "xHTTP patch check: ERROR helper failed"
+fi
+
+exit 0

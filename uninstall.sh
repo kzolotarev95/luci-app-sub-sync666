@@ -241,3 +241,37 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 # SUBSYNC_REAL_BACKEND_V138_BEGIN
 rm -f /usr/bin/sub-sync.real 2>/dev/null || true
 # SUBSYNC_REAL_BACKEND_V138_END
+
+# SUBSYNC_MIXED_URLTEST_UNINSTALL_V165B_BEGIN
+rm -f \
+  /usr/bin/sub-sync-urltest \
+  /usr/bin/sub-sync-hy2-urltest \
+  /usr/bin/sub-sync-manual-link
+
+if [ -f /usr/bin/sub-sync ] && grep -q 'SUBSYNC_MANUAL_HY2_VISIBLE_WRAPPER_V164' /usr/bin/sub-sync 2>/dev/null && [ -f /usr/bin/sub-sync.v164manualbase ]; then
+  cp -f /usr/bin/sub-sync.v164manualbase /usr/bin/sub-sync
+  chmod 755 /usr/bin/sub-sync
+fi
+
+rm -f /usr/bin/sub-sync.v164manualbase
+
+if [ -f /usr/share/rpcd/acl.d/luci-app-sub-sync.json ] && command -v jq >/dev/null 2>&1; then
+  _acl="/usr/share/rpcd/acl.d/luci-app-sub-sync.json"
+  _tmp="/tmp/luci-app-sub-sync.acl.uninstall.v165b.$$"
+  jq '
+    if .["luci-app-sub-sync"] then
+      del(.["luci-app-sub-sync"].read.file["/usr/bin/sub-sync-urltest"]) |
+      del(.["luci-app-sub-sync"].write.file["/usr/bin/sub-sync-urltest"]) |
+      del(.["luci-app-sub-sync"].read.file["/usr/bin/sub-sync-hy2-urltest"]) |
+      del(.["luci-app-sub-sync"].write.file["/usr/bin/sub-sync-hy2-urltest"]) |
+      del(.["luci-app-sub-sync"].read.file["/usr/bin/sub-sync-manual-link"]) |
+      del(.["luci-app-sub-sync"].write.file["/usr/bin/sub-sync-manual-link"])
+    else . end
+  ' "$_acl" > "$_tmp" && jq empty "$_tmp" && cp -f "$_tmp" "$_acl"
+  rm -f "$_tmp"
+fi
+
+rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
+/etc/init.d/rpcd restart || true
+/etc/init.d/uhttpd restart || true
+# SUBSYNC_MIXED_URLTEST_UNINSTALL_V165B_END

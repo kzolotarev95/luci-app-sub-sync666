@@ -1,0 +1,199 @@
+#!/bin/sh
+# SUBSYNC_MANUAL_HY2_VISIBLE_V164
+set -u
+
+DATA="/etc/sub-sync"
+MAN="$DATA/manual-links.tsv"
+SERVERS="$DATA/servers.json"
+
+mkdir -p "$DATA"
+
+mask_link() {
+  printf '%s\n' "$1" | sed -E 's#^(hy2|hysteria2)://[^@]+@#\1://***@#'
+}
+
+is_hy2() {
+  case "$1" in
+    hy2://*|hysteria2://*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+host_from_link() {
+  link="$1"
+  rest="${link#*://}"
+  after="${rest#*@}"
+  hp="${after%%\?*}"
+  hp="${hp%%#*}"
+  hp="${hp%/}"
+  printf '%s\n' "${hp%%:*}"
+}
+
+port_from_link() {
+  link="$1"
+  rest="${link#*://}"
+  after="${rest#*@}"
+  hp="${after%%\?*}"
+  hp="${hp%%#*}"
+  hp="${hp%/}"
+  port="$(printf '%s\n' "$hp" | sed -n 's/^[^:]*:\([0-9][0-9]*\).*$/\1/p')"
+  [ -n "$port" ] || port="443"
+  printf '%s\n' "$port"
+}
+
+add_link() {
+  link="$1"
+  name="${2:-}"
+
+  is_hy2 "$link" || {
+    echo "ERROR: only hy2:// or hysteria2:// supported here"
+    return 1
+  }
+
+  host="$(host_from_link "$link")"
+  [ -n "$name" ] || name="Manual HY2 $host"
+
+  touch "$MAN"
+
+  if awk -F '\t' -v L="$link" '$1 == L { found=1 } END { exit found ? 0 : 1 }' "$MAN"; then
+    echo "Already exists:"
+    mask_link "$link"
+    return 0
+  fi
+
+  printf '%s\t%s\n' "$link" "$name" >> "$MAN"
+
+  echo "Added manual HY2:"
+  mask_link "$link"
+}
+
+add_from_podkop() {
+  sec="$1"
+  links="$(uci -q get "podkop.$sec.urltest_proxy_links" 2>/dev/null || true)"
+  [ -n "$links" ] || {
+    echo "ERROR: no urltest_proxy_links in podkop.$sec"
+    return 1
+  }
+
+  for link in $links; do
+    is_hy2 "$link" || continue
+    add_link "$link" "Manual HY2 from $sec"
+  done
+}
+
+merge_manual() {
+  tmp="/tmp/subsync-manual-hy2-v164.$$"
+  tmp2="/tmp/subsync-manual-hy2-v164-2.$$"
+
+  if [ -s "$SERVERS" ]; then
+    jq 'if type == "array" then . else [] end' "$SERVERS" > "$tmp"
+  else
+    echo '[]' > "$tmp"
+  fi
+
+  [ -s "$MAN" ] || {
+    cp -f "$tmp" "$SERVERS"
+    rm -f "$tmp" "$tmp2"
+    echo '{"ok":true,"manual":0,"added":0}'
+    return 0
+  }
+
+  added=0
+
+  while IFS="$(printf '\t')" read -r link name; do
+    [ -n "$link" ] || continue
+    is_hy2 "$link" || continue
+
+    if jq -e --arg link "$link" 'any(.[]; (.link // "") == $link)' "$tmp" >/dev/null 2>&1; then
+      continue
+    fi
+
+    proto="${link%%://*}"
+    host="$(host_from_link "$link")"
+    port="$(port_from_link "$link")"
+    [ -n "$name" ] || name="Manual HY2 $host"
+
+    maxid="$(jq '[ .[] | .id? | tonumber? ] | max // 0' "$tmp")"
+    id=$((maxid + 1))
+
+    jq \
+      --argjson id "$id" \
+      --arg name "$name" \
+      --arg proto "$proto" \
+      --arg type "quic" \
+      --arg security "tls" \
+      --arg addr "$host" \
+      --argjson port "$port" \
+      --arg link "$link" \
+      '. += [{
+        id: $id,
+        name: $name,
+        proto: $proto,
+        type: $type,
+        security: $security,
+        addr: $addr,
+        port: $port,
+        link: $link
+      }]' "$tmp" > "$tmp2"
+
+    mv -f "$tmp2" "$tmp"
+    added=$((added + 1))
+  done < "$MAN"
+
+  cp -f "$tmp" "$SERVERS"
+  rm -f "$tmp" "$tmp2"
+
+  printf '{"ok":true,"added":%s}\n' "$added"
+}
+
+list_hy2() {
+  [ -s "$SERVERS" ] || {
+    echo "No $SERVERS"
+    return 0
+  }
+
+  jq -r '
+    .[] |
+    select(
+      ((.proto // "") | ascii_downcase) == "hy2" or
+      ((.proto // "") | ascii_downcase) == "hysteria2" or
+      ((.type // "") | ascii_downcase) == "hysteria2" or
+      ((.link // "") | ascii_downcase | startswith("hy2://")) or
+      ((.link // "") | ascii_downcase | startswith("hysteria2://"))
+    ) |
+    "\(.id)\t\(.proto // "-")\t\(.name // "-")\t\(.addr // "-"):\(.port // "-")"
+  ' "$SERVERS"
+}
+
+case "${1:-}" in
+  add-link)
+    shift
+    [ -n "${1:-}" ] || {
+      echo "Usage: $0 add-link 'hysteria2://...' [name]"
+      exit 1
+    }
+    add_link "$1" "${2:-}"
+    ;;
+  add-from-podkop)
+    shift
+    [ -n "${1:-}" ] || {
+      echo "Usage: $0 add-from-podkop SECTION"
+      exit 1
+    }
+    add_from_podkop "$1"
+    ;;
+  merge)
+    merge_manual
+    ;;
+  list-hy2)
+    list_hy2
+    ;;
+  *)
+    echo "Usage:"
+    echo "  $0 add-link 'hysteria2://...' [name]"
+    echo "  $0 add-from-podkop SECTION"
+    echo "  $0 merge"
+    echo "  $0 list-hy2"
+    exit 1
+    ;;
+esac
