@@ -263,6 +263,56 @@ fi
 chmod 644 /usr/share/rpcd/acl.d/luci-app-sub-sync.json 2>/dev/null || true
 # SUBSYNC_INSTALL_HELPERS_ACL_V120_END
 
+# SUBSYNC_PODCOP_SUB_V666_SHINE_INSTALL_V122_BEGIN
+echo "→ Установка CSS анимации Podcop Sub v666..."
+
+cat > /tmp/podcop-sub-v666-shine-v122.css <<'CSS'
+
+/* SUBSYNC_PODCOP_SUB_V666_SHINE_V122_BEGIN */
+@keyframes ssSubSyncGradientFlowV115 {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 320% 50%; }
+}
+
+@keyframes ssPodcopSubV666GradientFlowV122 {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 320% 50%; }
+}
+
+.ss-subsync-shine-v115,
+.ss-podcop-sub-v666-shine-v122 {
+    display: inline-block !important;
+    font-weight: 900 !important;
+    letter-spacing: .35px !important;
+    background-image: linear-gradient(90deg,#00d5ff,#ffffff,#ffd84d,#ff4fd8,#7c4dff,#00d5ff) !important;
+    background-size: 320% 100% !important;
+    background-position: 0% 50% !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    animation: ssPodcopSubV666GradientFlowV122 2.2s linear infinite !important;
+    text-shadow: 0 0 8px rgba(0,213,255,.35), 0 0 16px rgba(255,79,216,.25) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ss-subsync-shine-v115,
+    .ss-podcop-sub-v666-shine-v122 {
+        animation: none !important;
+    }
+}
+/* SUBSYNC_PODCOP_SUB_V666_SHINE_V122_END */
+CSS
+
+for css in /www/luci-static/*/cascade.css; do
+    [ -f "$css" ] || continue
+    sed -i '/SUBSYNC_PODCOP_SUB_V666_SHINE_V122_BEGIN/,/SUBSYNC_PODCOP_SUB_V666_SHINE_V122_END/d' "$css"
+    cat /tmp/podcop-sub-v666-shine-v122.css >> "$css"
+done
+
+rm -f /tmp/podcop-sub-v666-shine-v122.css
+# SUBSYNC_PODCOP_SUB_V666_SHINE_INSTALL_V122_END
+
 echo "→ Очистка LuCI кэша..."
 rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
 touch /usr/lib/opkg/status 2>/dev/null || touch /lib/apk/db/installed 2>/dev/null || true

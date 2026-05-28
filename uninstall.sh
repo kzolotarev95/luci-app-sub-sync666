@@ -170,6 +170,14 @@ rm -f \
     2>/dev/null || true
 # SUBSYNC_UNINSTALL_HELPERS_ACL_V120_END
 
+# SUBSYNC_PODCOP_SUB_V666_SHINE_UNINSTALL_V122_BEGIN
+echo "→ Удаление CSS анимации Podcop Sub v666..."
+for css in /www/luci-static/*/cascade.css; do
+    [ -f "$css" ] || continue
+    sed -i '/SUBSYNC_PODCOP_SUB_V666_SHINE_V122_BEGIN/,/SUBSYNC_PODCOP_SUB_V666_SHINE_V122_END/d' "$css"
+done
+# SUBSYNC_PODCOP_SUB_V666_SHINE_UNINSTALL_V122_END
+
 echo "→ Очистка LuCI кэша..."
 rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
 touch /usr/lib/opkg/status 2>/dev/null || touch /lib/apk/db/installed 2>/dev/null || true
