@@ -1,5 +1,5 @@
 #!/bin/sh
-# SUBSYNC_PUBLIC_UI_PATCH_V166
+# SUBSYNC_PUBLIC_UI_PATCH_V166B_NO_PYTHON
 set -u
 
 JS="/www/luci-static/resources/view/sub_sync/sub_sync.js"
@@ -9,104 +9,43 @@ JS="/www/luci-static/resources/view/sub_sync/sub_sync.js"
   exit 1
 }
 
-if grep -q 'SUBSYNC_PUBLIC_UI_PATCH_V166_APPLIED' "$JS" 2>/dev/null; then
-  echo "Public UI patch v166 already applied"
+if grep -q 'SUBSYNC_PUBLIC_UI_PATCH_V166B_APPLIED' "$JS" 2>/dev/null; then
+  echo "Public UI patch v166b already applied"
   exit 0
 fi
 
-B="/root/SUBSYNC-PUBLIC-UI-PATCH-V166-BEFORE-$(date +%Y%m%d-%H%M%S)"
+B="/root/SUBSYNC-PUBLIC-UI-PATCH-V166B-BEFORE-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$B"
-cp -a "$JS" "$B/sub_sync.js.before-v166-public-ui"
+cp -a "$JS" "$B/sub_sync.js.before-v166b-public-ui"
 
-python3 - "$JS" <<'PY'
-import sys, re, pathlib
+INJ="/tmp/subsync-public-ui-v166b-inject.$$"
+TMP="/tmp/subsync-public-ui-v166b-js.$$"
 
-path = pathlib.Path(sys.argv[1])
-s = path.read_text(errors="ignore")
-
-marker = "SUBSYNC_PUBLIC_UI_PATCH_V166_APPLIED"
-if marker in s:
-    sys.exit(0)
-
-inject = r'''
-/* SUBSYNC_PUBLIC_UI_PATCH_V166_APPLIED */
+cat > "$INJ" <<'INJECT_EOF'
+/* SUBSYNC_PUBLIC_UI_PATCH_V166B_APPLIED */
 (function() {
   'use strict';
 
   var TELEGRAM = 'https://t.me/+LZDsQJhUfcNhYWEy';
 
   function addStyle() {
-    if (document.getElementById('ss-public-ui-v166-style')) return;
+    if (document.getElementById('ss-public-ui-v166b-style')) return;
 
     var st = document.createElement('style');
-    st.id = 'ss-public-ui-v166-style';
-    st.textContent = `
-      /* SUBSYNC_DONATERS_PUBLIC_CARDS_V136_INLINE_STYLE */
-      @keyframes ssPodcopSubV666TitleShineV136 {
-        0% { background-position: 0% 50%; filter: brightness(1); }
-        50% { background-position: 100% 50%; filter: brightness(1.18); }
-        100% { background-position: 0% 50%; filter: brightness(1); }
-      }
-      @keyframes ssDonatersTitlePulseV136 {
-        0%, 100% { transform: scale(1); opacity: .94; }
-        50% { transform: scale(1.018); opacity: 1; }
-      }
-      .ss-podcop-sub-v666-shine-v166 {
-        display: inline-block;
-        background: linear-gradient(90deg,#38bdf8,#22c55e,#f97316,#e879f9,#38bdf8);
-        background-size: 300% 300%;
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent !important;
-        animation: ssPodcopSubV666TitleShineV136 4.2s ease-in-out infinite;
-        font-weight: 900;
-      }
-      .ss-public-help-v166 {
-        margin: 12px 0 14px 0;
-        padding: 12px 14px;
-        border-radius: 14px;
-        border: 1px solid rgba(56,189,248,.34);
-        background: rgba(56,189,248,.08);
-        box-shadow: 0 8px 24px rgba(0,0,0,.12);
-      }
-      .ss-public-help-v166 a {
-        font-weight: 800;
-        text-decoration: none;
-      }
-      .ss-donaters-public-v166 {
-        margin: 12px 0 14px 0;
-        padding: 12px 14px;
-        border-radius: 14px;
-        border: 1px solid rgba(34,197,94,.32);
-        background: rgba(34,197,94,.08);
-        box-shadow: 0 8px 24px rgba(0,0,0,.12);
-      }
-      .ss-donaters-public-v166-title {
-        font-weight: 900;
-        margin-bottom: 8px;
-        animation: ssDonatersTitlePulseV136 2.8s ease-in-out infinite;
-      }
-      .ss-donaters-public-v166-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-      .ss-donaters-public-v166-card {
-        padding: 7px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255,255,255,.16);
-        background: rgba(255,255,255,.08);
-        font-weight: 700;
-      }
-      .ss-singbox-check-v166 {
-        margin: 10px 0 14px 0;
-        padding: 10px 12px;
-        border-radius: 12px;
-        border: 1px solid rgba(148,163,184,.35);
-        opacity: .92;
-        font-size: 12px;
-      }
-    `;
+    st.id = 'ss-public-ui-v166b-style';
+    st.textContent =
+      '/* SUBSYNC_DONATERS_PUBLIC_CARDS_V136_INLINE_STYLE */\n' +
+      '@keyframes ssPodcopSubV666TitleShineV136 { 0% { background-position: 0% 50%; filter: brightness(1); } 50% { background-position: 100% 50%; filter: brightness(1.18); } 100% { background-position: 0% 50%; filter: brightness(1); } }\n' +
+      '@keyframes ssDonatersTitlePulseV136 { 0%, 100% { transform: scale(1); opacity: .94; } 50% { transform: scale(1.018); opacity: 1; } }\n' +
+      '.ss-podcop-sub-v666-shine-v166b { display: inline-block; background: linear-gradient(90deg,#38bdf8,#22c55e,#f97316,#e879f9,#38bdf8); background-size: 300% 300%; -webkit-background-clip: text; background-clip: text; color: transparent !important; animation: ssPodcopSubV666TitleShineV136 4.2s ease-in-out infinite; font-weight: 900; }\n' +
+      '.ss-public-help-v166b { margin: 12px 0 14px 0; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(56,189,248,.34); background: rgba(56,189,248,.08); box-shadow: 0 8px 24px rgba(0,0,0,.12); }\n' +
+      '.ss-public-help-v166b a { font-weight: 800; text-decoration: none; }\n' +
+      '.ss-donaters-public-v166b { margin: 12px 0 14px 0; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(34,197,94,.32); background: rgba(34,197,94,.08); box-shadow: 0 8px 24px rgba(0,0,0,.12); }\n' +
+      '.ss-donaters-public-v166b-title { font-weight: 900; margin-bottom: 8px; animation: ssDonatersTitlePulseV136 2.8s ease-in-out infinite; }\n' +
+      '.ss-donaters-public-v166b-row { display: flex; flex-wrap: wrap; gap: 8px; }\n' +
+      '.ss-donaters-public-v166b-card { padding: 7px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); font-weight: 700; }\n' +
+      '.ss-singbox-check-v166b { margin: 10px 0 14px 0; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(148,163,184,.35); opacity: .92; font-size: 12px; }\n';
+
     document.head.appendChild(st);
   }
 
@@ -126,7 +65,7 @@ inject = r'''
     var heads = Array.prototype.slice.call(root.querySelectorAll('h1,h2,h3,.cbi-map-title,.cbi-section h3'));
     heads.forEach(function(h) {
       var t = (h.textContent || '').trim();
-      if (/Sub Sync|Podcop Sub|Podkop Sub/i.test(t)) h.classList.add('ss-podcop-sub-v666-shine-v166');
+      if (/Sub Sync|Podcop Sub|Podkop Sub/i.test(t)) h.classList.add('ss-podcop-sub-v666-shine-v166b');
     });
   }
 
@@ -134,29 +73,27 @@ inject = r'''
     addStyle();
 
     var root = findMount();
-    if (!root || document.getElementById('ss-public-ui-v166-block')) {
-      if (root) addTitleShine(root);
-      return;
-    }
+    if (!root) return;
 
     addTitleShine(root);
 
-    var holder = document.createElement('div');
-    holder.id = 'ss-public-ui-v166-block';
+    if (document.getElementById('ss-public-ui-v166b-block')) return;
 
+    var holder = document.createElement('div');
+    holder.id = 'ss-public-ui-v166b-block';
     holder.innerHTML =
-      '<div class="ss-public-help-v166">' +
-        '<b class="ss-podcop-sub-v666-shine-v166">Помощь по Podcop Sub v666</b>: ' +
+      '<div class="ss-public-help-v166b">' +
+        '<b class="ss-podcop-sub-v666-shine-v166b">Помощь по Podcop Sub v666</b>: ' +
         '<a href="' + TELEGRAM + '" target="_blank" rel="noreferrer">Telegram</a>' +
       '</div>' +
-      '<div class="ss-donaters-public-v166">' +
-        '<div class="ss-donaters-public-v166-title">Донатеры проекта</div>' +
-        '<div class="ss-donaters-public-v166-row">' +
-          '<span class="ss-donaters-public-v166-card">Спасибо всем, кто поддерживает проект</span>' +
-          '<span class="ss-donaters-public-v166-card">Podcop Sub v666</span>' +
+      '<div class="ss-donaters-public-v166b">' +
+        '<div class="ss-donaters-public-v166b-title">Донатеры проекта</div>' +
+        '<div class="ss-donaters-public-v166b-row">' +
+          '<span class="ss-donaters-public-v166b-card">Спасибо всем, кто поддерживает проект</span>' +
+          '<span class="ss-donaters-public-v166b-card">Podcop Sub v666</span>' +
         '</div>' +
       '</div>' +
-      '<div class="ss-singbox-check-v166">Проверка sing-box доступна через helper: <code>/usr/bin/sub-sync-singbox-check</code></div>';
+      '<div class="ss-singbox-check-v166b">Проверка sing-box: <code>/usr/bin/sub-sync-singbox-check</code></div>';
 
     if (root.firstChild) root.insertBefore(holder, root.firstChild);
     else root.appendChild(holder);
@@ -174,26 +111,38 @@ inject = r'''
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();
-'''
+INJECT_EOF
 
-# Важно: LuCI view часто делает `return view.extend(...)`; код после return не выполнится.
-# Поэтому вставляем patch прямо перед первым `return view.extend`.
-m = re.search(r'\breturn\s+view\.extend\s*\(', s)
-if m:
-    s = s[:m.start()] + inject + "\n" + s[m.start():]
-else:
-    s = inject + "\n" + s
+awk '
+  FNR == NR {
+    inj = inj $0 "\n"
+    next
+  }
 
-path.write_text(s)
-PY
+  done == 0 && $0 ~ /return[ \t]+view\.extend[ \t]*\(/ {
+    printf "%s", inj
+    done = 1
+  }
 
-grep -q 'SUBSYNC_PUBLIC_UI_PATCH_V166_APPLIED' "$JS" || {
-  echo "ERROR: patch marker not found after patch"
+  { print }
+
+  END {
+    if (done == 0) {
+      printf "%s", inj
+    }
+  }
+' "$INJ" "$JS" > "$TMP"
+
+cp -f "$TMP" "$JS"
+rm -f "$INJ" "$TMP"
+
+grep -q 'SUBSYNC_PUBLIC_UI_PATCH_V166B_APPLIED' "$JS" || {
+  echo "ERROR: v166b patch marker not found after patch"
   exit 1
 }
 
-grep -q 'https://t.me/+LZDsQJhUfcNhYWEy' "$JS" || {
-  echo "ERROR: Telegram link not found after patch"
+grep -q 'SUBSYNC_DONATERS_PUBLIC_CARDS_V136_INLINE_STYLE' "$JS" || {
+  echo "ERROR: donaters style marker not found after patch"
   exit 1
 }
 
@@ -202,9 +151,14 @@ grep -q 'ssPodcopSubV666TitleShineV136' "$JS" || {
   exit 1
 }
 
+grep -q 'https://t.me/+LZDsQJhUfcNhYWEy' "$JS" || {
+  echo "ERROR: Telegram link not found after patch"
+  exit 1
+}
+
 rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
 /etc/init.d/rpcd restart || true
 /etc/init.d/uhttpd restart || true
 
-echo "Public UI patch v166 applied"
+echo "Public UI patch v166b applied"
 echo "BACKUP: $B"
