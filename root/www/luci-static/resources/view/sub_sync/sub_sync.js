@@ -1111,52 +1111,6 @@ syncAllBtnStates(sec3);
                             singboxConsoleBodyV81
                     ]);
 
-                    /* SUBSYNC_DONATERS_ADMIN_UI_V143 */
-                    var donatersAdminRowsV143 = [];
-                    var donatersAdminStatusV143 = E('div', { 'style': 'font-size:12px;opacity:.8;margin-top:8px' }, 'Загрузка...');
-                    var donatersAdminBodyV143 = E('div', { 'style': 'display:grid;gap:8px;margin-top:10px' });
-                    function ssDonatersAdminSetStatusV143(t, ok) { donatersAdminStatusV143.textContent = t || ''; donatersAdminStatusV143.style.color = ok ? '#4caf50' : '#ff9800'; }
-                    function ssDonatersAdminRenderV143(data) {
-                            while (donatersAdminBodyV143.firstChild) donatersAdminBodyV143.removeChild(donatersAdminBodyV143.firstChild);
-                            donatersAdminRowsV143 = [];
-                            var items = (data && data.items) || [];
-                            for (var i = 0; i < items.length; i++) {
-                                    (function(it) {
-                                            var en = E('input', { 'type': 'checkbox' });
-                                            en.checked = !!it.enabled;
-                                            var nick = E('input', { 'type': 'text', 'placeholder': 'Ник', 'value': it.nick || '', 'style': 'min-width:120px' });
-                                            var url = E('input', { 'type': 'text', 'placeholder': 'Telegram URL', 'value': it.url || '', 'style': 'min-width:220px' });
-                                            var save = E('button', { 'class': 'btn cbi-button cbi-button-positive' }, 'Сохранить');
-                                            save.addEventListener('click', function() {
-                                                    ssDonatersAdminSetStatusV143('Сохраняю строку ' + it.row + '...', false);
-                                                    return fs.exec('/usr/bin/sub-sync-donaters', ['set', String(it.row), en.checked ? '1' : '0', nick.value || '', url.value || '']).then(function() {
-                                                            ssDonatersAdminSetStatusV143('Сохранено: строка ' + it.row, true);
-                                                            return ssDonatersAdminLoadV143();
-                                                    }).catch(function(e) {
-                                                            ssDonatersAdminSetStatusV143('Ошибка сохранения: ' + e, false);
-                                                    });
-                                            });
-                                            var row = E('div', { 'style': 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px;border:1px solid rgba(127,127,127,.25);border-radius:10px' }, [
-                                                    E('b', {}, '#' + it.row), en, nick, url, save
-                                            ]);
-                                            donatersAdminBodyV143.appendChild(row);
-                                    })(items[i] || {});
-                            }
-                            ssDonatersAdminSetStatusV143('Загружено строк: ' + items.length, true);
-                    }
-                    function ssDonatersAdminLoadV143() {
-                            return fs.exec('/usr/bin/sub-sync-donaters', ['get']).then(function(res) {
-                                    var data = JSON.parse((res && res.stdout) || '{}');
-                                    ssDonatersAdminRenderV143(data);
-                            }).catch(function(e) { ssDonatersAdminSetStatusV143('Ошибка загрузки: ' + e, false); });
-                    }
-                    var donatersAdminCardV143 = E('div', { 'class': 'ss-card', 'style': 'border:1px solid rgba(76,175,80,.35);border-radius:14px;padding:12px;margin:10px 0' }, [
-                            E('h3', { 'style': 'margin-top:0' }, 'Админ-панель донатеров'),
-                            E('div', { 'style': 'font-size:12px;opacity:.75' }, 'Локальная панель. Данные не уходят в GitHub.'),
-                            donatersAdminBodyV143,
-                            donatersAdminStatusV143
-                    ]);
-                    window.setTimeout(function() { try { ssDonatersAdminLoadV143(); } catch(e) {} }, 500);
                     /* SUBSYNC_DONATERS_PUBLIC_CARDS_V134_COMPACT_CARDS */
                     var donatersPublicListV128 = E('div', {
                             'class': 'ss-donaters-grid-v134'
@@ -3026,7 +2980,7 @@ if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrat
                                    '.ss-widget__value .ss-label{color:#aeb4bb!important}',
                                    '.ss-widget__value .ss-val{word-break:break-word!important}'
                            ].join('\n')),
-				manualCardV53B, widgetsRow, sysWidgetsRowV96, wServerCard, sectionCreateCardV45B, subsCard, xhttpCard, autoPickCard, serversCard, donatersAdminCardV143, donatersPublicCardV128, 
+				manualCardV53B, widgetsRow, sysWidgetsRowV96, wServerCard, sectionCreateCardV45B, subsCard, xhttpCard, autoPickCard, serversCard, donatersPublicCardV128, 
 				E('div', { 'style': 'text-align:right;margin-top:8px' }, [
                                         E('span', { 'class': 'ss-version ss-version-hidden-v90', 'style': 'display:none!important' }, '')
 				])
