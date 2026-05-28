@@ -433,3 +433,22 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 
 echo "[Podcop Sub v666] Public Donaters list installed"
 # SUBSYNC_DONATERS_PUBLIC_INSTALL_V134B_END
+
+
+# SUBSYNC_REAL_BACKEND_V138_BEGIN
+echo "=== Podcop Sub v666 real backend v138 ==="
+
+SUBSYNC_REPO="${SUBSYNC_REPO:-kzolotarev95/luci-app-sub-sync666}"
+SUBSYNC_BRANCH="${SUBSYNC_BRANCH:-main}"
+SUBSYNC_RAW="https://raw.githubusercontent.com/${SUBSYNC_REPO}/${SUBSYNC_BRANCH}"
+
+wget -qO /usr/bin/sub-sync.real "${SUBSYNC_RAW}/root/usr/bin/sub-sync.real?v=$(date +%s)"
+sed -i 's/\r$//' /usr/bin/sub-sync.real
+chmod 755 /usr/bin/sub-sync.real
+
+sh -n /usr/bin/sub-sync.real
+grep -q "cmd_add_sub" /usr/bin/sub-sync.real
+grep -q "cmd_singbox_info" /usr/bin/sub-sync.real
+
+echo "Real backend v138 installed: /usr/bin/sub-sync.real"
+# SUBSYNC_REAL_BACKEND_V138_END

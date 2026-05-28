@@ -236,3 +236,8 @@ done
 
 rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
 # SUBSYNC_DONATERS_PUBLIC_UNINSTALL_V134B_END
+
+
+# SUBSYNC_REAL_BACKEND_V138_BEGIN
+rm -f /usr/bin/sub-sync.real 2>/dev/null || true
+# SUBSYNC_REAL_BACKEND_V138_END
