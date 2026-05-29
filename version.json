@@ -1,9 +1,9 @@
 {
-  "version": "v255",
-  "build": 255,
-  "title": "Вышло обновление Podcop Sub v666 v255",
-  "message": "Возвращена кнопка Обновление Модуля при доступной обнове, служебные строки скрыты.",
-  "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V255_BEGIN",
+  "version": "v256",
+  "build": 256,
+  "title": "Вышло обновление Podcop Sub v666 v256",
+  "message": "Добавлена автоматическая установка темы luci-theme-protobyzks95 вместе с установкой и OTA обновлением Podcop Sub v666.",
+  "required_marker": "SUBSYNC_AUTO_INSTALL_PROTOBYZKS95_THEME_V256_BEGIN",
   "install_url": "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install.sh",
-  "released_at": "2026-05-29 22:55:57 +0400"
+  "released_at": "2026-05-29 23:11:54 +0400"
 }

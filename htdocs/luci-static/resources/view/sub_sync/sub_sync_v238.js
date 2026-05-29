@@ -1111,7 +1111,7 @@ syncAllBtnStates(sec3);
                             singboxConsoleBodyV81
                     ]);
 
-                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V255 */
+                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V256 */
                     /* SUBSYNC_DONATERS_PUBLIC_CARDS_V134_COMPACT_CARDS */
                     var donatersPublicListV128 = E('div', {
                             'class': 'ss-donaters-grid-v134'
