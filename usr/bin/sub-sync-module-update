@@ -1,0 +1,140 @@
+#!/bin/sh
+# SUBSYNC_MODULE_UPDATE_HELPER_V236
+set -u
+
+RAW_BASE="${SUBSYNC_UPDATE_RAW_BASE:-https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main}"
+VERSION_URL="${SUBSYNC_UPDATE_VERSION_URL:-$RAW_BASE/version.json}"
+DEFAULT_INSTALL_URL="$RAW_BASE/install.sh"
+LOCAL_BUILD_FILE="/etc/sub-sync/module-build"
+TMP="/tmp/subsync-module-update-v236.$$"
+
+mkdir -p "$TMP"
+trap 'rm -rf "$TMP"' EXIT
+
+log() {
+  printf '%s\n' "$*"
+  logger -t sub-sync-module-update "$*" >/dev/null 2>&1 || true
+}
+
+json_str() {
+  sed -n 's/.*"'$1'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$2" | head -n 1
+}
+
+json_num() {
+  sed -n 's/.*"'$1'"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' "$2" | head -n 1
+}
+
+local_build() {
+  if [ -s "$LOCAL_BUILD_FILE" ]; then
+    cat "$LOCAL_BUILD_FILE" | tr -cd '0-9' | head -c 8
+  else
+    echo 0
+  fi
+}
+
+download_version() {
+  wget -qO "$TMP/version.json" "$VERSION_URL?v=$(date +%s)" || return 1
+  [ -s "$TMP/version.json" ] || return 1
+  return 0
+}
+
+download_install() {
+  url="$1"
+  log "Download install.sh: $url"
+  wget -qO "$TMP/install.sh" "$url?v=$(date +%s)" || {
+    log "ERROR: не удалось скачать install.sh"
+    return 1
+  }
+
+  sh -n "$TMP/install.sh" || {
+    log "ERROR: скачанный install.sh не прошёл sh -n"
+    return 2
+  }
+
+  return 0
+}
+
+case "${1:-check}" in
+  check)
+    log "=== Podcop Sub v666 update check v236 ==="
+    lb="$(local_build)"
+    log "LOCAL_BUILD=$lb"
+
+    if ! download_version; then
+      log "NO_REMOTE_VERSION"
+      log "version.json пока нет на GitHub."
+      log "После GitHub push обновления начнут отображаться автоматически."
+      exit 0
+    fi
+
+    rb="$(json_num build "$TMP/version.json")"
+    rv="$(json_str version "$TMP/version.json")"
+    title="$(json_str title "$TMP/version.json")"
+    msg="$(json_str message "$TMP/version.json")"
+
+    [ -n "$rb" ] || rb=0
+    [ -n "$rv" ] || rv="unknown"
+
+    log "REMOTE_VERSION=$rv"
+    log "REMOTE_BUILD=$rb"
+    [ -n "$title" ] && log "TITLE=$title"
+    [ -n "$msg" ] && log "MESSAGE=$msg"
+
+    if [ "$rb" -gt "$lb" ]; then
+      log "UPDATE_AVAILABLE"
+      log "Вышло обновление $rv. Можно нажать Обновление Модуля."
+    else
+      log "UP_TO_DATE"
+      log "Обновлений нет."
+    fi
+  ;;
+
+  run|update|install)
+    log "=== Podcop Sub v666 update run v236 ==="
+    lb="$(local_build)"
+
+    if ! download_version; then
+      log "SAFE_STOP: version.json пока нет на GitHub"
+      exit 20
+    fi
+
+    rb="$(json_num build "$TMP/version.json")"
+    rv="$(json_str version "$TMP/version.json")"
+    marker="$(json_str required_marker "$TMP/version.json")"
+    install_url="$(json_str install_url "$TMP/version.json")"
+
+    [ -n "$rb" ] || rb=0
+    [ -n "$rv" ] || rv="unknown"
+    [ -n "$marker" ] || marker="SUBSYNC_PUBLIC_BUILD_V$rb"
+    [ -n "$install_url" ] || install_url="$DEFAULT_INSTALL_URL"
+
+    log "LOCAL_BUILD=$lb"
+    log "REMOTE_VERSION=$rv"
+    log "REMOTE_BUILD=$rb"
+    log "REQUIRED_MARKER=$marker"
+
+    if [ "$rb" -le "$lb" ]; then
+      log "NO_UPDATE: remote build is not newer"
+      exit 0
+    fi
+
+    download_install "$install_url" || exit $?
+
+    if ! grep -q "$marker" "$TMP/install.sh"; then
+      log "SAFE_STOP: install.sh без marker $marker"
+      log "Обновление остановлено, чтобы не поставить неправильную версию."
+      exit 21
+    fi
+
+    log "OK: marker найден, запускаю install.sh"
+    sh "$TMP/install.sh"
+    rc="$?"
+    log "DONE: install.sh finished rc=$rc"
+    exit "$rc"
+  ;;
+
+  *)
+    echo "Usage: $0 check|run"
+    exit 2
+  ;;
+esac

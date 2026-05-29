@@ -1,0 +1,9 @@
+{
+  "version": "v238",
+  "build": 238,
+  "title": "Вышло обновление Podcop Sub v666 v238",
+  "message": "Добавлена карточка Обновление Модуля, проверка version.json, безопасное OTA-обновление из GitHub и скрыт блок донатеров.",
+  "required_marker": "SUBSYNC_PUBLIC_BUILD_V238",
+  "install_url": "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install.sh",
+  "released_at": "2026-05-29 20:32:14 +0400"
+}

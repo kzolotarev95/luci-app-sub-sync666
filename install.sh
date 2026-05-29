@@ -1,4 +1,5 @@
 #!/bin/sh
+# SUBSYNC_PUBLIC_BUILD_V238
 # PODCOP_SUB_V666_PUBLIC_INSTALL_CLEAN_V221
 set -u
 
@@ -102,3 +103,23 @@ echo "Podcop Sub v666 public install v221 complete"
 echo "Open: Services -> Podkop"
 echo "Ctrl+F5 after install"
 echo "========================================="
+# SUBSYNC_INSTALL_VERSION_FILES_V238_BEGIN
+mkdir -p /etc/sub-sync
+echo "238" > /etc/sub-sync/module-build
+echo "v238" > /etc/sub-sync/module-version
+
+SUBSYNC_RAW_BASE="${SUBSYNC_RAW_BASE:-${RAW_BASE:-https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main}}"
+
+mkdir -p /usr/bin /usr/share/rpcd/acl.d /www/luci-static/resources/view/sub_sync
+
+wget -qO /usr/bin/sub-sync-module-update "$SUBSYNC_RAW_BASE/usr/bin/sub-sync-module-update?v=$(date +%s)" && chmod 755 /usr/bin/sub-sync-module-update || true
+wget -qO /usr/share/rpcd/acl.d/luci-app-sub-sync.json "$SUBSYNC_RAW_BASE/usr/share/rpcd/acl.d/luci-app-sub-sync.json?v=$(date +%s)" || true
+wget -qO /www/luci-static/resources/view/sub_sync/sub_sync.js "$SUBSYNC_RAW_BASE/htdocs/luci-static/resources/view/sub_sync/sub_sync.js?v=$(date +%s)" || true
+wget -qO /www/luci-static/resources/view/sub_sync/sub_sync_v238.js "$SUBSYNC_RAW_BASE/htdocs/luci-static/resources/view/sub_sync/sub_sync_v238.js?v=$(date +%s)" || true
+
+rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
+/etc/init.d/rpcd restart >/dev/null 2>&1 || true
+/etc/init.d/uhttpd restart >/dev/null 2>&1 || true
+
+logger -t sub-sync "Podcop Sub v666 public build v238 installed" 2>/dev/null || true
+# SUBSYNC_INSTALL_VERSION_FILES_V238_END

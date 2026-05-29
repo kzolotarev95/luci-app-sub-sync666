@@ -2,56 +2,158 @@
   "luci-app-sub-sync": {
     "description": "Grant access to Podcop Sub v666",
     "read": {
-      "uci": [ "podkop", "sub-sync", "network", "dhcp" ],
+      "uci": [
+        "podkop",
+        "sub-sync",
+        "network",
+        "dhcp"
+      ],
       "file": {
-        "/usr/bin/sub-sync": [ "exec" ],
-        "/usr/bin/sub-sync.real": [ "exec" ],
-        "/usr/bin/sub-sync.v51base": [ "exec" ],
-        "/usr/bin/sub-sync.v164manualbase": [ "exec" ],
-        "/usr/bin/sub-sync-autoadd": [ "exec" ],
-        "/usr/bin/sub-sync-donaters": [ "exec" ],
-        "/usr/bin/sub-sync-happ-json-hy2-import": [ "exec" ],
-        "/usr/bin/sub-sync-hy2-manager": [ "exec" ],
-        "/usr/bin/sub-sync-hy2-probe": [ "exec" ],
-        "/usr/bin/sub-sync-hy2-urltest": [ "exec" ],
-        "/usr/bin/sub-sync-manual-import": [ "exec" ],
-        "/usr/bin/sub-sync-manual-link": [ "exec" ],
-        "/usr/bin/sub-sync-section": [ "exec" ],
-        "/usr/bin/sub-sync-singbox-log": [ "exec" ],
-        "/usr/bin/sub-sync-subs-info": [ "exec" ],
-        "/usr/bin/sub-sync-system-info": [ "exec" ],
-        "/usr/bin/sub-sync-urltest": [ "exec" ],
-        "/usr/bin/sub-sync-xhttp-guard": [ "exec" ],
-        "/usr/bin/podcop-sub-v666-xhttp-patch": [ "exec" ],
-        "/etc/sub-sync/*": [ "read" ],
-        "/etc/sing-box/config.json": [ "read" ],
-        "/tmp/sub-sync-*": [ "read" ]
+        "/usr/bin/sub-sync": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync.real": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync.v51base": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync.v164manualbase": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-autoadd": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-donaters": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-happ-json-hy2-import": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-manager": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-probe": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-urltest": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-manual-import": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-manual-link": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-section": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-singbox-log": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-subs-info": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-system-info": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-urltest": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-xhttp-guard": [
+          "exec"
+        ],
+        "/usr/bin/podcop-sub-v666-xhttp-patch": [
+          "exec"
+        ],
+        "/etc/sub-sync/*": [
+          "read"
+        ],
+        "/etc/sing-box/config.json": [
+          "read"
+        ],
+        "/tmp/sub-sync-*": [
+          "read"
+        ],
+        "/usr/bin/sub-sync-module-update": [
+          "exec"
+        ]
       }
     },
     "write": {
-      "uci": [ "podkop", "sub-sync" ],
+      "uci": [
+        "podkop",
+        "sub-sync"
+      ],
       "file": {
-        "/usr/bin/sub-sync": [ "exec" ],
-        "/usr/bin/sub-sync.real": [ "exec" ],
-        "/usr/bin/sub-sync.v51base": [ "exec" ],
-        "/usr/bin/sub-sync.v164manualbase": [ "exec" ],
-        "/usr/bin/sub-sync-autoadd": [ "exec" ],
-        "/usr/bin/sub-sync-donaters": [ "exec" ],
-        "/usr/bin/sub-sync-happ-json-hy2-import": [ "exec" ],
-        "/usr/bin/sub-sync-hy2-manager": [ "exec" ],
-        "/usr/bin/sub-sync-hy2-probe": [ "exec" ],
-        "/usr/bin/sub-sync-hy2-urltest": [ "exec" ],
-        "/usr/bin/sub-sync-manual-import": [ "exec" ],
-        "/usr/bin/sub-sync-manual-link": [ "exec" ],
-        "/usr/bin/sub-sync-section": [ "exec" ],
-        "/usr/bin/sub-sync-singbox-log": [ "exec" ],
-        "/usr/bin/sub-sync-subs-info": [ "exec" ],
-        "/usr/bin/sub-sync-system-info": [ "exec" ],
-        "/usr/bin/sub-sync-urltest": [ "exec" ],
-        "/usr/bin/sub-sync-xhttp-guard": [ "exec" ],
-        "/usr/bin/podcop-sub-v666-xhttp-patch": [ "exec" ],
-        "/etc/sub-sync/*": [ "read", "write" ],
-        "/etc/config/podkop": [ "read", "write" ]
+        "/usr/bin/sub-sync": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync.real": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync.v51base": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync.v164manualbase": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-autoadd": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-donaters": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-happ-json-hy2-import": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-manager": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-probe": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-urltest": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-manual-import": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-manual-link": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-section": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-singbox-log": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-subs-info": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-system-info": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-urltest": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-xhttp-guard": [
+          "exec"
+        ],
+        "/usr/bin/podcop-sub-v666-xhttp-patch": [
+          "exec"
+        ],
+        "/etc/sub-sync/*": [
+          "read",
+          "write"
+        ],
+        "/etc/config/podkop": [
+          "read",
+          "write"
+        ],
+        "/usr/bin/sub-sync-module-update": [
+          "exec"
+        ]
       }
     }
   }
