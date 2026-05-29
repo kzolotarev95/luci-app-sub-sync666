@@ -1,9 +1,9 @@
 #!/bin/sh
-# PODCOP_SUB_V666_PUBLIC_UNINSTALL_CLEAN_V206
+# PODCOP_SUB_V666_PUBLIC_UNINSTALL_CLEAN_V208
 set -u
 
 echo "========================================="
-echo "  Podcop Sub v666 — public uninstall v206"
+echo "  Podcop Sub v666 — public uninstall v208"
 echo "========================================="
 echo "Backup: disabled for public/friend uninstall"
 
@@ -31,15 +31,9 @@ if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
 fi
 
 echo "=== remove public module files ==="
-rm -f /www/luci-static/resources/view/sub_sync/sub_sync.js /www/luci-static/resources/view/sub_sync/sub_sync_v206.js 2>/dev/null || true
+rm -rf /www/luci-static/resources/view/sub_sync 2>/dev/null || true
 rm -f /usr/share/rpcd/acl.d/luci-app-sub-sync.json 2>/dev/null || true
-rm -f /usr/bin/podcop-sub-v666-xhttp-patch 2>/dev/null || true
-rm -f /usr/bin/sub-sync /usr/bin/sub-sync.real /usr/bin/sub-sync.v51base /usr/bin/sub-sync.v164manualbase 2>/dev/null || true
-rm -f /usr/bin/sub-sync-autoadd /usr/bin/sub-sync-donaters /usr/bin/sub-sync-happ-json-hy2-import 2>/dev/null || true
-rm -f /usr/bin/sub-sync-hy2-manager /usr/bin/sub-sync-hy2-probe /usr/bin/sub-sync-hy2-urltest 2>/dev/null || true
-rm -f /usr/bin/sub-sync-manual-import /usr/bin/sub-sync-manual-link /usr/bin/sub-sync-section 2>/dev/null || true
-rm -f /usr/bin/sub-sync-singbox-check /usr/bin/sub-sync-singbox-log /usr/bin/sub-sync-subs-info 2>/dev/null || true
-rm -f /usr/bin/sub-sync-system-info /usr/bin/sub-sync-urltest /usr/bin/sub-sync-xhttp-guard 2>/dev/null || true
+rm -f /usr/bin/sub-sync* /usr/bin/podcop-sub-v666-xhttp-patch 2>/dev/null || true
 rm -f /usr/bin/sub-sync-public-ui-patch /usr/bin/sub-sync-public-ui-patch.disabled-v* 2>/dev/null || true
 
 echo "=== clear LuCI cache ==="
@@ -48,4 +42,4 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 /etc/init.d/uhttpd restart >/dev/null 2>&1 || true
 /etc/init.d/podkop restart >/dev/null 2>&1 || true
 
-echo "Podcop Sub v666 public uninstall v206 complete"
+echo "Podcop Sub v666 public uninstall v208 complete"

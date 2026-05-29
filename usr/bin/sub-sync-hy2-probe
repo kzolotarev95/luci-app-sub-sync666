@@ -1,93 +1,144 @@
 #!/bin/sh
-# SUBSYNC_HY2_PROBE_SELF_CONTAINED_V198
-set -eu
-
-json_escape() {
-  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
-}
-
-out_ok() {
-  msg="$(json_escape "$1")"
-  delay="${2:-}"
-  if [ -n "$delay" ]; then
-    printf '{"ok":true,"status":"WORK","delay":%s,"message":"%s"}\n' "$delay" "$msg"
-  else
-    printf '{"ok":true,"status":"WORK","message":"%s"}\n' "$msg"
-  fi
-}
-
-out_bad() {
-  printf '{"ok":false,"status":"NO WORK","error":"%s"}\n' "$(json_escape "$1")"
-}
+# SUBSYNC_HY2_WORK_PROBE_V180
+set -u
 
 LINK="${1:-}"
+TEST_URL="${2:-https://www.gstatic.com/generate_204}"
+
+mask() {
+  sed -E 's#(hy2|hysteria2)://[^@[:space:]]+@#\1://***@#g'
+}
+
+fail() {
+  echo "NO WORK: $*"
+  exit 1
+}
+
+[ -n "$LINK" ] || fail "HY2 link empty"
+
+LINK="$(printf '%s' "$LINK" | sed 's/[[:space:]]*$//;s/#.*$//')"
 
 case "$LINK" in
   hy2://*|hysteria2://*) ;;
-  *) out_bad "Вставь hy2:// или hysteria2://"; exit 0 ;;
+  *) fail "only hy2:// or hysteria2:// supported" ;;
 esac
 
-if ! sing-box check -c /etc/sing-box/config.json >/tmp/subsync-hy2-probe-check.out 2>&1; then
-  out_bad "sing-box config invalid: $(cat /tmp/subsync-hy2-probe-check.out)"
-  exit 0
-fi
+REST="${LINK#*://}"
+AUTH="${REST%%@*}"
+HPQ="${REST#*@}"
 
-u="${LINK#*://}"
-u="${u%%#*}"
-u="${u%%\?*}"
+[ "$AUTH" != "$REST" ] || fail "missing password/auth before @"
 
-case "$u" in
-  *@*) hostport="${u#*@}" ;;
-  *) out_bad "В ссылке нет userinfo@host"; exit 0 ;;
+HOSTPORT="${HPQ%%/*}"
+HOST="${HOSTPORT%:*}"
+PORT="${HOSTPORT##*:}"
+
+[ -n "$HOST" ] || fail "host empty"
+case "$PORT" in
+  ''|*[!0-9]*) fail "bad port: $PORT" ;;
 esac
 
-hostport="${hostport%%/*}"
-host="${hostport%:*}"
-port="${hostport##*:}"
+SNI="$(printf '%s' "$HPQ" | sed -n 's/.*[?&]sni=\([^&#]*\).*/\1/p' | head -1)"
+[ -n "$SNI" ] || SNI="$HOST"
 
-[ -n "$host" ] || { out_bad "Не смог разобрать host"; exit 0; }
-[ -n "$port" ] || { out_bad "Не смог разобрать port"; exit 0; }
+TMP="/tmp/subsync-hy2-probe.$$"
+mkdir -p "$TMP"
+CFG="$TMP/config.json"
+LOG="$TMP/sing-box.log"
+ERR="$TMP/curl.err"
+PORT_LOCAL=$((18080 + ($$ % 1000)))
 
-TAG="$(jq -r --arg h "$host" --arg p "$port" '
-  .outbounds[]?
-  | select(((.type // "") == "hysteria2" or (.type // "") == "hy2")
-    and ((.server // "") == $h)
-    and (((.server_port // "")|tostring) == $p))
-  | .tag
-' /etc/sing-box/config.json 2>/dev/null | head -n 1)"
-
-if [ -z "$TAG" ]; then
-  TAG="$(jq -r '.outbounds[]? | select((.type // "") == "hysteria2" or (.type // "") == "hy2") | .tag' /etc/sing-box/config.json 2>/dev/null | head -n 1)"
-fi
-
-[ -n "$TAG" ] || {
-  out_bad "HY2 outbound не найден в /etc/sing-box/config.json. Сначала выбери HY2 в секцию и дождись перезапуска Podkop."
-  exit 0
+cleanup() {
+  [ -n "${PID:-}" ] && kill "$PID" 2>/dev/null || true
+  rm -rf "$TMP"
 }
+trap cleanup EXIT INT TERM
 
-API="$(jq -r '.experimental.clash_api.external_controller // "127.0.0.1:9090"' /etc/sing-box/config.json 2>/dev/null || echo '127.0.0.1:9090')"
+echo "HY2 probe v180"
+echo "Link: $(printf '%s' "$LINK" | mask)"
+echo "Server: $HOST:$PORT"
+echo "SNI: $SNI"
+echo "Test URL: $TEST_URL"
+echo
 
-case "$API" in
-  http://*|https://*) ;;
-  0.0.0.0:*) API="http://127.0.0.1:${API#0.0.0.0:}" ;;
-  127.*|localhost*) API="http://$API" ;;
-  :*) API="http://127.0.0.1$API" ;;
-  *) API="http://$API" ;;
-esac
+command -v sing-box >/dev/null 2>&1 || fail "sing-box not found"
 
-ENC_TAG="$(printf '%s' "$TAG" | jq -sRr @uri)"
-TEST_URL="https%3A%2F%2Fwww.gstatic.com%2Fgenerate_204"
+jq -n \
+  --arg listen "127.0.0.1" \
+  --argjson lport "$PORT_LOCAL" \
+  --arg server "$HOST" \
+  --argjson sport "$PORT" \
+  --arg password "$AUTH" \
+  --arg sni "$SNI" \
+  '{
+    log: { level: "error", timestamp: false },
+    inbounds: [
+      { type: "mixed", tag: "mixed-in", listen: $listen, listen_port: $lport }
+    ],
+    outbounds: [
+      {
+        type: "hysteria2",
+        tag: "hy2-out",
+        server: $server,
+        server_port: $sport,
+        password: $password,
+        tls: { enabled: true, server_name: $sni }
+      },
+      { type: "direct", tag: "direct" }
+    ],
+    route: {
+      rules: [
+        { inbound: ["mixed-in"], outbound: "hy2-out" }
+      ],
+      final: "hy2-out"
+    }
+  }' > "$CFG" || fail "cannot create temp sing-box config"
 
-RESP="$(wget -T 10 -qO- "$API/proxies/$ENC_TAG/delay?timeout=8000&url=$TEST_URL" 2>/tmp/subsync-hy2-probe-wget.err || true)"
-DELAY="$(printf '%s' "$RESP" | jq -r '.delay // empty' 2>/dev/null || true)"
+echo "=== sing-box config check ==="
+if ! sing-box check -c "$CFG" > "$TMP/check.out" 2>&1; then
+  cat "$TMP/check.out"
+  fail "temporary sing-box config invalid"
+fi
+cat "$TMP/check.out"
+echo "OK: temp config valid"
+echo
 
-if [ -n "$DELAY" ]; then
-  out_ok "HY2 отвечает через tag=$TAG" "$DELAY"
+echo "=== start temp sing-box ==="
+sing-box run -c "$CFG" > "$LOG" 2>&1 &
+PID="$!"
+sleep 2
+
+if ! kill -0 "$PID" 2>/dev/null; then
+  echo "--- sing-box log ---"
+  cat "$LOG"
+  fail "temp sing-box stopped"
+fi
+
+echo "OK: temp sing-box running on socks/mixed 127.0.0.1:$PORT_LOCAL"
+echo
+
+if ! command -v curl >/dev/null 2>&1; then
+  echo "WARN: curl not found"
+  echo "CONFIG OK, but real HTTP test skipped"
   exit 0
 fi
 
-ERR="$(cat /tmp/subsync-hy2-probe-wget.err 2>/dev/null || true)"
-[ -n "$ERR" ] || ERR="$RESP"
+echo "=== HTTP test through HY2 ==="
+OUT="$(curl -k -sS --max-time 12 --connect-timeout 6 \
+  --proxy "socks5h://127.0.0.1:$PORT_LOCAL" \
+  -o /dev/null -w '%{http_code} %{time_total}' \
+  "$TEST_URL" 2>"$ERR" || true)"
 
-out_bad "Пинг через Clash API не прошёл. tag=$TAG api=$API resp=$ERR"
-exit 0
+CODE="$(printf '%s' "$OUT" | awk '{print $1}')"
+TIME="$(printf '%s' "$OUT" | awk '{print $2}')"
+
+if [ "$CODE" = "204" ] || [ "$CODE" = "200" ] || [ "$CODE" = "301" ] || [ "$CODE" = "302" ]; then
+  echo "WORK: HTTP $CODE, time ${TIME}s"
+  exit 0
+fi
+
+echo "--- curl error ---"
+cat "$ERR" 2>/dev/null || true
+echo "--- sing-box log ---"
+cat "$LOG" 2>/dev/null || true
+fail "HTTP test failed, code=${CODE:-none}"

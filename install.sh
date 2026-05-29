@@ -1,5 +1,5 @@
 #!/bin/sh
-# PODCOP_SUB_V666_PUBLIC_INSTALL_CLEAN_V206
+# PODCOP_SUB_V666_PUBLIC_INSTALL_CLEAN_V208
 set -u
 
 REPO_SLUG="${SUBSYNC_REPO:-kzolotarev95/luci-app-sub-sync666}"
@@ -7,7 +7,7 @@ BRANCH="${SUBSYNC_BRANCH:-main}"
 RAW="https://raw.githubusercontent.com/${REPO_SLUG}/${BRANCH}"
 
 echo "========================================="
-echo "  Podcop Sub v666 — public install v206"
+echo "  Podcop Sub v666 — public install v208"
 echo "========================================="
 echo "Backup: disabled for public/friend install"
 
@@ -20,16 +20,19 @@ fetch_file() {
     chmod "$mode" "$dst" 2>/dev/null || true
     echo "OK: $dst"
   else
-    echo "ERROR: failed to download $src"
+    echo "WARN: failed to download $src"
     return 1
   fi
 }
 
-echo "=== install files ==="
+echo "=== install UI ==="
 fetch_file "htdocs/luci-static/resources/view/sub_sync/sub_sync.js" "/www/luci-static/resources/view/sub_sync/sub_sync.js" 644
-cp -f /www/luci-static/resources/view/sub_sync/sub_sync.js /www/luci-static/resources/view/sub_sync/sub_sync_v206.js 2>/dev/null || true
+fetch_file "htdocs/luci-static/resources/view/sub_sync/sub_sync_v208.js" "/www/luci-static/resources/view/sub_sync/sub_sync_v208.js" 644
+
+echo "=== install ACL ==="
 fetch_file "usr/share/rpcd/acl.d/luci-app-sub-sync.json" "/usr/share/rpcd/acl.d/luci-app-sub-sync.json" 644
 
+echo "=== install helpers ==="
 for f in \
   podcop-sub-v666-xhttp-patch \
   sub-sync \
@@ -55,8 +58,13 @@ do
   fetch_file "usr/bin/$f" "/usr/bin/$f" 755 || true
 done
 
-echo "=== disable stale/global public UI patch ==="
+echo "=== install public donor state ==="
+mkdir -p /etc/sub-sync
+fetch_file "etc/sub-sync/donaters.tsv" "/etc/sub-sync/donaters.tsv" 600 || true
+
+echo "=== remove stale old files ==="
 rm -f /usr/bin/sub-sync-public-ui-patch /usr/bin/sub-sync-public-ui-patch.disabled-v* 2>/dev/null || true
+rm -f /usr/bin/*prev* /usr/bin/*before* /usr/bin/*.bak /usr/bin/*real-v* /usr/bin/sub-sync-hy2-ping 2>/dev/null || true
 
 echo "=== integrate into Services -> Podkop ==="
 mkdir -p /usr/share/luci/menu.d
@@ -67,7 +75,7 @@ cat > /usr/share/luci/menu.d/luci-app-podkop.json <<'MENU'
     "order": 60,
     "action": {
       "type": "view",
-      "path": "sub_sync/sub_sync_v206"
+      "path": "sub_sync/sub_sync_v208"
     },
     "depends": {
       "acl": [ "luci-app-podkop", "luci-app-sub-sync" ]
@@ -90,7 +98,7 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 /etc/init.d/podkop restart >/dev/null 2>&1 || true
 
 echo "========================================="
-echo "Podcop Sub v666 public install v206 complete"
+echo "Podcop Sub v666 public install v208 complete"
 echo "Open: Services -> Podkop"
 echo "Ctrl+F5 after install"
 echo "========================================="

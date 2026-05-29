@@ -1,6 +1,6 @@
 #!/bin/sh
 # SUBSYNC_HAPP_JSON_HY2_WRAPPER_V177
-BASE="/usr/bin/sub-sync.real"
+BASE="/usr/bin/sub-sync.before-happ-json-hy2-v177"
 HELPER="/usr/bin/sub-sync-happ-json-hy2-import"
 
 case "${1:-}" in
@@ -16,4 +16,3 @@ case "${1:-}" in
     exec "$BASE" "$@"
   ;;
 esac
-# SUBSYNC_BASE_REAL_V204

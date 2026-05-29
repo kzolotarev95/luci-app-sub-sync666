@@ -3,7 +3,7 @@
 # SUBSYNC_HAPP_JSON_HY2_STRIP_FRAGMENT_V178B
 set -u
 
-BASE="/usr/bin/sub-sync.real"
+BASE="/usr/bin/sub-sync.before-happ-json-hy2-v177"
 DATA="/etc/sub-sync"
 LINKS="$DATA/links.txt"
 SERVERS="$DATA/servers.json"
@@ -101,4 +101,3 @@ grep -RsnEi 'hysteria2|hy2://' "$SERVERS" 2>/dev/null | mask_link || echo "NO HY
 echo
 echo "=== bad fragment check ==="
 grep -RsnE 'hysteria2://.*#|hy2://.*#' "$DATA" 2>/dev/null | mask_link || echo "OK: no HY2 link fragments"
-# SUBSYNC_BASE_REAL_V204

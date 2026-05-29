@@ -1,87 +1,75 @@
 #!/bin/sh
-# SUBSYNC_HY2_MANAGER_SELF_CONTAINED_V197
-set -eu
+# SUBSYNC_HY2_SAFE_DELETE_BACKEND_V184
+set -u
+
+ORIG="/usr/bin/sub-sync-hy2-manager.before-safe-delete-v184"
 
 json_escape() {
-  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+  sed 's/\\/\\\\/g; s/"/\\"/g'
 }
 
-ok_msg() {
-  printf '{"ok":true,"message":"%s"}\n' "$(json_escape "$1")"
-}
+if [ "${1:-}" = "delete" ]; then
+  SEC="${2:-}"
+  LINK="${3:-}"
 
-err_msg() {
-  printf '{"ok":false,"error":"%s"}\n' "$(json_escape "$1")"
-}
+  LINK="$(printf '%s' "$LINK" | sed 's/[[:space:]]*$//;s/#.*$//')"
 
-is_hy2() {
-  case "${1:-}" in
-    hy2://*|hysteria2://*) return 0 ;;
-    *) return 1 ;;
+  if [ -z "$SEC" ]; then
+    echo '{"ok":false,"error":"Не указана Podkop-секция"}'
+    exit 2
+  fi
+
+  case "$LINK" in
+    hy2://*|hysteria2://*) ;;
+    *)
+      echo '{"ok":false,"error":"Нет HY2 ключа — удалять нечего. Вставь hy2:// или hysteria2://."}'
+      exit 2
+    ;;
   esac
-}
 
-cmd="${1:-list}"
+  if ! uci -q show "podkop.$SEC" >/dev/null 2>&1; then
+    esc_sec="$(printf '%s' "$SEC" | json_escape)"
+    echo "{\"ok\":false,\"error\":\"Секция не найдена: $esc_sec\"}"
+    exit 2
+  fi
 
-case "$cmd" in
-  select)
-    section="${2:-}"
-    name="${3:-Manual HY2}"
-    link="${4:-}"
+  if ! uci -q show "podkop.$SEC" | grep -F "$LINK" >/dev/null 2>&1; then
+    echo '{"ok":false,"error":"Этот HY2 ключ не найден в указанной секции. Другие секции не трогаю."}'
+    exit 2
+  fi
 
-    [ -n "$section" ] || { err_msg "Не указана Podkop-секция"; exit 0; }
-    is_hy2 "$link" || { err_msg "Вставь полную ссылку hy2:// или hysteria2://"; exit 0; }
+  # Удаляем только точный ключ из указанной секции.
+  uci -q del_list "podkop.$SEC.urltest_proxy_links=$LINK" 2>/dev/null || true
 
-    if [ -x /usr/bin/sub-sync-urltest ]; then
-      out="$(/usr/bin/sub-sync-urltest apply-link "$section" "$link" 2>&1)" || {
-        err_msg "$out"
-        exit 0
-      }
-      /etc/init.d/podkop restart >/dev/null 2>&1 || true
-      ok_msg "HY2 применён в секцию $section. $out"
-      exit 0
-    fi
+  cur="$(uci -q get "podkop.$SEC.urltest_proxy_links" 2>/dev/null || true)"
+  if [ "$cur" = "$LINK" ]; then
+    uci -q delete "podkop.$SEC.urltest_proxy_links" 2>/dev/null || true
+  fi
 
-    err_msg "/usr/bin/sub-sync-urltest not found"
-  ;;
+  after="$(uci -q get "podkop.$SEC.urltest_proxy_links" 2>/dev/null || true)"
+  deleted_section="0"
 
-  delete)
-    section="${2:-}"
-    link="${3:-}"
+  if [ -z "$after" ]; then
+    marker="$(uci -q get "podkop.$SEC.user_domains_text" 2>/dev/null || true)"
 
-    [ -n "$section" ] || { err_msg "Не указана Podkop-секция"; exit 0; }
-    is_hy2 "$link" || { err_msg "Нет HY2 ключа — удалять нечего. Вставь hy2:// или hysteria2://."; exit 0; }
+    case "$SEC:$marker" in
+      hy2*:*|*hysteria*:*|*:hy2-urltest-v165.invalid*)
+        uci -q delete "podkop.$SEC" 2>/dev/null || true
+        deleted_section="1"
+      ;;
+      *)
+        # Не удаляем чужую/главную секцию, даже если ссылка была последней.
+        true
+      ;;
+    esac
+  fi
 
-    cur="$(uci -q get "podkop.$section.urltest_proxy_links" 2>/dev/null || true)"
-    new=""
-    for x in $cur; do
-      [ "$x" = "$link" ] && continue
-      new="$new $x"
-    done
+  uci commit podkop
+  /etc/init.d/podkop restart >/dev/null 2>&1 || true
 
-    uci set "podkop.$section.urltest_proxy_links=$new"
-    uci commit podkop
-    /etc/init.d/podkop restart >/dev/null 2>&1 || true
-    ok_msg "HY2 удалён из секции $section"
-  ;;
+  esc_sec="$(printf '%s' "$SEC" | json_escape)"
+  echo "{\"ok\":true,\"section\":\"$esc_sec\",\"deleted_section\":$deleted_section,\"message\":\"Удалён только этот HY2 ключ из указанной секции. Другие секции не тронуты.\"}"
+  exit 0
+fi
 
-  check)
-    if sing-box check -c /etc/sing-box/config.json >/tmp/subsync-hy2-check.out 2>&1; then
-      ok_msg "sing-box config OK"
-    else
-      err_msg "$(cat /tmp/subsync-hy2-check.out)"
-    fi
-  ;;
-
-  list)
-    if [ -f /etc/sub-sync/servers.json ]; then
-      jq -c '[.[] | select(((.proto // "")|ascii_downcase)=="hy2" or ((.proto // "")|ascii_downcase)=="hysteria2" or ((.type // "")|ascii_downcase)=="hysteria2")]' /etc/sub-sync/servers.json 2>/dev/null || echo '[]'
-    else
-      echo '[]'
-    fi
-  ;;
-
-  *)
-    err_msg "Unknown command: $cmd"
-  ;;
-esac
+exec "$ORIG" "$@"
