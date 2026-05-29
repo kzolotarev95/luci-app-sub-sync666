@@ -1111,7 +1111,7 @@ syncAllBtnStates(sec3);
                             singboxConsoleBodyV81
                     ]);
 
-                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V256 */
+                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V258 */
                     /* SUBSYNC_DONATERS_PUBLIC_CARDS_V134_COMPACT_CARDS */
                     var donatersPublicListV128 = E('div', {
                             'class': 'ss-donaters-grid-v134'
@@ -1382,6 +1382,69 @@ syncAllBtnStates(sec3);
                     }, [
                             moduleUpdateRunBtnV236,
                             moduleUpdateOutV236
+                    ]);
+
+                    /* SUBSYNC_DONATE_BANNER_TEXT_CARD_V257 */
+                    /* SUBSYNC_DONATE_COPY_BUTTON_V258 */
+                    function ssDonateCopyNumberV258(ev) {
+                            if (ev) {
+                                    ev.preventDefault();
+                                    ev.stopPropagation();
+                            }
+
+                            var num = '4817760258323256';
+                            var btn = ev && ev.currentTarget ? ev.currentTarget : null;
+                            var old = btn ? btn.textContent : '';
+
+                            function setBtnText(txt) {
+                                    if (!btn)
+                                            return;
+
+                                    btn.textContent = txt;
+                                    window.setTimeout(function() {
+                                            btn.textContent = old || 'Копировать номер';
+                                    }, 1300);
+                            }
+
+                            function fallbackCopy() {
+                                    try {
+                                            var ta = document.createElement('textarea');
+                                            ta.value = num;
+                                            ta.setAttribute('readonly', 'readonly');
+                                            ta.style.position = 'fixed';
+                                            ta.style.left = '-9999px';
+                                            document.body.appendChild(ta);
+                                            ta.select();
+                                            document.execCommand('copy');
+                                            document.body.removeChild(ta);
+                                            setBtnText('Скопировано');
+                                    } catch(e) {
+                                            setBtnText('Не скопировано');
+                                    }
+                            }
+
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                                    navigator.clipboard.writeText(num).then(function() {
+                                            setBtnText('Скопировано');
+                                    }).catch(fallbackCopy);
+                            } else {
+                                    fallbackCopy();
+                            }
+                    }
+
+                    var donateBannerV257 = E('div', { 'class': 'ss-donate-banner-v257 ss-card' }, [
+                            E('div', { 'class': 'ss-donate-banner-v257__glow' }, []),
+                            E('div', { 'class': 'ss-donate-banner-v257__top' }, 'Буду благодарен каждому из вас.'),
+                            E('div', { 'class': 'ss-donate-banner-v257__sub' }, 'Поддержать Донатом'),
+                            E('div', { 'class': 'ss-donate-banner-v257__pay' }, [
+                                    E('span', { 'class': 'ss-donate-banner-v257__bank' }, 'Сбербанк:'),
+                                    E('span', { 'class': 'ss-donate-banner-v257__num' }, '4817760258323256'),
+                                    E('button', {
+                                            'class': 'ss-donate-banner-v258__copy cbi-button',
+                                            'type': 'button',
+                                            'click': ssDonateCopyNumberV258
+                                    }, 'Копировать номер')
+                            ])
                     ]);
 
                     var moduleUpdateCardV236 = E('div', {
@@ -4873,8 +4936,45 @@ if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrat
 /* SUBSYNC_MODULE_UPDATE_HIDE_DEBUG_DETAILS_CSS_V253 */
 .ss-module-update-card-v236 .ss-module-update-details-v239{display:block!important;}
 .ss-module-update-card-v236 pre{display:none!important;}
+/* SUBSYNC_DONATE_BANNER_TEXT_CARD_CSS_V257 */
+@keyframes ssDonatePulseV257{0%,100%{box-shadow:0 0 0 rgba(67,255,151,0),0 0 18px rgba(67,255,151,.18)}50%{box-shadow:0 0 28px rgba(67,255,151,.22),0 0 46px rgba(255,207,83,.16)}}
+@keyframes ssDonateShineV257{0%{transform:translateX(-130%) skewX(-18deg);opacity:0}18%{opacity:.7}45%{opacity:.35}100%{transform:translateX(180%) skewX(-18deg);opacity:0}}
+.ss-donate-banner-v257{position:relative;overflow:hidden;margin:0 0 14px 0!important;padding:13px 16px!important;border-radius:14px!important;border:1px solid rgba(115,255,170,.34)!important;background:linear-gradient(135deg,rgba(18,35,30,.82),rgba(12,16,20,.92) 48%,rgba(48,36,12,.75))!important;color:inherit!important;box-sizing:border-box!important;animation:ssDonatePulseV257 3.2s ease-in-out infinite!important;}
+.ss-donate-banner-v257:before{content:"";position:absolute;inset:-2px;background:radial-gradient(circle at 10% 20%,rgba(92,255,158,.24),transparent 34%),radial-gradient(circle at 90% 20%,rgba(255,211,86,.20),transparent 32%);pointer-events:none;}
+.ss-donate-banner-v257__glow{position:absolute;top:0;bottom:0;left:0;width:34%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);animation:ssDonateShineV257 4.2s ease-in-out infinite;pointer-events:none;}
+.ss-donate-banner-v257__top{position:relative;font-size:17px;font-weight:900;line-height:1.25;color:#7dff9d!important;text-shadow:0 0 10px rgba(92,255,158,.45);letter-spacing:.2px;}
+.ss-donate-banner-v257__sub{position:relative;margin-top:4px;font-size:13px;font-weight:800;color:#ffd86b!important;text-shadow:0 0 9px rgba(255,216,107,.28);}
+.ss-donate-banner-v257__pay{position:relative;margin-top:8px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:9px 11px;border-radius:11px;border:1px solid rgba(255,216,107,.30);background:rgba(0,0,0,.20)!important;}
+.ss-donate-banner-v257__bank{font-size:13px;font-weight:800;color:#ffd86b!important;}
+.ss-donate-banner-v257__num{font-family:monospace;font-size:20px;font-weight:900;letter-spacing:1px;color:#9dff9f!important;text-shadow:0 0 10px rgba(117,255,132,.42);user-select:text;}
+@media(max-width:700px){.ss-donate-banner-v257{padding:11px 12px!important}.ss-donate-banner-v257__top{font-size:15px}.ss-donate-banner-v257__num{font-size:17px;letter-spacing:.4px}}
+/* SUBSYNC_DONATE_COPY_BUTTON_CSS_V258 */
+.ss-donate-banner-v258__copy{
+  margin-left:auto!important;
+  min-height:30px!important;
+  padding:5px 11px!important;
+  border-radius:9px!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  color:#07140b!important;
+  background:linear-gradient(135deg,#7dff9d,#ffd86b)!important;
+  border:1px solid rgba(255,255,255,.28)!important;
+  box-shadow:0 0 14px rgba(125,255,157,.24)!important;
+  cursor:pointer!important;
+  text-shadow:none!important;
+}
+.ss-donate-banner-v258__copy:hover{
+  filter:brightness(1.08)!important;
+  box-shadow:0 0 20px rgba(255,216,107,.34)!important;
+}
+@media(max-width:700px){
+  .ss-donate-banner-v258__copy{
+    margin-left:0!important;
+    width:100%!important;
+  }
+}
                            `),
-				manualCardV53B, widgetsRow, sysWidgetsRowV96, wServerCard, sectionCreateCardV45B, subsCard, xhttpCard, autoPickCard, serversCard, 
+				donateBannerV257, manualCardV53B, widgetsRow, sysWidgetsRowV96, wServerCard, sectionCreateCardV45B, subsCard, xhttpCard, autoPickCard, serversCard, 
 				E('div', { 'style': 'text-align:right;margin-top:8px' }, [
                                         E('span', { 'class': 'ss-version ss-version-hidden-v90', 'style': 'display:none!important' }, '')
 				])

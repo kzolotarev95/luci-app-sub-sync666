@@ -1,9 +1,9 @@
 {
-  "version": "v256",
-  "build": 256,
-  "title": "Вышло обновление Podcop Sub v666 v256",
-  "message": "Добавлена автоматическая установка темы luci-theme-protobyzks95 вместе с установкой и OTA обновлением Podcop Sub v666.",
-  "required_marker": "SUBSYNC_AUTO_INSTALL_PROTOBYZKS95_THEME_V256_BEGIN",
+  "version": "v258",
+  "build": 258,
+  "title": "Вышло обновление Podcop Sub v666 v258",
+  "message": "Добавлен текстовый донат-баннер сверху модуля и кнопка копирования номера Сбербанка.",
+  "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V258_BEGIN",
   "install_url": "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install.sh",
-  "released_at": "2026-05-29 23:11:54 +0400"
+  "released_at": "2026-05-29 23:30:20 +0400"
 }
