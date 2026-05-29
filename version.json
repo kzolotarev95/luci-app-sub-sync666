@@ -1,9 +1,9 @@
 {
-  "version": "v238",
-  "build": 238,
-  "title": "Вышло обновление Podcop Sub v666 v238",
-  "message": "Добавлена карточка Обновление Модуля, проверка version.json, безопасное OTA-обновление из GitHub и скрыт блок донатеров.",
-  "required_marker": "SUBSYNC_PUBLIC_BUILD_V238",
+  "version": "v252",
+  "build": 252,
+  "title": "Вышло обновление Podcop Sub v666 v252",
+  "message": "Финальная карточка обновления: без прыжков, внутри блока помощи, фон под тему, зелёный статус когда модуль актуальный и жёлтый статус при доступном обновлении.",
+  "required_marker": "SUBSYNC_PUBLIC_BUILD_V252",
   "install_url": "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install.sh",
-  "released_at": "2026-05-29 20:32:14 +0400"
+  "released_at": "2026-05-29 21:29:57 +0400"
 }

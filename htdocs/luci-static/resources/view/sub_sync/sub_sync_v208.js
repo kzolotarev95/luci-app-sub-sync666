@@ -1111,7 +1111,7 @@ syncAllBtnStates(sec3);
                             singboxConsoleBodyV81
                     ]);
 
-                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V238 */
+                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V252 */
                     /* SUBSYNC_DONATERS_PUBLIC_CARDS_V134_COMPACT_CARDS */
                     var donatersPublicListV128 = E('div', {
                             'class': 'ss-donaters-grid-v134'
@@ -1181,6 +1181,8 @@ syncAllBtnStates(sec3);
 
 
 
+                    /* SUBSYNC_MODULE_UPDATE_SLOT_VAR_V249 */
+                    var moduleUpdateSlotV249 = E('div', { 'class': 'ss-module-update-slot-v246 ss-module-update-slot-v249' }, []);
                     var manualCardV53B = E('div', {
                             'class': 'ss-manual-flat-v94',
                            /* SUBSYNC_MANUAL_CARD_NO_LEFT_LINE_V62 */
@@ -1203,6 +1205,8 @@ syncAllBtnStates(sec3);
                                                     }, 'kzolotarev95')
                                             ]),
                                             E('h3', { 'style': 'margin:0 0 4px 0' }, [
+                            /* SUBSYNC_MODULE_UPDATE_HELP_SLOT_PLACE_V249 */
+                            moduleUpdateSlotV249,
                                                 'Помощь по ',
                                                 E('a', {
                                                     'class': 'ss-subsync-shine-v115 ss-podcop-sub-v666-shine-v115',
@@ -1240,32 +1244,74 @@ syncAllBtnStates(sec3);
 			]);
 
                     /* SUBSYNC_MODULE_UPDATE_BUTTON_V236 */
-                    /* SUBSYNC_MODULE_UPDATE_UI_CLEAN_V238B */
+                    /* SUBSYNC_MODULE_UPDATE_UI_COLLAPSE_V239 */
+                    var moduleUpdateUserOpenV239 = false;
+                    var moduleUpdateHasUpdateV239 = false;
+
                     var moduleUpdateStatusV236 = E('div', {
+                            'class': 'ss-module-update-status-v239',
                             'style': 'font-size:12px;margin:4px 0 10px 0;color:#888'
                     }, 'Проверка обновлений ещё не запускалась.');
 
                     var moduleUpdateOutV236 = E('pre', {
-                            'style': 'display:none;margin-top:10px;max-height:240px;overflow:auto;white-space:pre-wrap;font-size:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:10px;'
+                            'class': 'ss-module-update-log-v239',
+                            'style': 'display:none;margin-top:10px;max-height:220px;overflow:auto;white-space:pre-wrap;font-size:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:10px;'
                     }, '');
 
+                    function ssModuleUpdateOpenV239(open, manual) {
+                            if (manual)
+                                    moduleUpdateUserOpenV239 = !!open;
+
+                            moduleUpdateDetailsV239.style.display = open ? 'block' : 'none';
+                            moduleUpdateOutV236.style.display = open ? 'block' : 'none';
+                            moduleUpdateToggleBtnV239.textContent = open ? 'Скрыть детали' : 'Детали';
+                    }
+
+                    /* SUBSYNC_MODULE_UPDATE_CARD_COLORS_V251 */
+                    function ssModuleUpdateColorV251(state) {
+                            try {
+                                    if (!moduleUpdateCardV236 || !moduleUpdateCardV236.classList)
+                                            return;
+                                    moduleUpdateCardV236.classList.remove('ss-module-update-ok-v251', 'ss-module-update-warn-v251', 'ss-module-update-neutral-v251');
+                                    if (state === 'ok')
+                                            moduleUpdateCardV236.classList.add('ss-module-update-ok-v251');
+                                    else if (state === 'warn')
+                                            moduleUpdateCardV236.classList.add('ss-module-update-warn-v251');
+                                    else
+                                            moduleUpdateCardV236.classList.add('ss-module-update-neutral-v251');
+                            } catch(e) {}
+                    }
                     function ssModuleUpdateSetV236(text) {
                             var out = text || '';
-                            moduleUpdateOutV236.style.display = 'block';
                             moduleUpdateOutV236.textContent = out;
 
                             if (out.indexOf('UPDATE_AVAILABLE') >= 0) {
+                                    moduleUpdateHasUpdateV239 = true;
                                     moduleUpdateStatusV236.textContent = 'Вышло обновление. Можно нажать «Обновление Модуля».';
                                     moduleUpdateStatusV236.style.color = '#f3d66f';
+                                    ssModuleUpdateColorV251('warn');
+                                    moduleUpdateRunBtnV236.style.display = '';
+                                    ssModuleUpdateOpenV239(true, false);
                             } else if (out.indexOf('UP_TO_DATE') >= 0) {
+                                    moduleUpdateHasUpdateV239 = false;
                                     moduleUpdateStatusV236.textContent = 'Модуль уже актуальный.';
                                     moduleUpdateStatusV236.style.color = '#7bd88f';
+                                    ssModuleUpdateColorV251('ok');
+                                    moduleUpdateRunBtnV236.style.display = 'none';
+                                    if (!moduleUpdateUserOpenV239)
+                                            ssModuleUpdateOpenV239(false, false);
                             } else if (out.indexOf('NO_REMOTE_VERSION') >= 0) {
-                                    moduleUpdateStatusV236.textContent = 'GitHub version.json ещё не опубликован. После push проверка заработает.';
+                                    moduleUpdateHasUpdateV239 = false;
+                                    moduleUpdateStatusV236.textContent = 'GitHub version.json ещё не опубликован.';
                                     moduleUpdateStatusV236.style.color = '#aaa';
+                                    moduleUpdateRunBtnV236.style.display = 'none';
+                                    if (!moduleUpdateUserOpenV239)
+                                            ssModuleUpdateOpenV239(false, false);
                             } else if (out.indexOf('SAFE_STOP') >= 0 || out.indexOf('ERROR') >= 0) {
                                     moduleUpdateStatusV236.textContent = 'Обновление остановлено защитой. Подробности ниже.';
                                     moduleUpdateStatusV236.style.color = '#ff8a8a';
+                                    moduleUpdateRunBtnV236.style.display = 'none';
+                                    ssModuleUpdateOpenV239(true, false);
                             }
                     }
 
@@ -1276,7 +1322,7 @@ syncAllBtnStates(sec3);
                                     btn.textContent = mode === 'run' ? 'Обновляю...' : 'Проверяю...';
                             }
 
-                            ssModuleUpdateSetV236('Запуск: /usr/bin/sub-sync-module-update ' + mode);
+                            moduleUpdateOutV236.textContent = 'Запуск: /usr/bin/sub-sync-module-update ' + mode;
 
                             fs.exec('/usr/bin/sub-sync-module-update', [ mode ]).then(function(res) {
                                     var out = '';
@@ -1308,11 +1354,20 @@ syncAllBtnStates(sec3);
                                     ev.preventDefault();
                                     ssModuleUpdateRunV236('check', moduleUpdateCheckBtnV236);
                             }
-                    }, 'Проверить обновления');
+                    }, 'Проверить');
+
+                    var moduleUpdateToggleBtnV239 = E('button', {
+                            'class': 'btn cbi-button cbi-button-neutral',
+                            'style': 'margin-left:8px',
+                            'click': function(ev) {
+                                    ev.preventDefault();
+                                    ssModuleUpdateOpenV239(moduleUpdateDetailsV239.style.display === 'none', true);
+                            }
+                    }, 'Детали');
 
                     var moduleUpdateRunBtnV236 = E('button', {
                             'class': 'btn cbi-button cbi-button-apply',
-                            'style': 'margin-left:8px',
+                            'style': 'display:none;margin-top:8px',
                             'click': function(ev) {
                                     ev.preventDefault();
                                     if (!window.confirm('Скачать и установить последнюю публичную версию Podcop Sub v666 из GitHub?'))
@@ -1321,23 +1376,239 @@ syncAllBtnStates(sec3);
                             }
                     }, 'Обновление Модуля');
 
+                    var moduleUpdateDetailsV239 = E('div', {
+                            'class': 'ss-module-update-details-v239',
+                            'style': 'display:none;margin-top:10px'
+                    }, [
+                            moduleUpdateRunBtnV236,
+                            moduleUpdateOutV236
+                    ]);
+
                     var moduleUpdateCardV236 = E('div', {
                             'class': 'ss-card ss-module-update-card-v236'
                     }, [
                             E('div', { 'class': 'ss-card__title' }, 'Обновление Модуля'),
                             moduleUpdateStatusV236,
-                            E('div', {}, [
+                            E('div', { 'class': 'ss-module-update-actions-v239' }, [
                                     moduleUpdateCheckBtnV236,
-                                    moduleUpdateRunBtnV236
+                                    moduleUpdateToggleBtnV239
                             ]),
-                            moduleUpdateOutV236
+                            moduleUpdateDetailsV239
                     ]);
 
                     window.setTimeout(function() {
                             ssModuleUpdateRunV236('check', null);
+                    /* SUBSYNC_MODULE_UPDATE_ONE_BLOCK_ONLY_V247 */
+                    function ssModuleUpdateOneBlockOnlyV247() {
+                            window.setTimeout(function() {
+                                    try {
+                                            if (typeof ssModuleUpdateAttachWidgetV242 !== 'undefined')
+                                                    ssModuleUpdateAttachWidgetV242 = function(){};
+                                            if (typeof ssModuleUpdatePlaceBeforeHelpV242 !== 'undefined')
+                                                    ssModuleUpdatePlaceBeforeHelpV242 = function(){};
+                                            if (typeof ssModuleUpdateCopyHelpStyleV244 !== 'undefined')
+                                                    ssModuleUpdateCopyHelpStyleV244 = function(){};
+                                            if (typeof ssModuleUpdateFitWidgetV241 !== 'undefined')
+                                                    ssModuleUpdateFitWidgetV241 = function(){};
+                                    } catch(e) {}
+
+                                    var slot = document.querySelector('.ss-module-update-slot-v246');
+                                    if (!slot)
+                                            return;
+
+                                    var cards = Array.prototype.slice.call(document.querySelectorAll('.ss-module-update-card-v236'));
+                                    if (!cards.length)
+                                            return;
+
+                                    var keep = null;
+
+                                    for (var i = 0; i < cards.length; i++) {
+                                            if (slot.contains(cards[i])) {
+                                                    keep = cards[i];
+                                                    break;
+                                            }
+                                    }
+
+                                    if (!keep)
+                                            keep = cards[0];
+
+                                    if (keep.parentNode !== slot)
+                                            slot.appendChild(keep);
+
+                                    keep.classList.add('ss-module-update-inside-help-v247');
+
+                                    for (var j = 0; j < cards.length; j++) {
+                                            if (cards[j] !== keep && cards[j].parentNode)
+                                                    cards[j].parentNode.removeChild(cards[j]);
+                                    }
+
+                                    keep.style.setProperty('display', 'block', 'important');
+                                    keep.style.setProperty('max-width', 'none', 'important');
+                                    keep.style.setProperty('width', '100%', 'important');
+                                    keep.style.setProperty('margin', '0', 'important');
+                                    keep.style.setProperty('padding', '0', 'important');
+                                    keep.style.setProperty('background', 'transparent', 'important');
+                                    keep.style.setProperty('border', '0', 'important');
+                                    keep.style.setProperty('box-shadow', 'none', 'important');
+                                    keep.style.setProperty('color', 'inherit', 'important');
+                                    keep.style.setProperty('box-sizing', 'border-box', 'important');
+                                    keep.style.setProperty('overflow', 'visible', 'important');
+                            }, 0);
+                    }
+
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+
+                    /* SUBSYNC_MODULE_UPDATE_HELP_SLOT_FINAL_V246 */
+                    function ssModuleUpdateAttachToHelpSlotV246() {
+                            window.setTimeout(function() {
+                                    var slot = document.querySelector('.ss-module-update-slot-v246');
+                                    if (!slot)
+                                            return;
+
+                                    if (typeof moduleUpdateCardV236 === 'undefined' || !moduleUpdateCardV236)
+                                            return;
+
+                                    moduleUpdateCardV236.classList.add('ss-module-update-inside-help-v246');
+
+                                    if (moduleUpdateCardV236.parentNode !== slot)
+                                            slot.appendChild(moduleUpdateCardV236);
+
+                                    moduleUpdateCardV236.style.setProperty('display', 'block', 'important');
+                                    moduleUpdateCardV236.style.setProperty('max-width', 'none', 'important');
+                                    moduleUpdateCardV236.style.setProperty('width', '100%', 'important');
+                                    moduleUpdateCardV236.style.setProperty('margin', '0', 'important');
+                                    moduleUpdateCardV236.style.setProperty('padding', '0', 'important');
+                                    moduleUpdateCardV236.style.setProperty('background', 'transparent', 'important');
+                                    moduleUpdateCardV236.style.setProperty('border', '0', 'important');
+                                    moduleUpdateCardV236.style.setProperty('box-shadow', 'none', 'important');
+                                    moduleUpdateCardV236.style.setProperty('color', 'inherit', 'important');
+                                    moduleUpdateCardV236.style.setProperty('box-sizing', 'border-box', 'important');
+                                    moduleUpdateCardV236.style.setProperty('overflow', 'visible', 'important');
+                            }, 0);
+                    }
+
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+
+                    /* SUBSYNC_MODULE_UPDATE_STATIC_FIRST_NO_JUMP_V244 */
+                    function ssModuleUpdateCopyHelpStyleV244() {
+                            window.setTimeout(function() {
+                                    var card = document.querySelector('.ss-module-update-card-v236');
+                                    if (!card)
+                                            return;
+
+                                    var h3s = document.querySelectorAll('h3');
+                                    var helpTitle = null;
+
+                                    for (var i = 0; i < h3s.length; i++) {
+                                            if ((h3s[i].textContent || '').indexOf('Помощь по') >= 0) {
+                                                    helpTitle = h3s[i];
+                                                    break;
+                                            }
+                                    }
+
+                                    if (!helpTitle)
+                                            return;
+
+                                    var helpCard = helpTitle;
+                                    while (helpCard && (!helpCard.classList || !helpCard.classList.contains('ss-card')))
+                                            helpCard = helpCard.parentNode;
+
+                                    if (!helpCard || helpCard === card || !window.getComputedStyle)
+                                            return;
+
+                                    var cs = window.getComputedStyle(helpCard);
+                                    [
+                                            'background',
+                                            'background-color',
+                                            'border',
+                                            'border-radius',
+                                            'box-shadow',
+                                            'color',
+                                            'padding'
+                                    ].forEach(function(p) {
+                                            try {
+                                                    card.style.setProperty(p, cs.getPropertyValue(p), 'important');
+                                            } catch(e) {}
+                                    });
+
+                                    card.style.setProperty('max-width', 'none', 'important');
+                                    card.style.setProperty('width', 'auto', 'important');
+                                    card.style.setProperty('margin', '0 0 10px 0', 'important');
+                                    card.style.setProperty('box-sizing', 'border-box', 'important');
+                                    card.style.setProperty('overflow', 'hidden', 'important');
+                            }, 0);
+                    }
+
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+
+
+                    /* SUBSYNC_MODULE_UPDATE_SAFE_WIDGET_ATTACH_V242 */
+                    function ssModuleUpdateAttachWidgetV242() {
+                            window.setTimeout(function() {
+                                    var card = document.querySelector('.ss-module-update-card-v236');
+                                    var row = document.querySelector('.ss-widgets');
+
+                                    if (!card || !row)
+                                            return;
+
+                                    if (card.parentNode !== row)
+                                            row.appendChild(card);
+
+                                    card.classList.add('ss-widget');
+                                    card.classList.add('ss-module-update-widget-v242');
+
+                                    var title = card.querySelector('.ss-card__title');
+                                    if (title) {
+                                            title.classList.remove('ss-card__title');
+                                            title.classList.add('ss-widget__title');
+                                    }
+
+                                    var src = row.querySelector('.ss-widget:not(.ss-module-update-card-v236)');
+                                    if (src && window.getComputedStyle) {
+                                            var cs = window.getComputedStyle(src);
+                                            [
+                                                    'background',
+                                                    'background-color',
+                                                    'border',
+                                                    'border-radius',
+                                                    'box-shadow',
+                                                    'color',
+                                                    'padding',
+                                                    'min-height'
+                                            ].forEach(function(p) {
+                                                    try {
+                                                            card.style.setProperty(p, cs.getPropertyValue(p), 'important');
+                                                    } catch(e) {}
+                                            });
+                                    }
+
+                                    card.style.setProperty('max-width', 'none', 'important');
+                                    card.style.setProperty('width', 'auto', 'important');
+                                    card.style.setProperty('margin', '0', 'important');
+                                    card.style.setProperty('box-sizing', 'border-box', 'important');
+                                    card.style.setProperty('overflow', 'hidden', 'important');
+                            }, 250);
+                    }
+
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+                    /* SUBSYNC_MODULE_UPDATE_DISABLED_OLD_MOVER_TIMER_V249 */
+
                     }, 1200);
 
 			var widgetsRow = E('div', { 'class': 'ss-widgets' }, [wStatus, wConnection, wSingbox]);
+                    /* SUBSYNC_MODULE_UPDATE_SYNC_ATTACH_NO_JUMP_V249 */
+                    if (moduleUpdateSlotV249 && moduleUpdateCardV236) {
+                            moduleUpdateCardV236.classList.add('ss-module-update-inside-help-v249');
+                            moduleUpdateSlotV249.appendChild(moduleUpdateCardV236);
+                    }
                     /* SUBSYNC_SYSTEM_WIDGETS_V96 */
                     var sysMemValueV96 = E('div', { 'class': 'ss-widget__value' }, 'загрузка...');
                     var sysStorageValueV96 = E('div', { 'class': 'ss-widget__value' }, 'загрузка...');
@@ -3096,6 +3367,120 @@ if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrat
                            E("style", {}, `
 /* SUBSYNC_WIDGET_CENTER_IN_RENDER_V216 */
 /* SUBSYNC_MODULE_UPDATE_CARD_STYLE_V237 */
+/* SUBSYNC_MODULE_UPDATE_COLLAPSE_STYLE_V239 */
+/* SUBSYNC_MODULE_UPDATE_COMPACT_THEME_AUTO_V240 */
+.ss-module-update-card-v236{
+  max-width:440px!important;
+  width:auto!important;
+  min-width:0!important;
+  padding:10px 12px!important;
+  margin:8px 0 10px 0!important;
+  border-radius:12px!important;
+  background:var(--background-color-medium,var(--background-color-high,transparent))!important;
+  color:inherit!important;
+  border:1px solid color-mix(in srgb,currentColor 16%,transparent)!important;
+  box-shadow:none!important;
+}
+.ss-module-update-card-v236:before{
+  width:3px!important;
+  background:color-mix(in srgb,currentColor 42%,transparent)!important;
+  opacity:.45!important;
+}
+.ss-module-update-card-v236 .ss-card__title{
+  margin:0 0 6px 0!important;
+  gap:6px!important;
+  font-size:13px!important;
+  line-height:1.2!important;
+  font-weight:850!important;
+  color:inherit!important;
+  -webkit-text-fill-color:currentColor!important;
+  text-shadow:none!important;
+}
+.ss-module-update-card-v236 .ss-card__title:before{
+  content:"↻"!important;
+  width:19px!important;
+  height:19px!important;
+  min-width:19px!important;
+  border-radius:7px!important;
+  background:color-mix(in srgb,currentColor 8%,transparent)!important;
+  border:1px solid color-mix(in srgb,currentColor 18%,transparent)!important;
+  color:inherit!important;
+  opacity:.82!important;
+}
+.ss-module-update-card-v236 .ss-card__title:after{
+  content:""!important;
+  display:none!important;
+}
+.ss-module-update-card-v236 .ss-module-update-status-v239{
+  margin:0 0 8px 0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  font-size:12px!important;
+  line-height:1.25!important;
+}
+.ss-module-update-card-v236 .ss-module-update-actions-v239{
+  display:flex!important;
+  gap:6px!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  margin:0!important;
+}
+.ss-module-update-card-v236 .cbi-button{
+  min-height:28px!important;
+  padding:4px 9px!important;
+  margin:0!important;
+  border-radius:8px!important;
+  font-size:11px!important;
+  font-weight:750!important;
+  line-height:1.15!important;
+  background:color-mix(in srgb,currentColor 7%,transparent)!important;
+  color:inherit!important;
+  border:1px solid color-mix(in srgb,currentColor 18%,transparent)!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+.ss-module-update-card-v236 .cbi-button:hover{
+  transform:none!important;
+  background:color-mix(in srgb,currentColor 11%,transparent)!important;
+  box-shadow:none!important;
+}
+.ss-module-update-card-v236 .cbi-button-apply{
+  background:color-mix(in srgb,#35a852 14%,transparent)!important;
+  border-color:color-mix(in srgb,#35a852 30%,transparent)!important;
+  color:inherit!important;
+}
+.ss-module-update-card-v236 .ss-module-update-details-v239{
+  margin-top:8px!important;
+  padding-top:8px!important;
+  border-top:1px solid color-mix(in srgb,currentColor 12%,transparent)!important;
+}
+.ss-module-update-card-v236 .ss-module-update-log-v239,
+.ss-module-update-card-v236 pre{
+  margin-top:8px!important;
+  max-height:180px!important;
+  font-size:11px!important;
+  line-height:1.35!important;
+  color:inherit!important;
+  background:color-mix(in srgb,currentColor 5%,transparent)!important;
+  border:1px solid color-mix(in srgb,currentColor 14%,transparent)!important;
+  border-radius:9px!important;
+  padding:8px!important;
+}
+@supports not (background:color-mix(in srgb,black 10%,transparent)){
+  .ss-module-update-card-v236{background:transparent!important;border:1px solid rgba(127,127,127,.25)!important;}
+  .ss-module-update-card-v236 .cbi-button{background:transparent!important;border:1px solid rgba(127,127,127,.25)!important;}
+  .ss-module-update-card-v236 pre{background:transparent!important;border:1px solid rgba(127,127,127,.20)!important;}
+}
+@media(max-width:800px){
+  .ss-module-update-card-v236{max-width:none!important;width:100%!important;}
+  .ss-module-update-card-v236 .ss-module-update-actions-v239{flex-direction:row!important;align-items:center!important;}
+  .ss-module-update-card-v236 .ss-module-update-actions-v239 .cbi-button{width:auto!important;margin-left:0!important;}
+}
+.ss-module-update-card-v236 .ss-module-update-actions-v239{display:flex!important;gap:8px!important;flex-wrap:wrap!important;align-items:center!important;margin:0!important;}
+.ss-module-update-card-v236 .ss-module-update-details-v239{border-top:1px solid rgba(255,255,255,.08)!important;padding-top:10px!important;margin-top:10px!important;}
+.ss-module-update-card-v236 .ss-module-update-log-v239{margin-top:10px!important;}
+@media(max-width:800px){.ss-module-update-card-v236 .ss-module-update-actions-v239{flex-direction:column!important;align-items:stretch!important}.ss-module-update-card-v236 .ss-module-update-actions-v239 .cbi-button{width:100%!important;margin-left:0!important}}
 .ss-module-update-card-v236{
   position:relative!important;
   overflow:hidden!important;
@@ -4131,8 +4516,319 @@ if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrat
 /* SUBSYNC_REMOVE_DONATERS_BLOCK_SAFE_V235 */
 .ss-card.ss-donaters-card-v134{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;}
 .ss-card.ss-donaters-card-v134 *{display:none!important;visibility:hidden!important;}
+/* SUBSYNC_MODULE_UPDATE_NATIVE_WIDGET_CSS_V242 */
+.ss-widgets>.ss-module-update-card-v236,
+.ss-module-update-card-v236.ss-module-update-widget-v242{
+  max-width:none!important;
+  width:auto!important;
+  min-width:0!important;
+  margin:0!important;
+  align-self:stretch!important;
+  box-sizing:border-box!important;
+  color:inherit!important;
+}
+.ss-module-update-card-v236:before,
+.ss-module-update-card-v236 .ss-card__title:before,
+.ss-module-update-card-v236 .ss-card__title:after{display:none!important;}
+.ss-module-update-card-v236 .ss-widget__title{
+  margin:0 0 6px 0!important;
+  padding:0!important;
+  color:inherit!important;
+  -webkit-text-fill-color:currentColor!important;
+  text-shadow:none!important;
+}
+.ss-module-update-card-v236 .ss-module-update-status-v239{
+  margin:0 0 7px 0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  font-size:12px!important;
+  line-height:1.25!important;
+}
+.ss-module-update-card-v236 .ss-module-update-actions-v239{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:6px!important;
+  align-items:center!important;
+  margin:0!important;
+}
+.ss-module-update-card-v236 .cbi-button{
+  min-height:26px!important;
+  padding:4px 8px!important;
+  margin:0!important;
+  border-radius:7px!important;
+  font-size:11px!important;
+  line-height:1.1!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+.ss-module-update-card-v236 .ss-module-update-details-v239{
+  margin-top:7px!important;
+  padding-top:7px!important;
+  border-top:1px solid rgba(127,127,127,.20)!important;
+}
+.ss-module-update-card-v236 .ss-module-update-log-v239,
+.ss-module-update-card-v236 pre{
+  margin-top:7px!important;
+  max-height:150px!important;
+  font-size:11px!important;
+  line-height:1.3!important;
+  color:inherit!important;
+  background:transparent!important;
+  border:1px solid rgba(127,127,127,.22)!important;
+  border-radius:8px!important;
+  padding:7px!important;
+}
+/* SUBSYNC_MODULE_UPDATE_BEFORE_HELP_CSS_V242 */
+.ss-module-update-card-v236.ss-module-update-before-help-v242{
+  max-width:none!important;
+  width:auto!important;
+  min-width:0!important;
+  margin:0 0 10px 0!important;
+  box-sizing:border-box!important;
+  color:inherit!important;
+}
+.ss-module-update-card-v236:before,
+.ss-module-update-card-v236 .ss-card__title:before,
+.ss-module-update-card-v236 .ss-card__title:after{display:none!important;}
+.ss-module-update-card-v236 .ss-card__title{
+  margin:0 0 6px 0!important;
+  padding:0!important;
+  color:inherit!important;
+  -webkit-text-fill-color:currentColor!important;
+  text-shadow:none!important;
+  font-size:14px!important;
+  font-weight:900!important;
+}
+.ss-module-update-card-v236 .ss-module-update-status-v239{
+  margin:0 0 7px 0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  font-size:12px!important;
+  line-height:1.25!important;
+}
+.ss-module-update-card-v236 .ss-module-update-actions-v239{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:6px!important;
+  align-items:center!important;
+  margin:0!important;
+}
+.ss-module-update-card-v236 .cbi-button{
+  min-height:27px!important;
+  padding:4px 9px!important;
+  margin:0!important;
+  border-radius:7px!important;
+  font-size:11px!important;
+  line-height:1.1!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+.ss-module-update-card-v236 .ss-module-update-details-v239{
+  margin-top:7px!important;
+  padding-top:7px!important;
+  border-top:1px solid rgba(127,127,127,.20)!important;
+}
+.ss-module-update-card-v236 .ss-module-update-log-v239,
+.ss-module-update-card-v236 pre{
+  margin-top:7px!important;
+  max-height:150px!important;
+  font-size:11px!important;
+  line-height:1.3!important;
+  color:inherit!important;
+  background:transparent!important;
+  border:1px solid rgba(127,127,127,.22)!important;
+  border-radius:8px!important;
+  padding:7px!important;
+}
+/* SUBSYNC_MODULE_UPDATE_FIRST_BEFORE_HELP_V243 */
+.ss-module-update-card-v236.ss-module-update-before-help-v242{
+  max-width:none!important;
+  width:auto!important;
+  margin:0 0 10px 0!important;
+  box-sizing:border-box!important;
+  color:inherit!important;
+}
+/* SUBSYNC_MODULE_UPDATE_STATIC_FIRST_CSS_V244 */
+.ss-module-update-card-v236{
+  max-width:none!important;
+  width:auto!important;
+  min-width:0!important;
+  margin:0 0 10px 0!important;
+  box-sizing:border-box!important;
+  color:inherit!important;
+}
+.ss-module-update-card-v236:before,
+.ss-module-update-card-v236 .ss-card__title:before,
+.ss-module-update-card-v236 .ss-card__title:after{display:none!important;}
+/* SUBSYNC_MODULE_UPDATE_HELP_SLOT_CSS_V246 */
+.ss-module-update-slot-v246{
+  display:block!important;
+  width:100%!important;
+  margin:0 0 12px 0!important;
+  padding:0 0 12px 0!important;
+  border-bottom:1px solid rgba(127,127,127,.20)!important;
+  box-sizing:border-box!important;
+}
+.ss-module-update-slot-v246>.ss-module-update-card-v236{
+  display:block!important;
+  max-width:none!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  color:inherit!important;
+  overflow:visible!important;
+}
+.ss-module-update-slot-v246>.ss-module-update-card-v236:before,
+.ss-module-update-slot-v246>.ss-module-update-card-v236 .ss-card__title:before,
+.ss-module-update-slot-v246>.ss-module-update-card-v236 .ss-card__title:after{display:none!important;}
+.ss-module-update-slot-v246 .ss-card__title{
+  margin:0 0 5px 0!important;
+  padding:0!important;
+  color:inherit!important;
+  -webkit-text-fill-color:currentColor!important;
+  background:none!important;
+  text-shadow:none!important;
+  font-size:14px!important;
+  font-weight:900!important;
+}
+.ss-module-update-slot-v246 .ss-module-update-status-v239{
+  margin:0 0 7px 0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  font-size:12px!important;
+  line-height:1.25!important;
+}
+.ss-module-update-slot-v246 .ss-module-update-actions-v239{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:6px!important;
+  align-items:center!important;
+  margin:0!important;
+}
+.ss-module-update-slot-v246 .cbi-button{
+  min-height:27px!important;
+  padding:4px 9px!important;
+  margin:0!important;
+  border-radius:7px!important;
+  font-size:11px!important;
+  line-height:1.1!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+.ss-module-update-slot-v246 .ss-module-update-details-v239{
+  margin-top:7px!important;
+  padding-top:7px!important;
+  border-top:1px solid rgba(127,127,127,.18)!important;
+}
+.ss-module-update-slot-v246 pre{
+  margin-top:7px!important;
+  max-height:150px!important;
+  font-size:11px!important;
+  line-height:1.3!important;
+  color:inherit!important;
+  background:transparent!important;
+  border:1px solid rgba(127,127,127,.22)!important;
+  border-radius:8px!important;
+  padding:7px!important;
+}
+/* SUBSYNC_MODULE_UPDATE_ONE_BLOCK_ONLY_CSS_V247 */
+.ss-module-update-slot-v246{
+  display:block!important;
+  width:100%!important;
+  margin:0 0 12px 0!important;
+  padding:0 0 12px 0!important;
+  border-bottom:1px solid rgba(127,127,127,.20)!important;
+  box-sizing:border-box!important;
+}
+.ss-module-update-slot-v246>.ss-module-update-card-v236{
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  color:inherit!important;
+}
+.ss-module-update-slot-v246>.ss-module-update-card-v236:before,
+.ss-module-update-slot-v246>.ss-module-update-card-v236 .ss-card__title:before,
+.ss-module-update-slot-v246>.ss-module-update-card-v236 .ss-card__title:after{display:none!important;}
+.ss-module-update-slot-v246 .ss-card__title{
+  margin:0 0 5px 0!important;
+  padding:0!important;
+  color:inherit!important;
+  -webkit-text-fill-color:currentColor!important;
+  background:none!important;
+  text-shadow:none!important;
+  font-size:14px!important;
+  font-weight:900!important;
+}
+.ss-module-update-slot-v246 .ss-module-update-status-v239{margin:0 0 7px 0!important;padding:0!important;background:transparent!important;border:0!important;font-size:12px!important;line-height:1.25!important;}
+.ss-module-update-slot-v246 .ss-module-update-actions-v239{display:flex!important;flex-wrap:wrap!important;gap:6px!important;align-items:center!important;margin:0!important;}
+.ss-module-update-slot-v246 .cbi-button{min-height:27px!important;padding:4px 9px!important;margin:0!important;border-radius:7px!important;font-size:11px!important;line-height:1.1!important;box-shadow:none!important;text-shadow:none!important;}
+.ss-module-update-slot-v246 .ss-module-update-details-v239{margin-top:7px!important;padding-top:7px!important;border-top:1px solid rgba(127,127,127,.18)!important;}
+.ss-module-update-slot-v246 pre{margin-top:7px!important;max-height:150px!important;font-size:11px!important;line-height:1.3!important;color:inherit!important;background:transparent!important;border:1px solid rgba(127,127,127,.22)!important;border-radius:8px!important;padding:7px!important;}
+/* SUBSYNC_MODULE_UPDATE_NO_JUMP_REAL_CSS_V249 */
+.ss-module-update-slot-v249{display:block!important;width:100%!important;margin:0 0 12px 0!important;padding:0 0 12px 0!important;border-bottom:1px solid rgba(127,127,127,.20)!important;box-sizing:border-box!important;}
+.ss-module-update-slot-v249>.ss-module-update-card-v236{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:inherit!important;overflow:visible!important;}
+.ss-module-update-slot-v249>.ss-module-update-card-v236:before,.ss-module-update-slot-v249>.ss-module-update-card-v236 .ss-card__title:before,.ss-module-update-slot-v249>.ss-module-update-card-v236 .ss-card__title:after{display:none!important;}
+.ss-module-update-slot-v249 .ss-card__title{margin:0 0 5px 0!important;padding:0!important;color:inherit!important;-webkit-text-fill-color:currentColor!important;background:none!important;text-shadow:none!important;font-size:14px!important;font-weight:900!important;}
+.ss-module-update-slot-v249 .ss-module-update-status-v239{margin:0 0 7px 0!important;padding:0!important;background:transparent!important;border:0!important;font-size:12px!important;line-height:1.25!important;}
+.ss-module-update-slot-v249 .ss-module-update-actions-v239{display:flex!important;flex-wrap:wrap!important;gap:6px!important;align-items:center!important;margin:0!important;}
+.ss-module-update-slot-v249 .cbi-button{min-height:27px!important;padding:4px 9px!important;margin:0!important;border-radius:7px!important;font-size:11px!important;line-height:1.1!important;box-shadow:none!important;text-shadow:none!important;}
+.ss-module-update-slot-v249 .ss-module-update-details-v239{margin-top:7px!important;padding-top:7px!important;border-top:1px solid rgba(127,127,127,.18)!important;}
+.ss-module-update-slot-v249 pre{margin-top:7px!important;max-height:150px!important;font-size:11px!important;line-height:1.3!important;color:inherit!important;background:transparent!important;border:1px solid rgba(127,127,127,.22)!important;border-radius:8px!important;padding:7px!important;}
+/* SUBSYNC_MODULE_UPDATE_CARD_COLORS_CSS_V251 */
+.ss-module-update-card-v236.ss-module-update-ok-v251{background:rgba(76,175,80,.12)!important;border:1px solid rgba(76,175,80,.46)!important;border-radius:10px!important;box-shadow:0 0 0 1px rgba(76,175,80,.08) inset!important;}
+.ss-module-update-card-v236.ss-module-update-warn-v251{background:rgba(255,193,7,.13)!important;border:1px solid rgba(255,193,7,.50)!important;border-radius:10px!important;box-shadow:0 0 0 1px rgba(255,193,7,.10) inset!important;}
+.ss-module-update-card-v236.ss-module-update-ok-v251 .ss-module-update-status-v239{color:#4caf50!important;font-weight:800!important;}
+.ss-module-update-card-v236.ss-module-update-warn-v251 .ss-module-update-status-v239{color:#d8a300!important;font-weight:800!important;}
+/* SUBSYNC_MODULE_UPDATE_THEME_BG_TEXT_ONLY_V252 */
+.ss-module-update-card-v236.ss-module-update-ok-v251,
+.ss-module-update-card-v236.ss-module-update-warn-v251,
+.ss-module-update-card-v236.ss-module-update-neutral-v251{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  color:inherit!important;
+}
+.ss-module-update-slot-v249>.ss-module-update-card-v236.ss-module-update-ok-v251,
+.ss-module-update-slot-v249>.ss-module-update-card-v236.ss-module-update-warn-v251,
+.ss-module-update-slot-v249>.ss-module-update-card-v236.ss-module-update-neutral-v251,
+.ss-module-update-slot-v248>.ss-module-update-card-v236.ss-module-update-ok-v251,
+.ss-module-update-slot-v248>.ss-module-update-card-v236.ss-module-update-warn-v251,
+.ss-module-update-slot-v248>.ss-module-update-card-v236.ss-module-update-neutral-v251,
+.ss-module-update-slot-v246>.ss-module-update-card-v236.ss-module-update-ok-v251,
+.ss-module-update-slot-v246>.ss-module-update-card-v236.ss-module-update-warn-v251,
+.ss-module-update-slot-v246>.ss-module-update-card-v236.ss-module-update-neutral-v251{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  color:inherit!important;
+}
+.ss-module-update-card-v236.ss-module-update-ok-v251 .ss-module-update-status-v239{
+  color:#4caf50!important;
+  font-weight:800!important;
+}
+.ss-module-update-card-v236.ss-module-update-warn-v251 .ss-module-update-status-v239{
+  color:#d8a300!important;
+  font-weight:800!important;
+}
+.ss-module-update-card-v236.ss-module-update-neutral-v251 .ss-module-update-status-v239{
+  color:inherit!important;
+  font-weight:700!important;
+}
                            `),
-				manualCardV53B, moduleUpdateCardV236, widgetsRow, sysWidgetsRowV96, wServerCard, sectionCreateCardV45B, subsCard, xhttpCard, autoPickCard, serversCard, 
+				manualCardV53B, widgetsRow, sysWidgetsRowV96, wServerCard, sectionCreateCardV45B, subsCard, xhttpCard, autoPickCard, serversCard, 
 				E('div', { 'style': 'text-align:right;margin-top:8px' }, [
                                         E('span', { 'class': 'ss-version ss-version-hidden-v90', 'style': 'display:none!important' }, '')
 				])
