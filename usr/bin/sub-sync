@@ -1,15 +1,18 @@
 #!/bin/sh
-# SUBSYNC_MANUAL_HY2_VISIBLE_WRAPPER_V164
-BASE="/usr/bin/sub-sync.v164manualbase"
-HELPER="/usr/bin/sub-sync-manual-link"
-
-"$BASE" "$@"
-rc="$?"
+# SUBSYNC_HAPP_JSON_HY2_WRAPPER_V177
+BASE="/usr/bin/sub-sync.before-happ-json-hy2-v177"
+HELPER="/usr/bin/sub-sync-happ-json-hy2-import"
 
 case "${1:-}" in
   sync|update|refresh)
-    [ -x "$HELPER" ] && "$HELPER" merge >/dev/null 2>&1 || true
-    ;;
+    "$BASE" "$@"
+    rc="$?"
+    if [ "$rc" = "0" ] && [ -x "$HELPER" ]; then
+      "$HELPER" || true
+    fi
+    exit "$rc"
+  ;;
+  *)
+    exec "$BASE" "$@"
+  ;;
 esac
-
-exit "$rc"

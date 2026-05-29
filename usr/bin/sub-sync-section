@@ -1,0 +1,120 @@
+#!/bin/sh
+# SUBSYNC_SECTION_CREATE_V46
+
+CONF="/etc/sub-sync/autoadd.conf"
+
+usage() {
+    echo "Usage:"
+    echo "  sub-sync-section create <section_name>"
+    echo "  sub-sync-section target"
+    echo "  sub-sync-section list"
+    echo "  sub-sync-section fix"
+    exit 1
+}
+
+valid_name() {
+    case "$1" in
+        ""|*[!A-Za-z0-9_]*)
+            return 1
+            ;;
+    esac
+    return 0
+}
+
+set_target() {
+    SEC="$1"
+    mkdir -p /etc/sub-sync
+    touch "$CONF"
+
+    if grep -q '^TARGET_SECTION=' "$CONF" 2>/dev/null; then
+        sed -i "s/^TARGET_SECTION=.*/TARGET_SECTION=${SEC}/" "$CONF"
+    else
+        echo "TARGET_SECTION=${SEC}" >> "$CONF"
+    fi
+}
+
+set_urltest_section() {
+    SEC="$1"
+
+    uci -q set "podkop.${SEC}=section"
+    uci -q set "podkop.${SEC}.enabled=0"
+    uci -q set "podkop.${SEC}.connection_type=proxy"
+    uci -q set "podkop.${SEC}.proxy_config_type=urltest"
+    uci -q set "podkop.${SEC}.urltest_check_interval=3m"
+    uci -q set "podkop.${SEC}.urltest_tolerance=50"
+    uci -q set "podkop.${SEC}.urltest_testing_url=https://www.gstatic.com/generate_204"
+    uci -q set "podkop.${SEC}.enable_udp_over_tcp=0"
+    uci -q set "podkop.${SEC}.user_domain_list_type=disabled"
+    uci -q set "podkop.${SEC}.user_subnet_list_type=disabled"
+    uci -q set "podkop.${SEC}.mixed_proxy_enabled=0"
+    uci -q set "podkop.${SEC}.resolve_real_ip_for_routing=0"
+}
+
+fix_bad_sections() {
+    CHANGED=0
+
+    for S in $(uci show podkop 2>/dev/null | sed -n "s/^podkop\.\([^.=]*\)\.connection_type='urltest'.*/\1/p;s/^podkop\.\([^.=]*\)\.connection_type=urltest.*/\1/p" | sort -u); do
+        uci -q set "podkop.${S}.connection_type=proxy"
+        uci -q set "podkop.${S}.proxy_config_type=urltest"
+        uci -q set "podkop.${S}.urltest_check_interval=3m"
+        uci -q set "podkop.${S}.urltest_tolerance=50"
+        uci -q set "podkop.${S}.urltest_testing_url=https://www.gstatic.com/generate_204"
+        uci -q set "podkop.${S}.enable_udp_over_tcp=0"
+        uci -q set "podkop.${S}.user_domain_list_type=disabled"
+        uci -q set "podkop.${S}.user_subnet_list_type=disabled"
+        uci -q set "podkop.${S}.mixed_proxy_enabled=0"
+        uci -q set "podkop.${S}.resolve_real_ip_for_routing=0"
+
+        A="$(uci -q get "podkop.${S}.urltest_proxy_links" 2>/dev/null || true)"
+        B="$(uci -q get "podkop.${S}.selector_proxy_links" 2>/dev/null || true)"
+        C="$(uci -q get "podkop.${S}.proxy_string" 2>/dev/null || true)"
+
+        if [ -z "$A$B$C" ]; then
+            uci -q set "podkop.${S}.enabled=0"
+        fi
+
+        echo "FIXED: $S"
+        CHANGED=1
+    done
+
+    [ "$CHANGED" = "1" ] && uci commit podkop || true
+}
+
+cmd="${1:-}"
+shift 2>/dev/null || true
+
+case "$cmd" in
+    create)
+        SEC="${1:-}"
+
+        valid_name "$SEC" || {
+            echo "ERROR: bad section name. Use only A-Z a-z 0-9 _"
+            exit 1
+        }
+
+        set_urltest_section "$SEC"
+        uci commit podkop
+        set_target "$SEC"
+
+        logger -t sub-sync "section create v46: ${SEC}"
+        echo "OK: URLTest section created disabled"
+        echo "TARGET: $SEC"
+        ;;
+
+    target)
+        sed -n 's/^TARGET_SECTION=//p' "$CONF" 2>/dev/null | tail -n 1
+        ;;
+
+    list)
+        uci show podkop 2>/dev/null | sed -n 's/^podkop\.\([^.=]*\)=section.*/\1/p'
+        ;;
+
+    fix)
+        fix_bad_sections
+        echo "OK: bad urltest connection_type sections fixed"
+        ;;
+
+    *)
+        usage
+        ;;
+esac

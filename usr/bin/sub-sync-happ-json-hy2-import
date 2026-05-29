@@ -1,0 +1,103 @@
+#!/bin/sh
+# SUBSYNC_HAPP_JSON_HY2_IMPORT_V177
+# SUBSYNC_HAPP_JSON_HY2_STRIP_FRAGMENT_V178B
+set -u
+
+BASE="/usr/bin/sub-sync.before-happ-json-hy2-v177"
+DATA="/etc/sub-sync"
+LINKS="$DATA/links.txt"
+SERVERS="$DATA/servers.json"
+TMP="/tmp/subsync-happ-json-hy2-v178b.$$"
+
+mkdir -p "$TMP" "$DATA"
+touch "$LINKS"
+[ -s "$SERVERS" ] || echo '[]' > "$SERVERS"
+
+mask_link() {
+  sed -E 's#(hy2|hysteria2)://[^@[:space:]]+@#\1://***@#g'
+}
+
+json_ok() {
+  jq empty "$1" >/dev/null 2>&1
+}
+
+echo "Happ JSON HY2 v178b: scan subscriptions"
+
+"$BASE" list-subs 2>/dev/null | jq -r '.[].url' 2>/dev/null | while IFS= read -r url; do
+  [ -n "$url" ] || continue
+
+  raw="$TMP/sub.raw"
+  cand="$TMP/candidates.tsv"
+
+  wget -qO "$raw" -U "Happ/1.0" "$url" 2>/dev/null || continue
+  json_ok "$raw" || continue
+
+  jq -r '
+    (if type == "array" then .[] else . end) as $cfg
+    | ($cfg.outbounds // [])[]
+    | select(((.protocol // "") | ascii_downcase) == "hysteria")
+    | select(((.settings.version // .streamSettings.hysteriaSettings.version // "") | tostring) == "2")
+    | [
+        ($cfg.remarks // .tag // "Hysteria2"),
+        (.settings.address // .settings.server // .server // ""),
+        ((.settings.port // .settings.server_port // .server_port // 443) | tostring),
+        (.streamSettings.hysteriaSettings.auth // .settings.auth // .password // ""),
+        (.streamSettings.tlsSettings.serverName // .streamSettings.tlsSettings.server_name // .settings.sni // .settings.serverName // .settings.address // "")
+      ]
+    | @tsv
+  ' "$raw" > "$cand" 2>/dev/null || continue
+
+  [ -s "$cand" ] || continue
+
+  nd="$TMP/new.ndjson"
+  : > "$nd"
+
+  idx="$(jq 'length' "$SERVERS" 2>/dev/null || echo 0)"
+  added=0
+
+  while IFS="$(printf '\t')" read -r name addr port auth sni; do
+    [ -n "$addr" ] || continue
+    [ -n "$port" ] || continue
+    [ -n "$auth" ] || continue
+    [ -n "$sni" ] || sni="$addr"
+
+    link="hysteria2://${auth}@${addr}:${port}/?sni=${sni}"
+
+    if grep -Fxq "$link" "$LINKS" 2>/dev/null; then
+      continue
+    fi
+
+    printf '\n%s\n' "$link" >> "$LINKS"
+
+    idx=$((idx + 1))
+    jq -n \
+      --argjson id "$idx" \
+      --arg name "$name" \
+      --arg addr "$addr" \
+      --arg port "$port" \
+      --arg link "$link" \
+      '{id:$id, proto:"hysteria2", name:$name, addr:$addr, port:$port, type:"quic", security:"tls", link:$link}' \
+      >> "$nd"
+
+    added=$((added + 1))
+    printf 'Happ JSON HY2 v178b: added %s %s:%s\n' "$name" "$addr" "$port"
+  done < "$cand"
+
+  if [ "$added" -gt 0 ]; then
+    jq -s '.' "$nd" > "$TMP/new.json"
+    jq -s '.[0] + .[1]' "$SERVERS" "$TMP/new.json" > "$TMP/servers.json"
+    jq empty "$TMP/servers.json"
+    cp -f "$TMP/servers.json" "$SERVERS"
+    logger -t sub-sync "Happ JSON HY2 v178b: added ${added} hysteria2 server(s)"
+  fi
+done
+
+rm -rf "$TMP"
+
+echo
+echo "=== HY2 in servers.json ==="
+grep -RsnEi 'hysteria2|hy2://' "$SERVERS" 2>/dev/null | mask_link || echo "NO HY2 in servers.json"
+
+echo
+echo "=== bad fragment check ==="
+grep -RsnE 'hysteria2://.*#|hy2://.*#' "$DATA" 2>/dev/null | mask_link || echo "OK: no HY2 link fragments"

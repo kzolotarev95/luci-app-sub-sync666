@@ -1,0 +1,121 @@
+{
+  "luci-app-sub-sync": {
+    "description": "Grant access to Podcop Sub v666",
+    "read": {
+      "ubus": {
+        "file": [
+          "exec"
+        ],
+        "uci": [
+          "get",
+          "changes"
+        ]
+      },
+      "uci": [
+        "podkop"
+      ],
+      "file": {
+        "/usr/bin/sub-sync": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-autoadd": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-section": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-subs-info": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-ensure-podkop-xhttp": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-singbox-log": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-system-info": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-donaters": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-urltest": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-urltest": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-manager": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-manual-link": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-probe": [
+          "exec"
+        ]
+      }
+    },
+    "write": {
+      "ubus": {
+        "file": [
+          "exec"
+        ],
+        "uci": [
+          "add",
+          "set",
+          "delete",
+          "apply",
+          "confirm",
+          "changes",
+          "revert",
+          "order"
+        ]
+      },
+      "uci": [
+        "podkop"
+      ],
+      "file": {
+        "/usr/bin/sub-sync": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-autoadd": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-section": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-subs-info": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-ensure-podkop-xhttp": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-singbox-log": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-system-info": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-donaters": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-urltest": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-urltest": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-manager": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-manual-link": [
+          "exec"
+        ],
+        "/usr/bin/sub-sync-hy2-probe": [
+          "exec"
+        ]
+      }
+    }
+  }
+}

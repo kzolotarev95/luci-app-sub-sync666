@@ -319,3 +319,20 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 /etc/init.d/rpcd restart || true
 /etc/init.d/uhttpd restart || true
 # SUBSYNC_MANUAL_LINK_IMPORT_UNINSTALL_V167_END
+
+# SUBSYNC_PUBLIC_UNINSTALL_V193_BEGIN
+[ -x /usr/bin/podcop-sub-v666-xhttp-patch ] && /usr/bin/podcop-sub-v666-xhttp-patch uninstall >/dev/null 2>&1 || true
+
+rm -f \
+  /usr/bin/sub-sync-happ-json-hy2-import \
+  /usr/bin/sub-sync-hy2-manager \
+  /usr/bin/sub-sync-urltest \
+  /usr/bin/sub-sync-manual-import \
+  /usr/bin/sub-sync-system-info \
+  /usr/bin/sub-sync-singbox-log \
+  /usr/bin/podcop-sub-v666-xhttp-patch
+
+rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
+/etc/init.d/rpcd restart >/dev/null 2>&1 || true
+/etc/init.d/uhttpd restart >/dev/null 2>&1 || true
+# SUBSYNC_PUBLIC_UNINSTALL_V193_END

@@ -1,6 +1,18 @@
 #!/bin/sh
-# SUBSYNC_SINGBOX_LOG_HELPER_V166C
-set -u
-LINES="${1:-120}"
-case "$LINES" in ''|*[!0-9]*) LINES=120 ;; esac
-logread 2>/dev/null | grep -Ei 'sub-sync|subsync|podkop|podcop|sing-box|hysteria|hysteria2|hy2|urltest|xhttp|Unknown transport|configuration invalid|fatal|invalid|Nice|SyntaxError|TypeError|ReferenceError|Access denied|Доступ запрещ|python3' | tail -n "$LINES"
+
+N="${1:-160}"
+
+case "$N" in
+    ''|*[!0-9]*) N=160 ;;
+esac
+
+[ "$N" -lt 20 ] && N=20
+[ "$N" -gt 300 ] && N=300
+
+echo "=== Sing-box / Podkop realtime log: $(date '+%Y-%m-%d %H:%M:%S') ==="
+echo "=== tail: $N, refresh: LuCI panel ==="
+echo ""
+
+logread 2>/dev/null | grep -Ei \
+'sing-box|singbox|podkop:.*sing-box|podkop:.*outbound|podkop:.*inbound|podkop:.*route|podkop:.*DNS|podkop:.*config|podkop:.*Nice|configuration .* invalid|jq: invalid|fatal|failed|error|invalid' \
+| tail -n "$N" || true

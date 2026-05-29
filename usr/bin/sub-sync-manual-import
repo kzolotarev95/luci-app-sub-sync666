@@ -1,57 +1,79 @@
 #!/bin/sh
-# SUBSYNC_MANUAL_LINK_IMPORT_V167
+# SUBSYNC_HY2_UI_PING_V168J_BEGIN
 set -u
 
-LINK="${1:-${SUBSYNC_MANUAL_LINK:-}}"
-NAME="${2:-${SUBSYNC_MANUAL_NAME:-Manual server}}"
+PREV="/usr/bin/sub-sync-manual-import.v168j-prev"
+CFG="/etc/sing-box/config.json"
 
-mask_link() {
-  printf '%s\n' "$1" | sed -E 's#^(vless|trojan|ss|hy2|hysteria2)://[^@]+@#\1://***@#'
+cmd="${1:-list-hy2}"
+
+get_controller() {
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.experimental.clash_api.external_controller // empty' "$CFG" 2>/dev/null | head -n 1
+  else
+    sed -n 's/.*"external_controller"[ ]*:[ ]*"\([^"]*\)".*/\1/p' "$CFG" | head -n 1
+  fi
 }
 
-usage() {
-  echo "Usage:"
-  echo "  $0 'hy2://...' 'Name'"
-  echo "  $0 'hysteria2://...' 'Name'"
-  echo "  $0 'vless://...' 'Name'"
-  echo
-  echo "Or:"
-  echo "  export SUBSYNC_MANUAL_LINK='hy2://...'"
-  echo "  export SUBSYNC_MANUAL_NAME='Manual HY2'"
-  echo "  $0"
+get_tags() {
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '
+      .outbounds[]?
+      | select(
+          ((.tag // "") | startswith("zkssss324234")) and
+          ((.type == "hysteria2") or (.type == "urltest") or (.type == "selector"))
+        )
+      | .tag
+    ' "$CFG" 2>/dev/null
+  else
+    grep '"tag": "zkssss324234' "$CFG" | sed 's/.*"tag": "\([^"]*\)".*/\1/'
+  fi
 }
 
-[ -n "$LINK" ] || {
-  usage
-  exit 1
+ping_hy2() {
+  ctrl="$(get_controller)"
+
+  if [ -z "$ctrl" ]; then
+    echo "ERROR: clash_api external_controller not found"
+    exit 2
+  fi
+
+  case "$ctrl" in
+    http://*|https://*) base="$ctrl" ;;
+    *) base="http://$ctrl" ;;
+  esac
+
+  enc_url="https%3A%2F%2Fwww.gstatic.com%2Fgenerate_204"
+
+  echo "CTRL=$ctrl"
+
+  best_delay=""
+  best_tag=""
+
+  get_tags | while read -r tag; do
+    [ -n "$tag" ] || continue
+
+    out="$(
+      wget -T 10 -qO- "$base/proxies/$tag/delay?timeout=8000&url=$enc_url" 2>/tmp/subsync-hy2-v168j-wget.err || true
+    )"
+
+    delay="$(printf '%s' "$out" | sed -n 's/.*"delay"[ ]*:[ ]*\([0-9][0-9]*\).*/\1/p' | head -n 1)"
+
+    if [ -n "$delay" ]; then
+      echo "$tag=$delay"
+    else
+      echo "$tag=ERR"
+      [ -s /tmp/subsync-hy2-v168j-wget.err ] && sed 's/^/ERRMSG=/' /tmp/subsync-hy2-v168j-wget.err
+    fi
+  done
 }
 
-case "$LINK" in
-  vless://*|trojan://*|ss://*|hy2://*|hysteria2://*) ;;
+case "$cmd" in
+  ping-hy2|hy2-ping|ping)
+    ping_hy2
+    ;;
   *)
-    echo "ERROR: unsupported link protocol. Supported: vless, trojan, ss, hy2, hysteria2"
-    exit 1
+    exec "$PREV" "$@"
     ;;
 esac
-
-[ -x /usr/bin/sub-sync-manual-link ] || {
-  echo "ERROR: /usr/bin/sub-sync-manual-link not found or not executable"
-  exit 1
-}
-
-echo "Adding manual server: $NAME"
-echo "Link: $(mask_link "$LINK")"
-
-/usr/bin/sub-sync-manual-link add-link "$LINK" "$NAME"
-/usr/bin/sub-sync-manual-link merge
-
-echo
-echo "=== selectable URLTest servers ==="
-if [ -x /usr/bin/sub-sync-urltest ]; then
-  /usr/bin/sub-sync-urltest list
-else
-  echo "WARN: /usr/bin/sub-sync-urltest not found"
-fi
-
-echo
-echo "Manual link import v167 done"
+# SUBSYNC_HY2_UI_PING_V168J_END

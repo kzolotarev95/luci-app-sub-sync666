@@ -614,3 +614,43 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 
 echo "[Sub Sync] Manual link import support v167 ready"
 # SUBSYNC_MANUAL_LINK_IMPORT_INSTALL_V167_END
+
+# SUBSYNC_PUBLIC_INSTALL_V193_BEGIN
+SUBSYNC_GH_REPO="${SUBSYNC_REPO:-kzolotarev95/luci-app-sub-sync666}"
+SUBSYNC_GH_BRANCH="${SUBSYNC_BRANCH:-main}"
+SUBSYNC_RAW_BASE="https://raw.githubusercontent.com/${SUBSYNC_GH_REPO}/${SUBSYNC_GH_BRANCH}"
+
+subsync_v193_install_file() {
+  src="$1"
+  dst="$2"
+  mkdir -p "$(dirname "$dst")"
+  wget -qO "$dst" "${SUBSYNC_RAW_BASE}/${src}?v=$(date +%s)" || return 0
+  chmod 755 "$dst" 2>/dev/null || true
+}
+
+subsync_v193_install_file "htdocs/luci-static/resources/view/sub_sync/sub_sync.js" "/www/luci-static/resources/view/sub_sync/sub_sync.js"
+subsync_v193_install_file "usr/share/rpcd/acl.d/luci-app-sub-sync.json" "/usr/share/rpcd/acl.d/luci-app-sub-sync.json"
+
+for f in \
+  sub-sync \
+  sub-sync.real \
+  sub-sync-autoadd \
+  sub-sync-urltest \
+  sub-sync-manual-import \
+  sub-sync-happ-json-hy2-import \
+  sub-sync-hy2-manager \
+  sub-sync-section \
+  sub-sync-subs-info \
+  sub-sync-system-info \
+  sub-sync-singbox-log \
+  podcop-sub-v666-xhttp-patch
+do
+  subsync_v193_install_file "usr/bin/$f" "/usr/bin/$f"
+done
+
+[ -x /usr/bin/podcop-sub-v666-xhttp-patch ] && /usr/bin/podcop-sub-v666-xhttp-patch install >/dev/null 2>&1 || true
+
+rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
+/etc/init.d/rpcd restart >/dev/null 2>&1 || true
+/etc/init.d/uhttpd restart >/dev/null 2>&1 || true
+# SUBSYNC_PUBLIC_INSTALL_V193_END

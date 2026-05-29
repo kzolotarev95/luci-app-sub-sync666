@@ -1111,6 +1111,7 @@ syncAllBtnStates(sec3);
                             singboxConsoleBodyV81
                     ]);
 
+                    /* SUBSYNC_DONATERS_ADMIN_REMOVED_FROM_MAIN_V150 - use /admin/services/podkop/admin */
                     /* SUBSYNC_DONATERS_PUBLIC_CARDS_V134_COMPACT_CARDS */
                     var donatersPublicListV128 = E('div', {
                             'class': 'ss-donaters-grid-v134'
@@ -1757,7 +1758,7 @@ syncAllBtnStates(sec3);
 				])
 			]);
 
-			var LIMIT = 20;
+			var LIMIT = 25; /* SUBSYNC_SERVER_TABLE_LIMIT_V179B */
 
 			var globalSectionSelect = E('select', { 'class': 'cbi-input-select ss-select', 'style': 'margin-right:8px' });
 			for (var gi = 0; gi < sections.length; gi++) {
@@ -1913,6 +1914,20 @@ rows[j].className = 'tr ' + (j % 2 === 0 ? 'cbi-rowstyle-1' : 'cbi-rowstyle-2') 
 				}
 			}
 
+                              /* SUBSYNC_HY2_PING_UI_V172 */
+                              function isHy2ServerPingV172(s) {
+                                      var p = String((s && (s.proto || s.protocol || s.scheme)) || "").toLowerCase();
+                                      var t = String((s && (s.type || s.transport)) || "").toLowerCase();
+                                      var l = String((s && s.link) || "").toLowerCase();
+                                      return p === "hy2" || p === "hysteria2" || l.indexOf("hy2://") === 0 || l.indexOf("hysteria2://") === 0 || (p === "hysteria2" && t === "quic");
+                              }
+                              function createHy2PingCellV172(s) {
+                                      return E("span", {
+                                              "data-hy2-ping-v172": "1",
+                                              "style": "font-size:11px;cursor:help;color:#4caf50;font-weight:600",
+                                              "title": "HYSTERIA2/QUIC: обычный TCP/HTTPS ping неприменим. Проверка: выбрать в секцию, sing-box check и Podkop Nice."
+                                      }, "QUIC");
+                              }
 			function createPingCell(serverId) {
 				var pingSpan = E('span', { 'style': 'font-size:11px;cursor:pointer;color:#999', 'title': 'Нажмите для проверки' }, '—');
 				var pinging = false;
@@ -2252,7 +2267,7 @@ if (!ssLinkInListV28(link2, myLinks)) {
 					E('div', { 'class': 'td', 'data-title': 'Имя' }, nameChildren),
 					E('div', { 'class': 'td', 'data-title': 'Адрес', 'style': 'font-family:monospace;font-size:12px' },
 						(s.addr || '') + ':' + (s.port || '')),
-					E('div', { 'class': 'td', 'data-title': 'Пинг', 'style': 'text-align:center' }, [createPingCell(s.id || (idx + 1))]),
+					E('div', { 'class': 'td', 'data-title': 'Пинг', 'style': 'text-align:center' }, [(isHy2ServerPingV172(s) ? createHy2PingCellV172(s) : createPingCell(s.id || (idx + 1)))]),
 					E('div', { 'class': 'td', 'style': 'text-align:right' }, E('div', { 'style': 'display:flex;gap:4px;justify-content:flex-end' }, [selectBtn, copyBtn]))
 				]);
 			}
@@ -3130,6 +3145,338 @@ function createMonitorContent(section) {
 	};
 }
 
+/* SUBSYNC_HY2_MODULE_CARD_V169D_APPLIED */
+(function() {
+  'use strict';
+
+  var timer = null;
+  var tries = 0;
+  var observer = null;
+
+  function ubusExec(command, params) {
+    var sid = window.L && L.env && L.env.sessionid ? L.env.sessionid : null;
+    if (!sid) return Promise.reject(new Error('LuCI sessionid not found. Re-login and Ctrl+F5.'));
+
+    return fetch('/ubus', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: Date.now(),
+        method: 'call',
+        params: [ sid, 'file', 'exec', { command: command, params: params || [] } ]
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (j.error) throw new Error(JSON.stringify(j.error));
+
+      var data = j.result && j.result[1] ? j.result[1] : {};
+      var out = '';
+
+      if (data.stdout) out += data.stdout;
+      if (data.stderr) out += (out ? '\n' : '') + data.stderr;
+
+      if (typeof data.code !== 'undefined' && data.code !== 0) {
+        throw new Error(out || ('command failed, code=' + data.code));
+      }
+
+      return out || 'OK';
+    });
+  }
+
+  function findCreateSectionCard() {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.ss-card'));
+
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var inp = card.querySelector('input[type="text"]');
+      var ph = inp ? (inp.getAttribute('placeholder') || '') : '';
+      var txt = card.textContent || '';
+
+      if (ph.indexOf('urlzks95') !== -1) return card;
+      if (txt.indexOf('urlzks95') !== -1 && txt.indexOf('Podkop') !== -1) return card;
+    }
+
+    return null;
+  }
+
+  function getTopSectionName() {
+    var card = findCreateSectionCard();
+    if (!card) return '';
+
+    var inp = card.querySelector('input[type="text"]');
+    return inp && inp.value ? inp.value.trim() : '';
+  }
+
+  function setOut(text) {
+    var out = document.getElementById('ss-hy2-v169d-out');
+    if (out) out.textContent = text;
+  }
+
+  function setStatus(text, color) {
+    var s = document.getElementById('ss-hy2-v169d-status');
+    if (!s) return;
+    s.textContent = text || '';
+    s.style.color = color || '#888';
+  }
+
+  function syncSection() {
+    var inp = document.getElementById('ss-hy2-v169d-section');
+    if (!inp) return;
+
+    var top = getTopSectionName();
+    if (top && !inp.value.trim()) inp.value = top;
+  }
+
+  function ensureBlock() {
+    var createCard = findCreateSectionCard();
+
+    /*
+      Strict module-only placement:
+      no body/main/header/cascade.css/theme insertion.
+      If target card not found, do nothing.
+    */
+    if (!createCard || !createCard.parentNode) return false;
+
+    var old = document.getElementById('ss-hy2-v169d-card');
+
+    if (old) {
+      if (old.previousElementSibling !== createCard) {
+        createCard.parentNode.insertBefore(old, createCard.nextSibling);
+      }
+      syncSection();
+      return true;
+    }
+
+    var box = document.createElement('div');
+    box.id = 'ss-hy2-v169d-card';
+    box.className = 'ss-card';
+    box.style.marginTop = '10px';
+
+    var section = getTopSectionName();
+
+    box.innerHTML =
+      '<h3>HYSTERIA2 / HY2</h3>' +
+      '<div class="ss-label" style="margin-bottom:8px">' +
+        '<div class="ss-label" style="margin-bottom:8px"><!-- SUBSYNC_HY2_MANUAL_TEXT_V183 --><b>Ручной если у вас нет подписки.</b><br>Вставь hy2:// или hysteria2://. Кнопка ниже применяет.</div>' +
+      '</div>' +
+      '<div class="ss-controls">' +
+        '<input id="ss-hy2-v169d-section" type="text" value="' + section.replace(/"/g, '&quot;') + '" placeholder="Podkop-секция" style="min-width:220px;margin-right:8px">' +
+        '<input id="ss-hy2-v169d-name" type="text" value="Manual HY2" placeholder="Название" style="min-width:180px;margin-right:8px">' +
+      '</div>' +
+      '<textarea id="ss-hy2-v169d-link" placeholder="hysteria2://..." style="width:100%;min-height:58px;box-sizing:border-box;font-family:monospace;margin-top:6px"></textarea>' +
+      '<div class="ss-controls" style="margin-top:8px">' +
+        '<button id="ss-hy2-v169d-select" class="btn cbi-button cbi-button-positive">Выбрать HYSTERIA2 в секцию</button>' +
+        '<button id="ss-hy2-v169d-delete" class="btn cbi-button cbi-button-remove" style="margin-left:8px">Удалить HYSTERIA2</button>' +
+        '<button id="ss-hy2-v169d-list" class="btn cbi-button" style="margin-left:8px">Подсказка</button>' +
+        '<button id="ss-hy2-v169d-check" class="btn cbi-button" style="margin-left:8px">Проверить sing-box</button>' +
+        '<button id="ss-hy2-v180-probe" class="btn cbi-button" style="margin-left:8px">Проверить HY2 сервер</button>' +
+        '<span class="ss-label" id="ss-hy2-v169d-status" style="margin-left:8px;color:#888"></span>' +
+      '</div>' +
+      '<pre id="ss-hy2-v169d-out" style="white-space:pre-wrap;word-break:break-word;max-height:240px;overflow:auto;margin-top:10px;padding:10px;border-radius:10px;background:rgba(0,0,0,.18)">Готово. Укажи секцию, вставь HY2-ссылку и нажми “Выбрать HYSTERIA2 в секцию”.</pre>';
+
+    createCard.parentNode.insertBefore(box, createCard.nextSibling);
+
+    document.getElementById('ss-hy2-v169d-select').onclick = function() {
+      /* SUBSYNC_HY2_SELECT_AUTO_REFRESH_V181 */
+      try {
+        var __hy2AutoRefreshLinkV181 = document.getElementById('ss-hy2-v169d-link');
+        if (__hy2AutoRefreshLinkV181 && /^(hy2|hysteria2):\/\//i.test((__hy2AutoRefreshLinkV181.value || '').trim())) {
+          setStatus('применяю, обновлю страницу через 5 сек...' , '#888');
+          window.setTimeout(function() {
+            try { window.location.reload(); } catch(e) {}
+          }, 5000);
+        }
+      } catch(e) {}
+      syncSection();
+
+      var section = document.getElementById('ss-hy2-v169d-section').value.trim();
+      var name = document.getElementById('ss-hy2-v169d-name').value.trim() || 'Manual HY2';
+      var link = document.getElementById('ss-hy2-v169d-link').value.trim();
+
+      if (!section) {
+        setStatus('ошибка', '#f66');
+        setOut('ERROR: укажи Podkop-секцию');
+        return;
+      }
+
+      if (!/^[A-Za-z0-9_]+$/.test(section)) {
+        setStatus('ошибка', '#f66');
+        setOut('ERROR: имя секции только A-Z a-z 0-9 _');
+        return;
+      }
+
+      if (!/^(hy2|hysteria2):\/\//i.test(link)) {
+        setStatus('ошибка', '#f66');
+        setOut('ERROR: вставь полную ссылку hy2:// или hysteria2://');
+        return;
+      }
+
+      setStatus('применяю...', '#888');
+      setOut('Применяю HYSTERIA2 в секцию ' + section + '...');
+
+      ubusExec('/usr/bin/sub-sync-hy2-manager', ['select', section, name, link])
+        .then(function(out) {
+          setStatus('готово', '#2ecc71');
+          setOut(out);
+        })
+        .catch(function(e) {
+          setStatus('ошибка', '#f66');
+          setOut('ERROR:\\n' + e.message);
+        });
+    };
+
+    document.getElementById('ss-hy2-v169d-delete').onclick = function() {
+      /* SUBSYNC_HY2_DELETE_EMPTY_GUARD_V184 */
+      try {
+        var __hy2DelLinkV184 = document.getElementById('ss-hy2-v169d-link');
+        var __hy2DelValV184 = (__hy2DelLinkV184 && __hy2DelLinkV184.value ? __hy2DelLinkV184.value : '').trim();
+        if (!/^(hy2|hysteria2):\/\//i.test(__hy2DelValV184)) {
+          setStatus('нет ключа', '#f66');
+          setOut('Нет HY2 ключа — удалять нечего. Вставь hy2:// или hysteria2://, чтобы удалить только этот ключ из указанной секции.');
+          return;
+        }
+      } catch(e) {
+        setStatus('ошибка проверки ключа', '#f66');
+        setOut('ERROR: не смог проверить HY2 ключ перед удалением\n' + e.message);
+        return;
+      }
+      /* SUBSYNC_HY2_DELETE_AUTO_REFRESH_V182 */
+      try {
+        setStatus('удаляю, обновлю страницу через 5 сек...' , '#888');
+        window.setTimeout(function() {
+          try { window.location.reload(); } catch(e) {}
+        }, 5000);
+      } catch(e) {}
+      var name = document.getElementById('ss-hy2-v169d-name').value.trim() || 'Manual HY2';
+      var link = document.getElementById('ss-hy2-v169d-link').value.trim();
+
+      setStatus('удаляю...', '#888');
+      setOut('Удаляю HYSTERIA2...');
+
+      syncSection();
+      var section = document.getElementById('ss-hy2-v169d-section').value.trim();
+      if (!section) {
+        setStatus('ошибка', '#f66');
+        setOut('ERROR: укажи Podkop-секцию для удаления');
+        return;
+      }
+      ubusExec('/usr/bin/sub-sync-hy2-manager', ['delete', section, link])
+        .then(function(out) {
+          setStatus('удалено', '#2ecc71');
+          setOut(out);
+        })
+        .catch(function(e) {
+          setStatus('ошибка', '#f66');
+          setOut('ERROR:\\n' + e.message);
+        });
+    };
+
+    document.getElementById('ss-hy2-v169d-list').onclick = function() {
+      setStatus('читаю...', '#888');
+      setOut('Загружаю список...');
+
+      ubusExec('/usr/bin/sub-sync-hy2-manager', ['list'])
+        .then(function(out) {
+          setStatus('готово', '#2ecc71');
+          setOut(out);
+        })
+        .catch(function(e) {
+          setStatus('ошибка', '#f66');
+          setOut('ERROR:\\n' + e.message);
+        });
+    };
+
+    /* SUBSYNC_HY2_WORK_CHECK_BUTTON_V180 */
+    document.getElementById('ss-hy2-v180-probe').onclick = function() {
+      var link = document.getElementById('ss-hy2-v169d-link').value.trim();
+      if (!/^(hy2|hysteria2):\/\//i.test(link)) {
+        setStatus('ошибка', '#f66');
+        setOut('ERROR: вставь HY2 ссылку в поле выше');
+        return;
+      }
+      setStatus('проверяю сервер.', '#888');
+      setOut('Проверяю HY2 сервер через временный sing-box. Жди 10-15 сек...');
+      ubusExec('/usr/bin/sub-sync-hy2-probe', [link])
+        .then(function(out) {
+          var ok = /(^|\n)WORK:/.test(out);
+          setStatus(ok ? 'WORK' : 'NO WORK', ok ? '#2ecc71' : '#f66');
+          setOut(out);
+        })
+        .catch(function(e) {
+          setStatus('NO WORK', '#f66');
+          setOut('ERROR:\n' + e.message);
+        });
+    };
+
+    /* SUBSYNC_HY2_MANUAL_ONLY_V187 */
+    var __ssHy2ManualHintBtnV187 = document.getElementById('ss-hy2-v169d-list');
+    if (__ssHy2ManualHintBtnV187) {
+      __ssHy2ManualHintBtnV187.textContent = 'Подсказка';
+      __ssHy2ManualHintBtnV187.onclick = function() {
+        setStatus('ручной режим', '#888');
+        setOut(
+          'HYSTERIA2 / HY2 — ручной режим.\n\n' +
+          'Если сервер пришёл из подписки — выбирай его в общем блоке “Серверы”.\n' +
+          'Если подписки нет — вставь сюда hy2:// или hysteria2:// и нажми “Выбрать HYSTERIA2 в секцию”.\n\n' +
+          'Ключи и пароли в этом окне не показываю.'
+        );
+      };
+    }
+
+    document.getElementById('ss-hy2-v169d-check').onclick = function() {
+      setStatus('проверяю...', '#888');
+      setOut('Проверяю sing-box...');
+
+      ubusExec('/usr/bin/sub-sync-hy2-manager', ['check'])
+        .then(function(out) {
+          setStatus('готово', '#2ecc71');
+          setOut(out);
+        })
+        .catch(function(e) {
+          setStatus('ошибка', '#f66');
+          setOut('ERROR:\\n' + e.message);
+        });
+    };
+
+    return true;
+  }
+
+  function startScopedObserver() {
+    var createCard = findCreateSectionCard();
+    if (!createCard || !createCard.parentNode || observer) return;
+
+    try {
+      observer = new MutationObserver(function() {
+        ensureBlock();
+      });
+      observer.observe(createCard.parentNode, { childList: true });
+    } catch(e) {}
+  }
+
+  function boot() {
+    ensureBlock();
+    startScopedObserver();
+
+    if (!timer) {
+      timer = setInterval(function() {
+        tries++;
+        ensureBlock();
+        startScopedObserver();
+
+        if (tries > 240) {
+          clearInterval(timer);
+          timer = null;
+        }
+      }, 1000);
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
 return view.extend({
 	render: function() {
 		main.injectGlobalStyles();

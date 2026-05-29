@@ -1,0 +1,75 @@
+#!/bin/sh
+# SUBSYNC_HY2_SAFE_DELETE_BACKEND_V184
+set -u
+
+ORIG="/usr/bin/sub-sync-hy2-manager.before-safe-delete-v184"
+
+json_escape() {
+  sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+if [ "${1:-}" = "delete" ]; then
+  SEC="${2:-}"
+  LINK="${3:-}"
+
+  LINK="$(printf '%s' "$LINK" | sed 's/[[:space:]]*$//;s/#.*$//')"
+
+  if [ -z "$SEC" ]; then
+    echo '{"ok":false,"error":"Не указана Podkop-секция"}'
+    exit 2
+  fi
+
+  case "$LINK" in
+    hy2://*|hysteria2://*) ;;
+    *)
+      echo '{"ok":false,"error":"Нет HY2 ключа — удалять нечего. Вставь hy2:// или hysteria2://."}'
+      exit 2
+    ;;
+  esac
+
+  if ! uci -q show "podkop.$SEC" >/dev/null 2>&1; then
+    esc_sec="$(printf '%s' "$SEC" | json_escape)"
+    echo "{\"ok\":false,\"error\":\"Секция не найдена: $esc_sec\"}"
+    exit 2
+  fi
+
+  if ! uci -q show "podkop.$SEC" | grep -F "$LINK" >/dev/null 2>&1; then
+    echo '{"ok":false,"error":"Этот HY2 ключ не найден в указанной секции. Другие секции не трогаю."}'
+    exit 2
+  fi
+
+  # Удаляем только точный ключ из указанной секции.
+  uci -q del_list "podkop.$SEC.urltest_proxy_links=$LINK" 2>/dev/null || true
+
+  cur="$(uci -q get "podkop.$SEC.urltest_proxy_links" 2>/dev/null || true)"
+  if [ "$cur" = "$LINK" ]; then
+    uci -q delete "podkop.$SEC.urltest_proxy_links" 2>/dev/null || true
+  fi
+
+  after="$(uci -q get "podkop.$SEC.urltest_proxy_links" 2>/dev/null || true)"
+  deleted_section="0"
+
+  if [ -z "$after" ]; then
+    marker="$(uci -q get "podkop.$SEC.user_domains_text" 2>/dev/null || true)"
+
+    case "$SEC:$marker" in
+      hy2*:*|*hysteria*:*|*:hy2-urltest-v165.invalid*)
+        uci -q delete "podkop.$SEC" 2>/dev/null || true
+        deleted_section="1"
+      ;;
+      *)
+        # Не удаляем чужую/главную секцию, даже если ссылка была последней.
+        true
+      ;;
+    esac
+  fi
+
+  uci commit podkop
+  /etc/init.d/podkop restart >/dev/null 2>&1 || true
+
+  esc_sec="$(printf '%s' "$SEC" | json_escape)"
+  echo "{\"ok\":true,\"section\":\"$esc_sec\",\"deleted_section\":$deleted_section,\"message\":\"Удалён только этот HY2 ключ из указанной секции. Другие секции не тронуты.\"}"
+  exit 0
+fi
+
+exec "$ORIG" "$@"
