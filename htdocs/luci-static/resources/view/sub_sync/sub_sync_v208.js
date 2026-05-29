@@ -1111,7 +1111,7 @@ syncAllBtnStates(sec3);
                             singboxConsoleBodyV81
                     ]);
 
-                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V253 */
+                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V254 */
                     /* SUBSYNC_DONATERS_PUBLIC_CARDS_V134_COMPACT_CARDS */
                     var donatersPublicListV128 = E('div', {
                             'class': 'ss-donaters-grid-v134'
@@ -5407,3 +5407,53 @@ return view.extend({
 		return m.render();
 	}
 });
+
+;/* SUBSYNC_MODULE_UPDATE_HIDE_RAW_LINES_V254 */
+(function(){
+  try {
+    if (window.__subsyncModuleUpdateHideRawLinesV254)
+      return;
+
+    window.__subsyncModuleUpdateHideRawLinesV254 = true;
+
+    function cleanModuleUpdateLogs() {
+      var pres = document.querySelectorAll('.ss-module-update-log-v239');
+      if (!pres || !pres.length)
+        return;
+
+      for (var i = 0; i < pres.length; i++) {
+        var pre = pres[i];
+        var raw = String(pre.textContent || '');
+        if (!raw)
+          continue;
+
+        var clean = raw.split(/\r?\n/).filter(function(line) {
+          line = String(line || '').trim();
+          if (!line)
+            return false;
+
+          if (/^=== Podcop Sub v666 update check v236 ===$/.test(line)) return false;
+          if (/^LOCAL_BUILD=/.test(line)) return false;
+          if (/^REMOTE_VERSION=/.test(line)) return false;
+          if (/^REMOTE_BUILD=/.test(line)) return false;
+          if (/^TITLE=/.test(line)) return false;
+          if (/^MESSAGE=/.test(line)) return false;
+          if (/^UPDATE_AVAILABLE$/.test(line)) return false;
+          if (/^UP_TO_DATE$/.test(line)) return false;
+          if (/^NO_REMOTE_VERSION$/.test(line)) return false;
+
+          return true;
+        }).join('\n').trim();
+
+        if (clean !== raw.trim())
+          pre.textContent = clean;
+
+        if (!clean)
+          pre.style.display = 'none';
+      }
+    }
+
+    cleanModuleUpdateLogs();
+    setInterval(cleanModuleUpdateLogs, 700);
+  } catch (e) {}
+})();
