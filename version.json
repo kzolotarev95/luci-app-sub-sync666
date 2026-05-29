@@ -1,9 +1,9 @@
 {
-  "version": "v260",
-  "build": 260,
-  "title": "Вышло обновление Podcop Sub v666 v260",
-  "message": "Исправлена ошибка 403 после OTA: файлы sub_sync_v*.js теперь заменяются безопасно, без удаления активного route-файла. Добавлен понятный отчёт обновления и отложенный перезапуск LuCI.",
-  "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V260_BEGIN",
+  "version": "v261",
+  "build": 261,
+  "title": "Вышло обновление Podcop Sub v666 v261",
+  "message": "Очищен installer от старых накопленных блоков, добавлен понятный вывод проверки версии и улучшенный отчёт обновления с таймингом.",
+  "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V261_BEGIN",
   "install_url": "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install.sh",
-  "released_at": "2026-05-29 23:51:16 +0400"
+  "released_at": "2026-05-30 00:04:09 +0400"
 }

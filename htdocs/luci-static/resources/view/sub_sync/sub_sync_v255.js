@@ -1111,7 +1111,7 @@ syncAllBtnStates(sec3);
                             singboxConsoleBodyV81
                     ]);
 
-                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V260 */
+                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V261 */
                     /* SUBSYNC_DONATERS_PUBLIC_CARDS_V134_COMPACT_CARDS */
                     var donatersPublicListV128 = E('div', {
                             'class': 'ss-donaters-grid-v134'
@@ -1294,7 +1294,7 @@ syncAllBtnStates(sec3);
                                     ssModuleUpdateOpenV239(true, false);
                             } else if (out.indexOf('UP_TO_DATE') >= 0) {
                                     moduleUpdateHasUpdateV239 = false;
-                                    moduleUpdateStatusV236.textContent = 'Модуль уже актуальный.';
+                                    moduleUpdateStatusV236.textContent = 'У вас последняя версия. Обновление не требуется.';
                                     moduleUpdateStatusV236.style.color = '#7bd88f';
                                     ssModuleUpdateColorV251('ok');
                                     moduleUpdateRunBtnV236.style.display = 'none';
@@ -5700,3 +5700,6 @@ return view.extend({
 })();
 
 /* SUBSYNC_SAFE_OTA_REPORT_UI_V260 */
+
+/* SUBSYNC_UPDATE_CHECK_TEXT_V261 */
+/* SUBSYNC_UPDATE_REAL_REPORT_TIMER_V261 */
