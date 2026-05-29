@@ -1111,7 +1111,7 @@ syncAllBtnStates(sec3);
                             singboxConsoleBodyV81
                     ]);
 
-                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V259 */
+                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V260 */
                     /* SUBSYNC_DONATERS_PUBLIC_CARDS_V134_COMPACT_CARDS */
                     var donatersPublicListV128 = E('div', {
                             'class': 'ss-donaters-grid-v134'
@@ -5698,3 +5698,5 @@ return view.extend({
     }, 1000);
   } catch(e) {}
 })();
+
+/* SUBSYNC_SAFE_OTA_REPORT_UI_V260 */
