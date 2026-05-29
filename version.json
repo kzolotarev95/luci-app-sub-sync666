@@ -5,5 +5,5 @@
   "message": "Автоустановка темы ProtoByZKS95, отдельное меню Подписки / Мониторинг после обновления Podkop, живой таймер обновления и понятная проверка версии.",
   "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V263_BEGIN",
   "install_url": "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install.sh",
-  "released_at": "2026-05-30 00:57:00 +0400"
+  "released_at": "2026-05-30 00:57:31 +0400"
 }
