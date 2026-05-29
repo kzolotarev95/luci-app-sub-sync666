@@ -1,9 +1,9 @@
 #!/bin/sh
-# PODCOP_SUB_V666_PUBLIC_UNINSTALL_CLEAN_V203
+# PODCOP_SUB_V666_PUBLIC_UNINSTALL_CLEAN_V205B
 set -u
 
 echo "========================================="
-echo "  Podcop Sub v666 — public uninstall v203"
+echo "  Podcop Sub v666 — public uninstall v205b"
 echo "========================================="
 echo "Backup: disabled for public/friend uninstall"
 
@@ -48,4 +48,4 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 /etc/init.d/uhttpd restart >/dev/null 2>&1 || true
 /etc/init.d/podkop restart >/dev/null 2>&1 || true
 
-echo "Podcop Sub v666 public uninstall v203 complete"
+echo "Podcop Sub v666 public uninstall v205b complete"

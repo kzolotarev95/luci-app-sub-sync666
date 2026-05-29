@@ -1111,7 +1111,7 @@ syncAllBtnStates(sec3);
                             singboxConsoleBodyV81
                     ]);
 
-                    /* SUBSYNC_DONATERS_ADMIN_REMOVED_FROM_MAIN_V150 - use /admin/services/podkop/admin */
+                    /* SUBSYNC_DONATERS_ADMIN_REMOVED_FROM_MAIN_V150 - use admin route removed from public build */
                     /* SUBSYNC_DONATERS_PUBLIC_CARDS_V134_COMPACT_CARDS */
                     var donatersPublicListV128 = E('div', {
                             'class': 'ss-donaters-grid-v134'
@@ -1239,7 +1239,7 @@ syncAllBtnStates(sec3);
 				activeServerEl
 			]);
 
-			var widgetsRow = E('div', { 'class': 'ss-widgets' }, [wStatus, wConnection, wSingbox]);
+			var widgetsRow = E('div', { 'class': 'ss-widgets', 'style': 'display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,260px))!important;gap:14px!important;justify-content:center!important;align-items:stretch!important;width:100%!important;max-width:860px!important;margin:14px auto 18px auto!important;text-align:center!important;' }, [wStatus, wConnection, wSingbox]);
                     /* SUBSYNC_SYSTEM_WIDGETS_V96 */
                     var sysMemValueV96 = E('div', { 'class': 'ss-widget__value' }, 'загрузка...');
                     var sysStorageValueV96 = E('div', { 'class': 'ss-widget__value' }, 'загрузка...');
@@ -1325,7 +1325,7 @@ syncAllBtnStates(sec3);
                             });
                     }
 
-                    var sysWidgetsRowV96 = E('div', {
+                    var sysWidgetsRowV96 = E('div', { 'style': 'display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,260px))!important;gap:14px!important;justify-content:center!important;align-items:stretch!important;width:100%!important;max-width:860px!important;margin:14px auto 18px auto!important;text-align:center!important;',
                             'class': 'ss-widgets',
                             'style': 'margin-top:10px'
                     }, [
@@ -1627,7 +1627,7 @@ syncAllBtnStates(sec3);
                                         subInfoClearV17();
 
                                         if (list.length === 0) {
-                                                subInfoList.appendChild(E('div', { 'class': 'ss-label' }, 'Подписок пока нет.'));
+                                                subInfoList.appendChild(E('div', { 'class': 'ss-label' }, 'Подписка добавлена. Этот URL не отдаёт лимит/срок (no_userinfo), поэтому трафик/дата не показываются; серверы уже загружены.'));
                                                 subInfoStatus.textContent = '';
                                                 return;
                                         }
@@ -3528,3 +3528,4 @@ return view.extend({
 		return m.render();
 	}
 });
+/* SUBSYNC_WIDGET_CENTER_PUBLIC_V205B */

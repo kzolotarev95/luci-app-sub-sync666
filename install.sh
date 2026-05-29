@@ -1,5 +1,5 @@
 #!/bin/sh
-# PODCOP_SUB_V666_PUBLIC_INSTALL_CLEAN_V203
+# PODCOP_SUB_V666_PUBLIC_INSTALL_CLEAN_V205B
 set -u
 
 REPO_SLUG="${SUBSYNC_REPO:-kzolotarev95/luci-app-sub-sync666}"
@@ -7,7 +7,7 @@ BRANCH="${SUBSYNC_BRANCH:-main}"
 RAW="https://raw.githubusercontent.com/${REPO_SLUG}/${BRANCH}"
 
 echo "========================================="
-echo "  Podcop Sub v666 — public install v203"
+echo "  Podcop Sub v666 — public install v205b"
 echo "========================================="
 echo "Backup: disabled for public/friend install"
 
@@ -89,7 +89,7 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 /etc/init.d/podkop restart >/dev/null 2>&1 || true
 
 echo "========================================="
-echo "Podcop Sub v666 public install v203 complete"
+echo "Podcop Sub v666 public install v205b complete"
 echo "Open: Services -> Podkop"
 echo "Ctrl+F5 after install"
 echo "========================================="
