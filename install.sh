@@ -1,4 +1,5 @@
 #!/bin/sh
+# SUBSYNC_PUBLIC_BUILD_V255
 # SUBSYNC_PUBLIC_BUILD_V254
 # SUBSYNC_PUBLIC_BUILD_V253
 # SUBSYNC_PUBLIC_BUILD_V252
@@ -11,7 +12,7 @@ BRANCH="${SUBSYNC_BRANCH:-main}"
 RAW="https://raw.githubusercontent.com/${REPO_SLUG}/${BRANCH}"
 
 echo "========================================="
-echo "  Podcop Sub v666 — public install v254"
+echo "  Podcop Sub v666 — public install v255"
 echo "========================================="
 echo "Backup: disabled for public/friend install"
 
@@ -199,3 +200,30 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 
 logger -t sub-sync "Podcop Sub v666 public build v254 installed" 2>/dev/null || true
 # SUBSYNC_INSTALL_VERSION_FILES_V254_END
+# SUBSYNC_INSTALL_VERSION_FILES_V255_BEGIN
+mkdir -p /etc/sub-sync
+echo "255" > /etc/sub-sync/module-build
+echo "v255" > /etc/sub-sync/module-version
+
+SUBSYNC_RAW_BASE="${SUBSYNC_RAW_BASE:-${RAW_BASE:-https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main}}"
+
+mkdir -p /usr/bin /usr/share/rpcd/acl.d /www/luci-static/resources/view/sub_sync
+
+wget -qO /usr/bin/sub-sync-module-update "$SUBSYNC_RAW_BASE/usr/bin/sub-sync-module-update?v=$(date +%s)" && chmod 755 /usr/bin/sub-sync-module-update || true
+wget -qO /usr/share/rpcd/acl.d/luci-app-sub-sync.json "$SUBSYNC_RAW_BASE/usr/share/rpcd/acl.d/luci-app-sub-sync.json?v=$(date +%s)" || true
+wget -qO /www/luci-static/resources/view/sub_sync/sub_sync.js "$SUBSYNC_RAW_BASE/htdocs/luci-static/resources/view/sub_sync/sub_sync.js?v=$(date +%s)" || true
+wget -qO /www/luci-static/resources/view/sub_sync/sub_sync_v255.js "$SUBSYNC_RAW_BASE/htdocs/luci-static/resources/view/sub_sync/sub_sync_v255.js?v=$(date +%s)" || true
+
+cp -a /www/luci-static/resources/view/sub_sync/sub_sync.js /www/luci-static/resources/view/sub_sync/sub_sync_v211.js 2>/dev/null || true
+cp -a /www/luci-static/resources/view/sub_sync/sub_sync.js /www/luci-static/resources/view/sub_sync/sub_sync_v221.js 2>/dev/null || true
+cp -a /www/luci-static/resources/view/sub_sync/sub_sync.js /www/luci-static/resources/view/sub_sync/sub_sync_v238.js 2>/dev/null || true
+cp -a /www/luci-static/resources/view/sub_sync/sub_sync.js /www/luci-static/resources/view/sub_sync/sub_sync_v252.js 2>/dev/null || true
+cp -a /www/luci-static/resources/view/sub_sync/sub_sync.js /www/luci-static/resources/view/sub_sync/sub_sync_v253.js 2>/dev/null || true
+cp -a /www/luci-static/resources/view/sub_sync/sub_sync.js /www/luci-static/resources/view/sub_sync/sub_sync_v254.js 2>/dev/null || true
+
+rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
+/etc/init.d/rpcd restart >/dev/null 2>&1 || true
+/etc/init.d/uhttpd restart >/dev/null 2>&1 || true
+
+logger -t sub-sync "Podcop Sub v666 public build v255 installed" 2>/dev/null || true
+# SUBSYNC_INSTALL_VERSION_FILES_V255_END

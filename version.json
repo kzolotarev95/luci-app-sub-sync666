@@ -1,9 +1,9 @@
 {
-  "version": "v254",
-  "build": 254,
-  "title": "Вышло обновление Podcop Sub v666 v254",
-  "message": "Скрыты служебные строки LOCAL_BUILD, REMOTE_VERSION, TITLE, MESSAGE, UPDATE_AVAILABLE и UP_TO_DATE из блока обновления.",
-  "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V254_BEGIN",
+  "version": "v255",
+  "build": 255,
+  "title": "Вышло обновление Podcop Sub v666 v255",
+  "message": "Возвращена кнопка Обновление Модуля при доступной обнове, служебные строки скрыты.",
+  "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V255_BEGIN",
   "install_url": "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install.sh",
-  "released_at": "2026-05-29 22:44:21 +0400"
+  "released_at": "2026-05-29 22:55:57 +0400"
 }

@@ -1111,7 +1111,7 @@ syncAllBtnStates(sec3);
                             singboxConsoleBodyV81
                     ]);
 
-                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V254 */
+                    /* SUBSYNC_DONATERS_PUBLIC_ONLY_V255 */
                     /* SUBSYNC_DONATERS_PUBLIC_CARDS_V134_COMPACT_CARDS */
                     var donatersPublicListV128 = E('div', {
                             'class': 'ss-donaters-grid-v134'
@@ -1415,7 +1415,7 @@ syncAllBtnStates(sec3);
 
                                     var rawRe = /LOCAL_BUILD=|REMOTE_VERSION=|REMOTE_BUILD=|TITLE=|MESSAGE=|UP_TO_DATE|UPDATE_AVAILABLE|REMOTE_/;
 
-                                    var nodes = card.querySelectorAll('pre, code, textarea, .ss-module-update-details-v239');
+                                    var nodes = card.querySelectorAll('pre, code, textarea');
                                     for (var i = 0; i < nodes.length; i++) {
                                             var txt = nodes[i].textContent || nodes[i].value || '';
                                             if (rawRe.test(txt)) {
@@ -4871,7 +4871,7 @@ if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrat
   font-weight:700!important;
 }
 /* SUBSYNC_MODULE_UPDATE_HIDE_DEBUG_DETAILS_CSS_V253 */
-.ss-module-update-card-v236 .ss-module-update-details-v239{display:none!important;}
+.ss-module-update-card-v236 .ss-module-update-details-v239{display:block!important;}
 .ss-module-update-card-v236 pre{display:none!important;}
                            `),
 				manualCardV53B, widgetsRow, sysWidgetsRowV96, wServerCard, sectionCreateCardV45B, subsCard, xhttpCard, autoPickCard, serversCard, 
@@ -5456,4 +5456,82 @@ return view.extend({
     cleanModuleUpdateLogs();
     setInterval(cleanModuleUpdateLogs, 700);
   } catch (e) {}
+})();
+
+;/* SUBSYNC_MODULE_UPDATE_SHOW_UPDATE_BUTTON_V255 */
+(function(){
+  try {
+    if (window.__subsyncModuleUpdateShowButtonV255)
+      return;
+
+    window.__subsyncModuleUpdateShowButtonV255 = true;
+
+    function cleanAndShowUpdateButtonV255() {
+      var card = document.querySelector('.ss-module-update-card-v236');
+      if (!card)
+        return;
+
+      var statusText = '';
+      var st = card.querySelector('.ss-module-update-status-v239');
+      if (st)
+        statusText = String(st.textContent || '');
+
+      var isUpdate = /вышло обновление|update_available|можно нажать/i.test(statusText);
+
+      var rawRe = /LOCAL_BUILD=|REMOTE_VERSION=|REMOTE_BUILD=|TITLE=|MESSAGE=|UPDATE_AVAILABLE|UP_TO_DATE|REQUIRED_MARKER=|Download install\.sh|SAFE_STOP|Podcop Sub v666 update/i;
+
+      var rawNodes = card.querySelectorAll('pre, code, textarea');
+      for (var i = 0; i < rawNodes.length; i++) {
+        var n = rawNodes[i];
+        var txt = String(n.textContent || n.value || '');
+        if (rawRe.test(txt)) {
+          if ('value' in n)
+            n.value = '';
+          n.textContent = '';
+          n.style.setProperty('display', 'none', 'important');
+        }
+      }
+
+      var details = card.querySelectorAll('.ss-module-update-details-v239');
+      for (var d = 0; d < details.length; d++) {
+        var box = details[d];
+        var hasUpdateButton = false;
+        var controls = box.querySelectorAll('button, a, input, .cbi-button');
+
+        for (var c = 0; c < controls.length; c++) {
+          var label = String(controls[c].textContent || controls[c].value || '').replace(/\s+/g, ' ').trim();
+
+          if (/^(детали|скрыть детали|details|hide details)$/i.test(label)) {
+            controls[c].style.setProperty('display', 'none', 'important');
+            continue;
+          }
+
+          if (/обновление модуля|обновить/i.test(label)) {
+            hasUpdateButton = true;
+            controls[c].style.setProperty('display', isUpdate ? 'inline-block' : 'none', 'important');
+            controls[c].style.setProperty('margin-top', '8px', 'important');
+          }
+        }
+
+        if (hasUpdateButton && isUpdate)
+          box.style.setProperty('display', 'block', 'important');
+        else if (!isUpdate)
+          box.style.setProperty('display', 'none', 'important');
+      }
+
+      var topControls = card.querySelectorAll('button, a, input, .cbi-button');
+      for (var t = 0; t < topControls.length; t++) {
+        var topLabel = String(topControls[t].textContent || topControls[t].value || '').replace(/\s+/g, ' ').trim();
+        if (/^(детали|скрыть детали|details|hide details)$/i.test(topLabel)) {
+          topControls[t].style.setProperty('display', 'none', 'important');
+        }
+      }
+    }
+
+    cleanAndShowUpdateButtonV255();
+    window.setTimeout(cleanAndShowUpdateButtonV255, 150);
+    window.setTimeout(cleanAndShowUpdateButtonV255, 700);
+    window.setTimeout(cleanAndShowUpdateButtonV255, 1600);
+    window.setInterval(cleanAndShowUpdateButtonV255, 1500);
+  } catch(e) {}
 })();
