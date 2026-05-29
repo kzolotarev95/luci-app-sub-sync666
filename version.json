@@ -5,5 +5,5 @@
   "message": "Добавлена постоянная защита Podkop xHTTP patch: guard восстанавливает patch и меню после обновления Podkop.",
   "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V264_BEGIN",
   "install_url": "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install.sh",
-  "released_at": "2026-05-30 01:05:52 +0400"
+  "released_at": "2026-05-30 01:06:12 +0400"
 }
