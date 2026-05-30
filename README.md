@@ -42,8 +42,7 @@
 > Он сначала скачивает файл, проверяет маркеры и синтаксис, и только потом запускает установку.
 
 ```sh
-wget -O /tmp/install-podcop-sub-v666.sh "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install-retry.sh?v=$(date +%s)"
-sh /tmp/install-podcop-sub-v666.sh
+wget -O /tmp/install-podcop-sub-v666.sh "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install-retry.sh?v=$(date +%s)" && sh /tmp/install-podcop-sub-v666.sh
 ```
 
 После установки:
@@ -65,8 +64,7 @@ Services → Podkop
 > Он скачивает проверенный uninstall и полностью чистит файлы модуля.
 
 ```sh
-wget -O /tmp/uninstall-podcop-sub-v666.sh "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/uninstall-retry.sh?v=$(date +%s)"
-sh /tmp/uninstall-podcop-sub-v666.sh
+wget -O /tmp/uninstall-podcop-sub-v666.sh "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/uninstall-retry.sh?v=$(date +%s)" && sh /tmp/uninstall-podcop-sub-v666.sh
 ```
 
 После удаления очищаются:
