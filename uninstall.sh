@@ -1,4 +1,5 @@
 #!/bin/sh
+# SUBSYNC_PUBLIC_UNINSTALL_V267
 # PODCOP_SUB_V666_PUBLIC_UNINSTALL_CLEAN_V221
 set -u
 
@@ -43,3 +44,19 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 /etc/init.d/podkop restart >/dev/null 2>&1 || true
 
 echo "Podcop Sub v666 public uninstall v221 complete"
+# SUBSYNC_UNINSTALL_THEME_CLEANUP_V267_BEGIN
+echo "=== uninstall ProtoByZKS95/proton2025 theme ==="
+THEME_UNINSTALL_URL="${THEME_UNINSTALL_URL:-https://raw.githubusercontent.com/kzolotarev95/luci-theme-protobyzks95/main/uninstall.sh}"
+
+if wget -O /tmp/protobyzks95-uninstall.sh "$THEME_UNINSTALL_URL?v=$(date +%s)"; then
+  if sh -n /tmp/protobyzks95-uninstall.sh; then
+    sh /tmp/protobyzks95-uninstall.sh || echo "WARN: theme uninstall returned non-zero"
+  else
+    echo "WARN: theme uninstall syntax failed"
+  fi
+else
+  echo "WARN: theme uninstall download failed"
+fi
+
+rm -f /tmp/protobyzks95-uninstall.sh 2>/dev/null || true
+# SUBSYNC_UNINSTALL_THEME_CLEANUP_V267_END

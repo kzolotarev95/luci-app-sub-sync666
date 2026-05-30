@@ -1,5 +1,5 @@
 #!/bin/sh
-# SUBSYNC_PUBLIC_BUILD_V266B
+# SUBSYNC_PUBLIC_BUILD_V267
 # SUBSYNC_SKIP_THEME_IF_PRESENT_V260_BEGIN
 if [ -d /www/luci-static/proton2025 ] && uci show luci 2>/dev/null | grep -q "ProtoByZKS95"; then
   export SUBSYNC_SKIP_PROTOBYZKS95_THEME=1
@@ -13,7 +13,7 @@ BRANCH="${SUBSYNC_BRANCH:-main}"
 RAW="https://raw.githubusercontent.com/${REPO_SLUG}/${BRANCH}"
 
 echo "========================================="
-echo "  Podcop Sub v666 — public install v266b"
+echo "  Podcop Sub v666 — public install v267"
 echo "========================================="
 echo "Backup: disabled for public/friend install"
 
@@ -104,19 +104,19 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 /etc/init.d/podkop restart >/dev/null 2>&1 || true
 
 echo "========================================="
-echo "Podcop Sub v666 public install v266b complete"
+echo "Podcop Sub v666 public install v267 complete"
 echo "Open: Services -> Podkop"
 echo "Re-login LuCI after install"
 echo "========================================="
-# SUBSYNC_INSTALL_VERSION_FILES_V266B_BEGIN
+# SUBSYNC_INSTALL_VERSION_FILES_V267_BEGIN
 echo "========================================="
-echo " Podcop Sub v666 OTA v266b direct UI fix"
+echo " Podcop Sub v666 OTA v267 theme uninstall support"
 echo "========================================="
 
 SUBSYNC_RAW_BASE="${SUBSYNC_RAW_BASE:-${RAW_BASE:-https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main}}"
 THEME_RAW="https://raw.githubusercontent.com/kzolotarev95/luci-theme-protobyzks95/main/install.sh"
 DST="/www/luci-static/resources/view/sub_sync"
-TMP_JS="/tmp/sub-sync-v266b-$RANDOM.js"
+TMP_JS="/tmp/sub-sync-v267-$RANDOM.js"
 
 echo "[1/13] install ProtoByZKS95/proton2025 theme"
 if wget -O /tmp/protobyzks95-install.sh "$THEME_RAW?v=$(date +%s)"; then
@@ -158,7 +158,7 @@ grep -q 'display:none!important;visibility:hidden!important;padding:2px 12px' "$
 
 echo "[5/13] install JS safely"
 cp -f "$TMP_JS" "$DST/sub_sync.js"
-for v in 208 211 212 221 238 252 253 254 255 256 258 259 260 261 262 263 264 265 266; do
+for v in 208 211 212 221 238 252 253 254 255 256 258 259 260 261 262 263 264 265 266 267; do
   cp -f "$TMP_JS" "$DST/sub_sync_v${v}.js"
 done
 chmod 755 "$DST"
@@ -200,8 +200,8 @@ echo "[11/13] run guard now"
 /usr/bin/podcop-sub-v666-guard || echo "WARN: guard returned non-zero"
 
 echo "[12/13] write local version and clear cache"
-echo "266" > /etc/sub-sync/module-build
-echo "v266b" > /etc/sub-sync/module-version
+echo "267" > /etc/sub-sync/module-build
+echo "v267" > /etc/sub-sync/module-version
 rm -rf /tmp/luci-modulecache /tmp/luci-modulecache/* /tmp/luci-indexcache /tmp/luci-indexcache* /tmp/luci-sessions /tmp/luci-sessions/* 2>/dev/null || true
 find /tmp -maxdepth 1 -type d -name 'luci-*cache*' -exec rm -rf {} + 2>/dev/null || true
 find /tmp -maxdepth 1 -type f -name 'luci-*cache*' -delete 2>/dev/null || true
@@ -212,11 +212,11 @@ uci get luci.main.mediaurlbase 2>/dev/null || true
 grep -RsnE 'sub_sync|Подписки|Мониторинг' /usr/share/luci/menu.d/*.json 2>/dev/null || true
 grep -n 'podcop-sub-v666-guard' /etc/crontabs/root 2>/dev/null || true
 
-nohup sh -c 'sleep 3; /etc/init.d/rpcd restart >/dev/null 2>&1 || true; /etc/init.d/uhttpd restart >/dev/null 2>&1 || true' >/tmp/subsync-v266b-delayed-restart.log 2>&1 &
+nohup sh -c 'sleep 3; /etc/init.d/rpcd restart >/dev/null 2>&1 || true; /etc/init.d/uhttpd restart >/dev/null 2>&1 || true' >/tmp/subsync-v267-delayed-restart.log 2>&1 &
 
 rm -f "$TMP_JS" /tmp/protobyzks95-install.sh 2>/dev/null || true
-logger -t sub-sync "Podcop Sub v666 public build v266b installed with direct UI fix, theme and guard" 2>/dev/null || true
+logger -t sub-sync "Podcop Sub v666 public build v267 installed with theme uninstall support" 2>/dev/null || true
 
 echo "DONE: install.sh finished rc=0"
-echo "DONE: Podcop Sub v666 v266b installed. Manual removed, load button hidden, theme and guard enabled."
-# SUBSYNC_INSTALL_VERSION_FILES_V266B_END
+echo "DONE: Podcop Sub v666 v267 installed. Theme install/uninstall support enabled."
+# SUBSYNC_INSTALL_VERSION_FILES_V267_END
