@@ -1,9 +1,9 @@
 {
-  "version": "v273",
-  "build": 273,
-  "title": "Вышло обновление Podcop Sub v666 v273",
-  "message": "Финальная чистка: больше не создаётся дубль меню Подписки / Мониторинг, guard v273 удаляет дубль вместо восстановления, кнопка Проверить скрыта и дедублицирована.",
-  "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V273_BEGIN",
+  "version": "v274",
+  "build": 274,
+  "title": "Вышло обновление Podcop Sub v666 v274",
+  "message": "Финальная установка/удаление: install имеет локальный ACL fallback, скрывает Проверить до проверок, не создаёт дубль меню, guard не возвращает дубль.",
+  "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V274_BEGIN",
   "install_url": "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install.sh",
-  "released_at": "2026-05-30 13:39:41 +0400"
+  "released_at": "2026-05-30 13:50:13 +0400"
 }

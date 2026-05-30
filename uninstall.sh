@@ -1,10 +1,10 @@
 #!/bin/sh
-# SUBSYNC_PUBLIC_UNINSTALL_V273
+# SUBSYNC_PUBLIC_UNINSTALL_V274
 # PODCOP_SUB_V666_PUBLIC_UNINSTALL_CLEAN_V221
 set -u
 
 echo "========================================="
-echo "  Podcop Sub v666 — public uninstall v273"
+echo "  Podcop Sub v666 — public uninstall v274"
 echo "========================================="
 echo "Backup: disabled for public/friend uninstall"
 
@@ -43,7 +43,7 @@ rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev
 /etc/init.d/uhttpd restart >/dev/null 2>&1 || true
 /etc/init.d/podkop restart >/dev/null 2>&1 || true
 
-echo "Podcop Sub v666 public uninstall v273 complete"
+echo "Podcop Sub v666 public uninstall v274 complete"
 # SUBSYNC_UNINSTALL_FULL_CLEAN_V271_BEGIN
 echo "=== v271 hard remove Podcop Sub v666 module leftovers ==="
 

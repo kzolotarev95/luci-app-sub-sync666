@@ -1,10 +1,8 @@
 #!/bin/sh
-# PODCOP_SUB_V666_PERSISTENT_GUARD_V273
+# PODCOP_SUB_V666_PERSISTENT_GUARD_V274
 LOGTAG="podcop-sub-v666-guard"
 changed=0
 
-# Old versions restored duplicate standalone menu. v273 does the opposite:
-# keep only Podkop-integrated route and remove duplicate luci-app-sub-sync.json.
 if [ -f /usr/share/luci/menu.d/luci-app-sub-sync.json ]; then
   rm -f /usr/share/luci/menu.d/luci-app-sub-sync.json 2>/dev/null || true
   rm -rf /tmp/luci-modulecache /tmp/luci-modulecache/* /tmp/luci-indexcache /tmp/luci-indexcache* 2>/dev/null || true
