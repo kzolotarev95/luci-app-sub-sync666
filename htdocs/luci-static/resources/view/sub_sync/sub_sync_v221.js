@@ -1,4 +1,7 @@
 'use strict';
+/* SUBSYNC_HIDE_UPDATE_CHECK_BUTTON_V269B */
+/* SUBSYNC_HIDE_UPDATE_CHECK_BUTTON_V269 */
+/* SUBSYNC_DIRECT_REMOVE_MANUAL_HIDE_LOAD_V266B */
 'require view';
 'require form';
 'require ui';
@@ -752,7 +755,7 @@ syncAllBtnStates(sec3);
 			var syncCooldown = 0;
 			var syncBtn = E('button', {
 				'class': 'cbi-button cbi-button-apply',
-				'style': 'padding:2px 12px',
+				'style': 'display:none!important;visibility:hidden!important;padding:2px 12px',
 				'click': function() {
 					if (syncCooldown > 0) return;
 					if (subscriptions.length === 0) {
@@ -952,16 +955,16 @@ syncAllBtnStates(sec3);
                     /* SUBSYNC_MANUAL_CONSOLE_ROW_V94 */
                     var manualBtnV53B = E('button', {
                             'class': 'cbi-button cbi-button-neutral',
-                            'style': 'display:inline-block!important;margin:0!important;padding:3px 10px!important;font-size:12px;border-radius:9px;border:1px solid #ff9800;background:transparent;color:#ff9800;font-weight:800;text-align:left!important',
+                            'style': 'display:none!important;margin:0!important;padding:0!important;width:0!important;height:0!important;overflow:hidden!important;border:0!important;background:transparent;color:transparent;font-size:0!important;text-align:left!important',
                             'click': function(ev) {
                                     if (ev && ev.preventDefault)
                                             ev.preventDefault();
 
                                     var isHidden = manualBodyV53B.style.display === 'none';
                                     manualBodyV53B.style.display = isHidden ? 'block' : 'none';
-                                    manualBtnV53B.textContent = isHidden ? 'Скрыть мануал' : 'Мануал: как пользоваться модулем';
+                                    manualBtnV53B.textContent = '';
                             }
-                    }, 'Мануал: как пользоваться модулем');
+                    }, '');
 
                     /* SUBSYNC_SINGBOX_CONSOLE_LOGS_V81 */
                     var singboxConsoleTimerV81 = null;
@@ -1076,7 +1079,7 @@ syncAllBtnStates(sec3);
 
                     var singboxConsoleBtnV81 = E('button', {
                             'class': 'cbi-button cbi-button-neutral',
-                            'style': 'display:inline-block!important;margin:0!important;padding:3px 10px!important;font-size:12px;border-radius:9px;border:1px solid #ff9800;background:transparent;color:#ff9800;font-weight:800;text-align:left!important',
+                            'style': 'display:none!important;margin:0!important;padding:0!important;width:0!important;height:0!important;overflow:hidden!important;border:0!important;background:transparent;color:transparent;font-size:0!important;text-align:left!important',
                             'click': function(ev) {
                                     if (ev && ev.preventDefault)
                                             ev.preventDefault();
@@ -1350,6 +1353,7 @@ syncAllBtnStates(sec3);
 
                     var moduleUpdateCheckBtnV236 = E('button', {
                             'class': 'btn cbi-button cbi-button-neutral',
+                            'style': 'display:none!important;visibility:hidden!important;width:0!important;height:0!important;overflow:hidden!important;margin:0!important;padding:0!important;border:0!important',
                             'click': function(ev) {
                                     ev.preventDefault();
                                     ssModuleUpdateRunV236('check', moduleUpdateCheckBtnV236);

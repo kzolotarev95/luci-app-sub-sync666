@@ -1,9 +1,9 @@
 {
-  "version": "v276",
-  "build": 276,
-  "title": "Вышло обновление Podcop Sub v666 v276",
-  "message": "Исправлен public installer: прямое скачивание через wget, strict retry, ACL fallback, guard init fallback, правильный xHTTP apply. UI не менялся.",
-  "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V276_BEGIN",
+  "version": "v277",
+  "build": 277,
+  "title": "Вышло обновление Podcop Sub v666 v277",
+  "message": "Clean public repo: удалена ошибочная папка root/, выровнен sub_sync_v221.js, исправлен installer theme env leak. UI не менялся.",
+  "required_marker": "SUBSYNC_INSTALL_VERSION_FILES_V277_BEGIN",
   "install_url": "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install.sh",
-  "released_at": "2026-05-30 16:26:06 +0400"
+  "released_at": "2026-05-30 16:52:21 +0400"
 }

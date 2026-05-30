@@ -1,6 +1,6 @@
 #!/bin/sh
-# SUBSYNC_PUBLIC_BUILD_V276
-# SUBSYNC_INSTALL_VERSION_FILES_V276_BEGIN
+# SUBSYNC_PUBLIC_BUILD_V277
+# SUBSYNC_INSTALL_VERSION_FILES_V277_BEGIN
 set -u
 
 REPO_OWNER="${REPO_OWNER:-kzolotarev95}"
@@ -9,10 +9,10 @@ REPO_REF="${REPO_REF:-main}"
 RAW_BASE="https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_REF}"
 
 echo "========================================="
-echo "  Podcop Sub v666 — public install v276"
+echo "  Podcop Sub v666 — public install v277"
 echo "========================================="
 echo "Backup: disabled for public/friend install"
-echo "Downloader: wget strict direct installer v276"
+echo "Downloader: wget strict direct installer v277"
 
 dl() {
   rel="$1"
@@ -203,8 +203,8 @@ rm -f /tmp/root.cron.v276
 /etc/init.d/cron restart 2>/dev/null || true
 
 echo "=== version ==="
-echo "v276" > /etc/sub-sync/module-version
-echo "276" > /etc/sub-sync/module-build
+echo "v277" > /etc/sub-sync/module-version
+echo "277" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
@@ -218,7 +218,7 @@ while [ "$i" -le 5 ]; do
   echo "--- theme try $i/5 ---"
   rm -f /tmp/protobyzks95-install.sh
   if wget -O /tmp/protobyzks95-install.sh "https://raw.githubusercontent.com/kzolotarev95/luci-theme-protobyzks95/main/install.sh?v=$(date +%s)-$i"; then
-    if sh -n /tmp/protobyzks95-install.sh && sh /tmp/protobyzks95-install.sh; then
+    if sh -n /tmp/protobyzks95-install.sh && REPO_OWNER=kzolotarev95 REPO_NAME=luci-theme-protobyzks95 REPO_REF=main sh /tmp/protobyzks95-install.sh; then
       theme_ok=1
       break
     fi
@@ -256,7 +256,7 @@ rm -rf /tmp/luci-modulecache /tmp/luci-modulecache/* /tmp/luci-indexcache /tmp/l
 /etc/init.d/rpcd restart 2>/dev/null || true
 /etc/init.d/uhttpd restart 2>/dev/null || true
 
-echo "DONE_MODULE_OK: Podcop Sub v666 v276 module installed."
+echo "DONE_MODULE_OK: Podcop Sub v666 v277 module installed."
 echo "DONE_THEME_STATUS: mediaurlbase=$(uci get luci.main.mediaurlbase 2>/dev/null || true)"
 echo "DONE: install.sh v276 finished rc=0"
-# SUBSYNC_INSTALL_VERSION_FILES_V276_END
+# SUBSYNC_INSTALL_VERSION_FILES_V277_END

@@ -1,12 +1,12 @@
 #!/bin/sh
-# SUBSYNC_RETRY_INSTALL_V276
+# SUBSYNC_RETRY_INSTALL_V277
 set -u
 
-OUT="/tmp/subsync-install-v276.sh"
+OUT="/tmp/subsync-install-v277.sh"
 BASE="https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main"
 
 echo "========================================="
-echo " Podcop Sub v666 retry installer v276"
+echo " Podcop Sub v666 retry installer v277"
 echo "========================================="
 
 ok=0
@@ -16,14 +16,14 @@ while [ "$i" -le 30 ]; do
   rm -f "$OUT"
 
   if wget -O "$OUT" "$BASE/install.sh?v=$(date +%s)-$i"; then
-    if grep -q 'SUBSYNC_PUBLIC_BUILD_V276' "$OUT" &&
-       grep -q 'SUBSYNC_INSTALL_VERSION_FILES_V276_BEGIN' "$OUT" &&
+    if grep -q 'SUBSYNC_PUBLIC_BUILD_V277' "$OUT" &&
+       grep -q 'SUBSYNC_INSTALL_VERSION_FILES_V277_BEGIN' "$OUT" &&
        sh -n "$OUT"; then
-      echo "OK: install.sh v276 downloaded and verified"
+      echo "OK: install.sh v277 downloaded and verified"
       ok=1
       break
     fi
-    echo "WARN: downloaded install.sh is not verified v276"
+    echo "WARN: downloaded install.sh is not verified v277"
   else
     echo "WARN: install.sh download failed"
   fi
@@ -33,7 +33,7 @@ while [ "$i" -le 30 ]; do
 done
 
 if [ "$ok" != "1" ]; then
-  echo "ERROR: cannot download verified Podcop Sub v666 installer v276 now"
+  echo "ERROR: cannot download verified Podcop Sub v666 installer v277 now"
   echo "Try again later or check router internet/GitHub access."
   exit 1
 fi

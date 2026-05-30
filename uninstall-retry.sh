@@ -1,12 +1,12 @@
 #!/bin/sh
-# SUBSYNC_RETRY_UNINSTALL_V276
+# SUBSYNC_RETRY_UNINSTALL_V277
 set -u
 
-OUT="/tmp/subsync-uninstall-v276.sh"
+OUT="/tmp/subsync-uninstall-v277.sh"
 BASE="https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main"
 
 echo "========================================="
-echo " Podcop Sub v666 retry uninstaller v276"
+echo " Podcop Sub v666 retry uninstaller v277"
 echo "========================================="
 
 ok=0

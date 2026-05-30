@@ -1,5 +1,5 @@
 #!/bin/sh
-# SUBSYNC_MODULE_UPDATE_HELPER_V276
+# SUBSYNC_MODULE_UPDATE_HELPER_V277
 set -u
 
 RAW_BASE="${SUBSYNC_RAW_BASE:-https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main}"
@@ -18,7 +18,7 @@ cmd_check() {
   [ -n "$lb" ] || lb=0
   [ -n "$lv" ] || lv="unknown"
 
-  echo "=== Podcop Sub v666 update check v276 ==="
+  echo "=== Podcop Sub v666 update check v277 ==="
 
   if ! wget -qO "$vf" "$VERSION_URL"; then
     echo "STATUS=ERROR"
@@ -70,7 +70,7 @@ cmd_update() {
   [ -n "$lb" ] || lb=0
   [ -n "$lv" ] || lv="unknown"
 
-  echo "=== Podcop Sub v666 update v276 ==="
+  echo "=== Podcop Sub v666 update v277 ==="
   echo "[00:00] Старт обновления"
   echo "[00:00] Текущая версия: $lv ($lb)"
   echo "[00:00] [1/7] Скачиваю version.json"
