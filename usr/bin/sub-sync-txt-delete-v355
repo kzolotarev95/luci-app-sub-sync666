@@ -132,7 +132,7 @@ delete_file() {
     sync_oldtxt
   fi
 
-  /etc/init.d/podkop restart 2>/dev/null || true
+  /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
 
   left="$(awk -F '\t' 'NF>=3 {c++} END{print c+0}' "$FILES" 2>/dev/null)"
   echo "OK: TXT файл удалён: $fname / удалено серверов: $cnt / осталось TXT: $left"
@@ -143,7 +143,7 @@ clear_all() {
   rm -f "$FILES" "$OLDTXT" "$PING" "$UPLOAD"
   clean_servers_json_txt
   [ -f "$LINKS" ] && grep -vE 'txt-v[0-9]| TXT ' "$LINKS" > "$LINKS.tmp.$$" 2>/dev/null && mv -f "$LINKS.tmp.$$" "$LINKS" || true
-  /etc/init.d/podkop restart 2>/dev/null || true
+  /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
   echo "OK: все TXT удалены / удалено серверов: $cnt"
 }
 

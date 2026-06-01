@@ -65,7 +65,7 @@ if [ "${1:-}" = "delete" ]; then
   fi
 
   uci commit podkop
-  /etc/init.d/podkop restart >/dev/null 2>&1 || true
+  /usr/bin/podcop-sub-v666-safe-podkop-restart || true >/dev/null 2>&1 || true
 
   esc_sec="$(printf '%s' "$SEC" | json_escape)"
   echo "{\"ok\":true,\"section\":\"$esc_sec\",\"deleted_section\":$deleted_section,\"message\":\"Удалён только этот HY2 ключ из указанной секции. Другие секции не тронуты.\"}"

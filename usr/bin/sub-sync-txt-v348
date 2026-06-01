@@ -163,7 +163,7 @@ remove_active_link() {
 
   if [ "$changed" = "1" ]; then
     uci commit podkop 2>/dev/null || true
-    /etc/init.d/podkop restart 2>/dev/null || true
+    /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
   fi
 
   return 0
@@ -569,7 +569,7 @@ txt_v352_delete_file() {
   cleanup_empty_urltest_v352
 
   uci commit podkop 2>/dev/null || true
-  /etc/init.d/podkop restart 2>/dev/null || true
+  /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
 
   left="$(awk -F '\t' -v fid="$fid" -v fname="$fname" 'NF>=3 && (($1 == fid && fid != "") || ($2 == fname && fname != "")) {c++} END{print c+0}' "$FILES" 2>/dev/null)"
 
@@ -590,7 +590,7 @@ txt_v352_clear_all() {
   cleanup_empty_urltest_v352
 
   uci commit podkop 2>/dev/null || true
-  /etc/init.d/podkop restart 2>/dev/null || true
+  /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
 
   echo "OK: все TXT файлы удалены, активные TXT-серверы очищены: $cnt"
 }
@@ -719,7 +719,7 @@ remove_active_link_v350() {
 
   if [ "$changed" = "1" ]; then
     uci commit podkop 2>/dev/null || true
-    /etc/init.d/podkop restart 2>/dev/null || true
+    /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
   fi
 
   return 0
@@ -960,7 +960,7 @@ txt_v353_delete_file() {
   sync_oldtxt 2>/dev/null || true
 
   uci commit podkop 2>/dev/null || true
-  /etc/init.d/podkop restart 2>/dev/null || true
+  /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
 
   left="$(awk -F '\t' 'NF>=3 {c++} END{print c+0}' "$FILES" 2>/dev/null)"
   echo "OK: TXT файл удалён: $fname / серверов очищено: $cnt / осталось TXT-серверов: $left"
@@ -986,7 +986,7 @@ txt_v353_clear_all() {
   rm -f "$FILES" "$OLDTXT" "$UPLOAD" "$PING"
 
   uci commit podkop 2>/dev/null || true
-  /etc/init.d/podkop restart 2>/dev/null || true
+  /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
 
   echo "OK: все TXT файлы удалены, активные TXT-серверы очищены: $cnt"
 }

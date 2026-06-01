@@ -130,7 +130,7 @@ fi
 
 if [ -s "$CHANGED" ]; then
     uci commit podkop 2>/dev/null || true
-    /etc/init.d/podkop restart 2>/dev/null || true
+    /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
     DID=1
 else
     DID=0

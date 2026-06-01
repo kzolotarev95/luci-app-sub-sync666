@@ -129,7 +129,7 @@ apply_links_file() {
 
   logger -t sub-sync "Mixed URLTest v165: applied $count link(s) to section $sec" 2>/dev/null || true
 
-  /etc/init.d/podkop restart || return 1
+  /usr/bin/podcop-sub-v666-safe-podkop-restart || true || return 1
   sleep 5
 
   /etc/init.d/podkop status >/dev/null 2>&1 || true
@@ -190,7 +190,7 @@ cmd_remove_section() {
 
   uci -q delete "podkop.$sec" 2>/dev/null || true
   uci commit podkop
-  /etc/init.d/podkop restart || true
+  /usr/bin/podcop-sub-v666-safe-podkop-restart || true || true
 
   printf '{"ok":true,"removed":"%s"}\n' "$sec"
 }

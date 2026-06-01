@@ -117,7 +117,7 @@ apply_ids() {
 
     uci commit podkop
 
-    /etc/init.d/podkop restart 2>/dev/null || true
+    /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
 
     log "AutoPick: applied $added server(s) to $target ($key), mode=$mode"
     echo "OK: applied $added"

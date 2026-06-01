@@ -41,7 +41,7 @@ echo "=== clear LuCI cache ==="
 rm -rf /tmp/luci-modulecache/* /tmp/luci-indexcache* /tmp/luci-sessions/* 2>/dev/null || true
 /etc/init.d/rpcd restart >/dev/null 2>&1 || true
 /etc/init.d/uhttpd restart >/dev/null 2>&1 || true
-/etc/init.d/podkop restart >/dev/null 2>&1 || true
+/usr/bin/podcop-sub-v666-safe-podkop-restart || true >/dev/null 2>&1 || true
 
 echo "Podcop Sub v666 public uninstall v275 complete"
 # SUBSYNC_UNINSTALL_FULL_CLEAN_V271_BEGIN

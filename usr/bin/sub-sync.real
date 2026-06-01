@@ -183,7 +183,7 @@ cmd_apply() {
         return 1
     fi
     uci commit podkop
-    /etc/init.d/podkop restart 2>/dev/null || true
+    /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
     log "Применено $_added сервер(ов) в секцию '$_target'"
     echo "OK: $_added"
 }

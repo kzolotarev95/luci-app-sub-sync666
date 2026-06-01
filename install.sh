@@ -1,12 +1,43 @@
 #!/bin/sh
-# SUBSYNC_PUBLIC_BUILD_V361
-# SUBSYNC_PUBLIC_BUILD_V360
-# SUBSYNC_PUBLIC_BUILD_V359
-# SUBSYNC_PUBLIC_BUILD_V358
-# SUBSYNC_PUBLIC_BUILD_V357
-# SUBSYNC_PUBLIC_BUILD_V340
-# SUBSYNC_PUBLIC_BUILD_V340
-# SUBSYNC_INSTALL_VERSION_FILES_V277_BEGIN
+# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V387_BEGIN
+cat > /usr/bin/podcop-sub-v666-safe-podkop-restart <<'EOSAFE'
+#!/bin/sh
+# SUBSYNC_SAFE_PODKOP_RESTART_V387
+set -u
+
+has_outbound() {
+  for S in $(uci show podkop 2>/dev/null | sed -n 's/^podkop\.\([^.=]*\)=section.*/\1/p'); do
+    for O in proxy_string selector_proxy_links urltest_proxy_links outbound_json interface; do
+      V="$(uci -q get podkop.$S.$O 2>/dev/null || true)"
+      [ -n "$V" ] && return 0
+    done
+  done
+  return 1
+}
+
+if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
+  /usr/bin/podcop-sub-v666-xhttp-patch apply >/dev/null 2>&1 || true
+fi
+
+if ! has_outbound; then
+  logger -t podcop-sub-v666 "v387: skip podkop restart, no outbound configured yet"
+  /etc/init.d/podkop stop >/dev/null 2>&1 || true
+  echo "SKIP_PODKOP_RESTART_NO_OUTBOUND"
+  exit 0
+fi
+
+/usr/bin/podcop-sub-v666-safe-podkop-restart || true
+EOSAFE
+chmod +x /usr/bin/podcop-sub-v666-safe-podkop-restart
+# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V387_END
+# SUBSYNC_PUBLIC_BUILD_V387
+# SUBSYNC_PUBLIC_BUILD_V387
+# SUBSYNC_PUBLIC_BUILD_V387
+# SUBSYNC_PUBLIC_BUILD_V387
+# SUBSYNC_PUBLIC_BUILD_V387
+# SUBSYNC_PUBLIC_BUILD_V387
+# SUBSYNC_PUBLIC_BUILD_V387
+# SUBSYNC_INSTALL_VERSION_FILES_V387_BEGIN
 set -u
 
 REPO_OWNER="${REPO_OWNER:-kzolotarev95}"
@@ -278,7 +309,7 @@ rm -rf /tmp/luci-modulecache /tmp/luci-modulecache/* /tmp/luci-indexcache /tmp/l
 echo "DONE_MODULE_OK: Podcop Sub v666 v361 module installed."
 echo "DONE_THEME_STATUS: mediaurlbase=$(uci get luci.main.mediaurlbase 2>/dev/null || true)"
 echo "DONE: install.sh v361 finished rc=0"
-# SUBSYNC_INSTALL_VERSION_FILES_V277_END
+# SUBSYNC_INSTALL_VERSION_FILES_V387_END
 
 # SUBSYNC_INSTALL_DELETE_PURGE_HELPER_V332_BEGIN
 echo "=== install delete purge helper v331/v332 ==="

@@ -1,6 +1,6 @@
 {
-  "version": "v361",
-  "build": 361,
-  "required_marker": "SUBSYNC_PUBLIC_BUILD_V361",
-  "notes": "Guard restores Podcop Sub v666 tabs after Podkop update"
+  "version": "v387",
+  "build": 387,
+  "title": "Podcop Sub v666",
+  "notes": "Safe Podkop restart on empty outbound config; preserve xHTTP patch after Podkop updates."
 }

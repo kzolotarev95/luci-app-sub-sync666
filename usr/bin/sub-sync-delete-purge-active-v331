@@ -122,6 +122,6 @@ echo "--- podkop after purge, relevant ---"
 uci show podkop 2>/dev/null | grep -Ei 'vless|trojan|hysteria|hy2|ss://|urltest|proxy|server|outbound|node|link|address|port|protocol|transport|uuid|password|213131' || echo "OK_NO_ACTIVE_SERVERS_OR_SECTIONS"
 
 rm -rf /tmp/luci-* /tmp/luci-indexcache* /tmp/.uci /tmp/ucitrack* 2>/dev/null || true
-/etc/init.d/podkop restart 2>/dev/null || true
+/usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
 
 exit 0

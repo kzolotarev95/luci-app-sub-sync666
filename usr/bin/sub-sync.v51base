@@ -159,7 +159,7 @@ done
 
 if [ -s "$FLAG" ]; then
     uci commit podkop 2>/dev/null || true
-    /etc/init.d/podkop restart 2>/dev/null || true
+    /usr/bin/podcop-sub-v666-safe-podkop-restart || true 2>/dev/null || true
     PODKOP_CHANGED=1
 else
     PODKOP_CHANGED=0
