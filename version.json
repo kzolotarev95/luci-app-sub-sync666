@@ -1,6 +1,6 @@
 {
-  "version": "v387",
-  "build": 387,
-  "title": "Podcop Sub v666",
-  "notes": "Safe Podkop restart on empty outbound config; preserve xHTTP patch after Podkop updates."
+  "version": "v388",
+  "build": 388,
+  "required_marker": "SUBSYNC_PUBLIC_BUILD_V388",
+  "notes": "Fix safe Podkop restart helper recursion; skip Podkop restart when no outbound; preserve xHTTP patch."
 }

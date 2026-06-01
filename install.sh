@@ -1,8 +1,8 @@
 #!/bin/sh
-# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V387_BEGIN
+# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V388_BEGIN
 cat > /usr/bin/podcop-sub-v666-safe-podkop-restart <<'EOSAFE'
 #!/bin/sh
-# SUBSYNC_SAFE_PODKOP_RESTART_V387
+# SUBSYNC_SAFE_PODKOP_RESTART_V388
 set -u
 
 has_outbound() {
@@ -20,24 +20,24 @@ if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
 fi
 
 if ! has_outbound; then
-  logger -t podcop-sub-v666 "v387: skip podkop restart, no outbound configured yet"
+  logger -t podcop-sub-v666 "v388: skip podkop restart, no outbound configured yet"
   /etc/init.d/podkop stop >/dev/null 2>&1 || true
   echo "SKIP_PODKOP_RESTART_NO_OUTBOUND"
   exit 0
 fi
 
-/usr/bin/podcop-sub-v666-safe-podkop-restart || true
+/etc/init.d/podkop restart
 EOSAFE
 chmod +x /usr/bin/podcop-sub-v666-safe-podkop-restart
-# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V387_END
-# SUBSYNC_PUBLIC_BUILD_V387
-# SUBSYNC_PUBLIC_BUILD_V387
-# SUBSYNC_PUBLIC_BUILD_V387
-# SUBSYNC_PUBLIC_BUILD_V387
-# SUBSYNC_PUBLIC_BUILD_V387
-# SUBSYNC_PUBLIC_BUILD_V387
-# SUBSYNC_PUBLIC_BUILD_V387
-# SUBSYNC_INSTALL_VERSION_FILES_V387_BEGIN
+# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V388_END
+# SUBSYNC_PUBLIC_BUILD_V388
+# SUBSYNC_PUBLIC_BUILD_V388
+# SUBSYNC_PUBLIC_BUILD_V388
+# SUBSYNC_PUBLIC_BUILD_V388
+# SUBSYNC_PUBLIC_BUILD_V388
+# SUBSYNC_PUBLIC_BUILD_V388
+# SUBSYNC_PUBLIC_BUILD_V388
+# SUBSYNC_INSTALL_VERSION_FILES_V388_BEGIN
 set -u
 
 REPO_OWNER="${REPO_OWNER:-kzolotarev95}"
@@ -306,10 +306,10 @@ rm -rf /tmp/luci-modulecache /tmp/luci-modulecache/* /tmp/luci-indexcache /tmp/l
 /etc/init.d/rpcd restart 2>/dev/null || true
 /etc/init.d/uhttpd restart 2>/dev/null || true
 
-echo "DONE_MODULE_OK: Podcop Sub v666 v361 module installed."
+echo "DONE_MODULE_OK: Podcop Sub v666 v388 module installed."
 echo "DONE_THEME_STATUS: mediaurlbase=$(uci get luci.main.mediaurlbase 2>/dev/null || true)"
-echo "DONE: install.sh v361 finished rc=0"
-# SUBSYNC_INSTALL_VERSION_FILES_V387_END
+echo "DONE: install.sh v388 finished rc=0"
+# SUBSYNC_INSTALL_VERSION_FILES_V388_END
 
 # SUBSYNC_INSTALL_DELETE_PURGE_HELPER_V332_BEGIN
 echo "=== install delete purge helper v331/v332 ==="
