@@ -13,7 +13,8 @@
 ---
 
 
-<img width="855" height="686" alt="chrome_kkTqBjO4jb" src="https://github.com/user-attachments/assets/d290fac8-9ad7-41c2-9a49-fde4dc1d9aeb" />
+<img width="835" height="716" alt="666" src="https://github.com/user-attachments/assets/4ac9cb6e-4076-4685-9eea-149f017b5a6c" />
+
 
 
 ---
@@ -42,8 +43,7 @@
 > Он сначала скачивает файл, проверяет маркеры и синтаксис, и только потом запускает установку.
 
 ```sh
-wget -O /tmp/install-podcop-sub-v666.sh "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install-retry.sh?v=$(date +%s)"
-sh /tmp/install-podcop-sub-v666.sh
+wget -O /tmp/install-podcop-sub-v666.sh "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install-retry.sh?v=$(date +%s)" && sh /tmp/install-podcop-sub-v666.sh
 ```
 
 После установки:
@@ -65,8 +65,7 @@ Services → Podkop
 > Он скачивает проверенный uninstall и полностью чистит файлы модуля.
 
 ```sh
-wget -O /tmp/uninstall-podcop-sub-v666.sh "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/uninstall-retry.sh?v=$(date +%s)"
-sh /tmp/uninstall-podcop-sub-v666.sh
+wget -O /tmp/uninstall-podcop-sub-v666.sh "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/uninstall-retry.sh?v=$(date +%s)" && sh /tmp/uninstall-podcop-sub-v666.sh
 ```
 
 После удаления очищаются:
@@ -396,6 +395,3 @@ Logout/Login LuCI + Ctrl + F5
 ## ❤️ Поддержка проекта
 
 Если модуль оказался полезен — Подержать Донатом  Сбербанк :  4817760258323256
-
-
-
