@@ -1,4 +1,5 @@
 #!/bin/sh
+# SUBSYNC_PUBLIC_BUILD_V332
 # SUBSYNC_PUBLIC_BUILD_V277
 # SUBSYNC_INSTALL_VERSION_FILES_V277_BEGIN
 set -u
@@ -203,8 +204,8 @@ rm -f /tmp/root.cron.v276
 /etc/init.d/cron restart 2>/dev/null || true
 
 echo "=== version ==="
-echo "v277" > /etc/sub-sync/module-version
-echo "277" > /etc/sub-sync/module-build
+echo "v332" > /etc/sub-sync/module-version
+echo "332" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
@@ -260,3 +261,9 @@ echo "DONE_MODULE_OK: Podcop Sub v666 v277 module installed."
 echo "DONE_THEME_STATUS: mediaurlbase=$(uci get luci.main.mediaurlbase 2>/dev/null || true)"
 echo "DONE: install.sh v276 finished rc=0"
 # SUBSYNC_INSTALL_VERSION_FILES_V277_END
+
+# SUBSYNC_INSTALL_DELETE_PURGE_HELPER_V332_BEGIN
+echo "=== install delete purge helper v331/v332 ==="
+SUBSYNC_RAW_BASE="https://raw.githubusercontent.com/${REPO_OWNER:-kzolotarev95}/${REPO_NAME:-luci-app-sub-sync666}/${REPO_REF:-main}"
+wget -O /usr/bin/sub-sync-delete-purge-active-v331 "$SUBSYNC_RAW_BASE/usr/bin/sub-sync-delete-purge-active-v331?v=$(date +%s)" && chmod +x /usr/bin/sub-sync-delete-purge-active-v331 || echo "WARN: delete purge helper download failed"
+# SUBSYNC_INSTALL_DELETE_PURGE_HELPER_V332_END

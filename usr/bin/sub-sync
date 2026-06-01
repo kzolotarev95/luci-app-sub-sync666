@@ -6,6 +6,21 @@
 # includes SUBSYNC_WRAPPER_SUBS_INFO_ALIAS_V213
 
 REAL="/usr/bin/sub-sync.real"
+# SUBSYNC_DELETE_SUB_PURGE_ACTIVE_SECTIONS_V331_WRAPPER
+case "${1:-}" in
+  delete-purge-v331)
+    shift
+    exec /usr/bin/sub-sync-delete-purge-active-v331 "$@"
+  ;;
+  del-sub|delete-sub|remove-sub|delete-subscription)
+    _cmd="$1"
+    shift
+    _rc=0
+    "$REAL" "$_cmd" "$@" || _rc="$?"
+    /usr/bin/sub-sync-delete-purge-active-v331 2>&1 || true
+    exit "$_rc"
+  ;;
+esac
 HY2="/usr/bin/sub-sync-happ-json-hy2-import"
 
 if [ ! -x "$REAL" ]; then

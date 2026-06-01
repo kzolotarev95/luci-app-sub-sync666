@@ -12,6 +12,446 @@
 'require view.podkop.section as section';
 'require view.podkop.dashboard as dashboard';
 'require view.podkop.diagnostic as diagnostic';
+/* SUBSYNC_MOVE_MANUAL_REFRESH_BUTTON_ONLY_V328_BEGIN */
+(function(){
+  if (window.__SUBSYNC_MOVE_MANUAL_REFRESH_BUTTON_ONLY_V328) return;
+  window.__SUBSYNC_MOVE_MANUAL_REFRESH_BUTTON_ONLY_V328 = true;
+
+  function txt(n) {
+    try { return String((n && (n.textContent || n.innerText)) || '').trim(); }
+    catch(e) { return ''; }
+  }
+
+  function removeOldSeparateButtonV328() {
+    try {
+      var old = document.getElementById('ss-manual-refresh-servers-v327');
+      if (old && old.parentNode)
+        old.parentNode.removeChild(old);
+    } catch(e) {}
+  }
+
+  function findAddServersControlsV328() {
+    try {
+      var controls = document.querySelectorAll('.ss-controls');
+      for (var i = 0; i < controls.length; i++) {
+        var t = txt(controls[i]);
+        if (/Добавить\s+список/i.test(t) && /Добавить\s*\+\s*загрузить\s+серверы/i.test(t))
+          return controls[i];
+      }
+    } catch(e) {}
+    return null;
+  }
+
+  function addButtonInsideTargetBlockV328() {
+    try {
+      removeOldSeparateButtonV328();
+
+      if (document.getElementById('ss-manual-refresh-servers-inline-v328'))
+        return;
+
+      var target = findAddServersControlsV328();
+      if (!target) return;
+
+      var btn = document.createElement('button');
+      btn.id = 'ss-manual-refresh-servers-inline-v328';
+      btn.type = 'button';
+      btn.className = 'cbi-button';
+      btn.style.cssText = 'padding:2px 10px;font-size:12px;background:transparent;color:#4caf50;border:1px solid #4caf50';
+      btn.textContent = 'Обновить серверы вручную';
+
+      var msg = document.createElement('span');
+      msg.id = 'ss-manual-refresh-servers-inline-msg-v328';
+      msg.className = 'ss-label';
+      msg.style.cssText = 'color:#999';
+
+      btn.onclick = function(ev) {
+        ev.preventDefault();
+        btn.disabled = true;
+        msg.textContent = 'Обновляю серверы...';
+
+        try {
+          fs.exec('/usr/bin/sub-sync', ['sync']).then(function() {
+            msg.textContent = 'Готово. Обновляю страницу...';
+            window.setTimeout(function() {
+              try { window.location.href = window.location.pathname + '?v=' + Date.now(); }
+              catch(e) { window.location.reload(); }
+            }, 1200);
+          }).catch(function(e) {
+            btn.disabled = false;
+            msg.textContent = 'Ошибка: ' + String((e && e.message) || e);
+          });
+        } catch(e) {
+          btn.disabled = false;
+          msg.textContent = 'Ошибка запуска: ' + String((e && e.message) || e);
+        }
+      };
+
+      target.appendChild(btn);
+      target.appendChild(msg);
+    } catch(e) {}
+  }
+
+  function runV328() {
+    removeOldSeparateButtonV328();
+    addButtonInsideTargetBlockV328();
+  }
+
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', runV328);
+  else
+    runV328();
+
+  setTimeout(runV328, 500);
+  setTimeout(runV328, 1500);
+  setTimeout(runV328, 3000);
+  setTimeout(runV328, 6000);
+
+  if (typeof MutationObserver !== 'undefined') {
+    try {
+      new MutationObserver(runV328).observe(document.documentElement || document.body, { childList:true, subtree:true });
+    } catch(e) {}
+  }
+})();
+/* SUBSYNC_MOVE_MANUAL_REFRESH_BUTTON_ONLY_V328_END */
+/* SUBSYNC_PING_SORT_MANUAL_REFRESH_ONLY_V327_BEGIN */
+(function(){
+  if (window.__SUBSYNC_PING_SORT_MANUAL_REFRESH_ONLY_V327) return;
+  window.__SUBSYNC_PING_SORT_MANUAL_REFRESH_ONLY_V327 = true;
+
+  function textOf(n) {
+    try { return String((n && (n.textContent || n.innerText)) || '').trim(); }
+    catch(e) { return ''; }
+  }
+
+  function pingValue(row) {
+    try {
+      var c = row.querySelector('.td[data-title="Пинг"]') || row.children[5];
+      var t = textOf(c);
+      var m = t.match(/[0-9]+/);
+      return m ? parseInt(m[0], 10) : 999999;
+    } catch(e) {
+      return 999999;
+    }
+  }
+
+  function renumber(table) {
+    try {
+      var rows = table.querySelectorAll('.tr:not(.table-titles)');
+      for (var i = 0; i < rows.length; i++) {
+        var c = rows[i].querySelector('.td[data-title="#"]') || rows[i].children[0];
+        if (c) c.textContent = String(i + 1);
+        rows[i].classList.remove('cbi-rowstyle-1');
+        rows[i].classList.remove('cbi-rowstyle-2');
+        rows[i].classList.add((i % 2) ? 'cbi-rowstyle-2' : 'cbi-rowstyle-1');
+      }
+    } catch(e) {}
+  }
+
+  function sortOneTable(table) {
+    try {
+      if (!table) return;
+      var rows = Array.prototype.slice.call(table.querySelectorAll('.tr:not(.table-titles)'));
+      if (!rows.length) return;
+
+      rows = rows.map(function(r, i) { return { r:r, i:i, p:pingValue(r) }; });
+      rows.sort(function(a, b) {
+        if (a.p !== b.p) return a.p - b.p;
+        return a.i - b.i;
+      });
+
+      for (var i = 0; i < rows.length; i++)
+        table.appendChild(rows[i].r);
+
+      renumber(table);
+    } catch(e) {}
+  }
+
+  function sortAllPingTables() {
+    try {
+      var tables = document.querySelectorAll('.ss-table-wrap .table');
+      for (var i = 0; i < tables.length; i++)
+        sortOneTable(tables[i]);
+    } catch(e) {}
+  }
+
+  function unfoldAreaForPing(btn) {
+    try {
+      var area = btn.closest('.ss-card') || btn.closest('.cbi-section') || document;
+      var wraps = area.querySelectorAll('.ss-table-wrap,.table');
+      for (var i = 0; i < wraps.length; i++) {
+        wraps[i].style.setProperty('display', 'block', 'important');
+        wraps[i].style.setProperty('visibility', 'visible', 'important');
+        wraps[i].style.removeProperty('height');
+        wraps[i].style.removeProperty('max-height');
+        wraps[i].style.removeProperty('overflow');
+      }
+
+      var hiddenRows = area.querySelectorAll('.tr.ss-server-hidden-v79');
+      for (var j = 0; j < hiddenRows.length; j++) {
+        hiddenRows[j].classList.remove('ss-server-hidden-v79');
+        hiddenRows[j].style.setProperty('display', '', '');
+      }
+    } catch(e) {}
+  }
+
+  function hookPingButtons() {
+    try {
+      var buttons = document.querySelectorAll('button');
+      for (var i = 0; i < buttons.length; i++) {
+        var b = buttons[i];
+        if (b.__ssPingSortV327) continue;
+        if (!/Проверить\s+пинг|Пинг/i.test(textOf(b))) continue;
+
+        b.__ssPingSortV327 = true;
+        b.addEventListener('click', function() {
+          unfoldAreaForPing(this);
+          window.setTimeout(sortAllPingTables, 2500);
+          window.setTimeout(sortAllPingTables, 6000);
+          window.setTimeout(sortAllPingTables, 12000);
+          window.setTimeout(sortAllPingTables, 25000);
+          window.setTimeout(sortAllPingTables, 45000);
+        }, true);
+      }
+    } catch(e) {}
+  }
+
+  function hookPingHeaderSort() {
+    try {
+      var ths = document.querySelectorAll('.table-titles .th');
+      for (var i = 0; i < ths.length; i++) {
+        var th = ths[i];
+        if (th.__ssPingHeaderSortV327) continue;
+        if (!/^Пинг$/i.test(textOf(th))) continue;
+
+        th.__ssPingHeaderSortV327 = true;
+        th.style.cursor = 'pointer';
+        th.title = 'Сортировать по пингу';
+        th.addEventListener('click', function() {
+          var table = this.closest('.table');
+          sortOneTable(table);
+        });
+      }
+    } catch(e) {}
+  }
+
+  function addManualRefreshButton() {
+    try {
+      if (document.getElementById('ss-manual-refresh-servers-v327')) return;
+
+      var root = document.querySelector('#view') || document.querySelector('main') || document.body;
+      if (!root) return;
+
+      var box = document.createElement('div');
+      box.id = 'ss-manual-refresh-servers-v327';
+      box.className = 'ss-controls';
+      box.style.cssText = 'margin:8px 0 10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap';
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cbi-button';
+      btn.style.cssText = 'padding:2px 10px;font-size:12px;background:transparent;color:#4caf50;border:1px solid #4caf50';
+      btn.textContent = 'Обновить серверы вручную';
+
+      var msg = document.createElement('span');
+      msg.className = 'ss-label';
+      msg.style.cssText = 'font-size:12px;opacity:.85';
+      msg.textContent = '';
+
+      btn.onclick = function(ev) {
+        ev.preventDefault();
+        btn.disabled = true;
+        msg.textContent = 'Обновляю серверы...';
+
+        try {
+          fs.exec('/usr/bin/sub-sync', ['sync']).then(function(res) {
+            var out = '';
+            try { out = String((res && (res.stdout || res.stderr)) || ''); } catch(e) {}
+            msg.textContent = out ? 'Готово. Обновляю страницу...' : 'Готово. Обновляю страницу...';
+            window.setTimeout(function() {
+              try { window.location.href = window.location.pathname + '?v=' + Date.now(); }
+              catch(e) { window.location.reload(); }
+            }, 1200);
+          }).catch(function(e) {
+            btn.disabled = false;
+            msg.textContent = 'Ошибка обновления серверов: ' + String((e && e.message) || e);
+          });
+        } catch(e) {
+          btn.disabled = false;
+          msg.textContent = 'Ошибка запуска: ' + String((e && e.message) || e);
+        }
+      };
+
+      box.appendChild(btn);
+      box.appendChild(msg);
+
+      var anchor = root.querySelector('.ss-table-wrap') || root.querySelector('.ss-xhttp-card-v2') || root.querySelector('.ss-card') || root.firstChild;
+      if (anchor && anchor.parentNode)
+        anchor.parentNode.insertBefore(box, anchor);
+      else
+        root.insertBefore(box, root.firstChild);
+    } catch(e) {}
+  }
+
+  function run() {
+    hookPingButtons();
+    hookPingHeaderSort();
+    addManualRefreshButton();
+  }
+
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', run);
+  else
+    run();
+
+  window.setTimeout(run, 700);
+  window.setTimeout(run, 2000);
+  window.setTimeout(run, 5000);
+})();
+/* SUBSYNC_PING_SORT_MANUAL_REFRESH_ONLY_V327_END */
+/* SUBSYNC_REMOVE_EMPTY_MODULE_UPDATE_SLOT_ONLY_V326_BEGIN */
+(function(){
+  if (window.__SUBSYNC_REMOVE_EMPTY_MODULE_UPDATE_SLOT_ONLY_V326) return;
+  window.__SUBSYNC_REMOVE_EMPTY_MODULE_UPDATE_SLOT_ONLY_V326 = true;
+
+  function removeEmptyModuleUpdateSlotOnlyV326() {
+    try {
+      var nodes = document.querySelectorAll('div.ss-module-update-slot-v246.ss-module-update-slot-v249');
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
+
+        if (n.children.length === 0 && String(n.textContent || '').trim() === '') {
+          if (n.parentNode)
+            n.parentNode.removeChild(n);
+        }
+      }
+    } catch(e) {}
+  }
+
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', removeEmptyModuleUpdateSlotOnlyV326);
+  else
+    removeEmptyModuleUpdateSlotOnlyV326();
+
+  setTimeout(removeEmptyModuleUpdateSlotOnlyV326, 300);
+  setTimeout(removeEmptyModuleUpdateSlotOnlyV326, 1000);
+  setTimeout(removeEmptyModuleUpdateSlotOnlyV326, 2500);
+
+  if (typeof MutationObserver !== 'undefined') {
+    try {
+      new MutationObserver(removeEmptyModuleUpdateSlotOnlyV326)
+        .observe(document.documentElement || document.body, { childList:true, subtree:true });
+    } catch(e) {}
+  }
+})();
+/* SUBSYNC_REMOVE_EMPTY_MODULE_UPDATE_SLOT_ONLY_V326_END */
+/* SUBSYNC_REMOVE_MODULE_TEXT_ANIMATIONS_ONLY_V324_BEGIN */
+(function(){
+  if (window.__SUBSYNC_REMOVE_MODULE_TEXT_ANIMATIONS_ONLY_V324) return;
+  window.__SUBSYNC_REMOVE_MODULE_TEXT_ANIMATIONS_ONLY_V324 = true;
+
+  function addNoAnimStyleV324() {
+    try {
+      if (document.getElementById('ss-no-module-text-animations-v324-style')) return;
+
+      var st = document.createElement('style');
+      st.id = 'ss-no-module-text-animations-v324-style';
+      st.textContent = [
+        '[class^="ss-"],[class*=" ss-"]{animation:none!important;transition:none!important;}',
+        '[class^="ss-"]::before,[class*=" ss-"]::before,[class^="ss-"]::after,[class*=" ss-"]::after{animation:none!important;transition:none!important;}',
+        '.ss-subsync-shine-v115,.ss-podcop-sub-v666-shine-v122,.ss-podcop-sub-v666-shine-v136{animation:none!important;background-position:0 0!important;text-shadow:none!important;}',
+        '.ss-donate-banner-v257,.ss-donate-banner-v257 *{animation:none!important;transition:none!important;}',
+        '.ss-donate-banner-v257::before,.ss-donate-banner-v257::after{animation:none!important;transition:none!important;display:none!important;}',
+        '.ss-donate-banner-v257__glow{animation:none!important;transition:none!important;display:none!important;}',
+        '.ss-donate-banner-v257__top,.ss-donate-banner-v257__sub,.ss-donate-banner-v257__bank,.ss-donate-banner-v257__num{animation:none!important;transition:none!important;text-shadow:none!important;}',
+        '.ss-donater-mini-v134,.ss-donater-mini-v134 *{animation:none!important;transition:none!important;text-shadow:none!important;}',
+        '.ss-autologic-warning,.ss-auto-warning,.ss-blink,.ss-pulse{animation:none!important;transition:none!important;text-shadow:none!important;}'
+      ].join('\n');
+
+      document.head.appendChild(st);
+    } catch(e) {}
+  }
+
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', addNoAnimStyleV324);
+  else
+    addNoAnimStyleV324();
+
+  setTimeout(addNoAnimStyleV324, 500);
+})();
+/* SUBSYNC_REMOVE_MODULE_TEXT_ANIMATIONS_ONLY_V324_END */
+/* SUBSYNC_REMOVE_AUTOPICK_BLOCK_ONLY_V323_BEGIN */
+(function(){
+  if (window.__SUBSYNC_REMOVE_AUTOPICK_BLOCK_ONLY_V323) return;
+  window.__SUBSYNC_REMOVE_AUTOPICK_BLOCK_ONLY_V323 = true;
+
+  function removeAutopickBlockOnlyV323() {
+    try {
+      var cards = document.querySelectorAll('div.ss-card');
+      for (var i = 0; i < cards.length; i++) {
+        var card = cards[i];
+        var title = card.querySelector('.ss-card__title');
+        var text = String((title && (title.textContent || title.innerText)) || '').trim();
+
+        if (/^Автоподбор\s+серверов\s+после\s+обновления$/i.test(text)) {
+          if (card.parentNode)
+            card.parentNode.removeChild(card);
+        }
+      }
+    } catch(e) {}
+  }
+
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', removeAutopickBlockOnlyV323);
+  else
+    removeAutopickBlockOnlyV323();
+
+  setTimeout(removeAutopickBlockOnlyV323, 300);
+  setTimeout(removeAutopickBlockOnlyV323, 1000);
+  setTimeout(removeAutopickBlockOnlyV323, 2500);
+
+  if (typeof MutationObserver !== 'undefined') {
+    try {
+      new MutationObserver(removeAutopickBlockOnlyV323)
+        .observe(document.documentElement || document.body, { childList:true, subtree:true });
+    } catch(e) {}
+  }
+})();
+/* SUBSYNC_REMOVE_AUTOPICK_BLOCK_ONLY_V323_END */
+/* SUBSYNC_REMOVE_EXACT_MODULE_UPDATE_DOM_V322_BEGIN */
+(function(){
+  if (window.__SUBSYNC_REMOVE_EXACT_MODULE_UPDATE_DOM_V322) return;
+  window.__SUBSYNC_REMOVE_EXACT_MODULE_UPDATE_DOM_V322 = true;
+
+  function removeExactModuleUpdateBlockV322() {
+    try {
+      var nodes = document.querySelectorAll('div.ss-card.ss-module-update-card-v236');
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
+        var title = n.querySelector('.ss-card__title');
+        var text = String((title && (title.textContent || title.innerText)) || '');
+        if (/Обновление\s*Модуля/i.test(text))
+          n.parentNode && n.parentNode.removeChild(n);
+      }
+    } catch(e) {}
+  }
+
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', removeExactModuleUpdateBlockV322);
+  else
+    removeExactModuleUpdateBlockV322();
+
+  setTimeout(removeExactModuleUpdateBlockV322, 300);
+  setTimeout(removeExactModuleUpdateBlockV322, 1000);
+  setTimeout(removeExactModuleUpdateBlockV322, 2500);
+
+  if (typeof MutationObserver !== 'undefined') {
+    try {
+      new MutationObserver(removeExactModuleUpdateBlockV322)
+        .observe(document.documentElement || document.body, { childList:true, subtree:true });
+    } catch(e) {}
+  }
+})();
+/* SUBSYNC_REMOVE_EXACT_MODULE_UPDATE_DOM_V322_END */
 /* SUBSYNC_DELETE_UI_REFRESH_V43 */
 (function() {
         if (typeof window === 'undefined')
@@ -1212,7 +1652,7 @@ syncAllBtnStates(sec3);
                             moduleUpdateSlotV249,
                                                 'Помощь по ',
                                                 E('a', {
-                                                    'class': 'ss-subsync-shine-v115 ss-podcop-sub-v666-shine-v115',
+                                                    'class': 'ss-podcop-sub-v666-title-static-v325',
                                                     'href': 'https://t.me/+LZDsQJhUfcNhYWEy',
                                                     'target': '_blank',
                                                     'rel': 'noopener noreferrer',

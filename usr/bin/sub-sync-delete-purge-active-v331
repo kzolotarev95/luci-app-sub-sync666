@@ -1,0 +1,127 @@
+#!/bin/sh
+# SUBSYNC_DELETE_SUB_PURGE_ACTIVE_SECTIONS_V331
+set -u
+
+REAL="/usr/bin/sub-sync.real"
+
+is_core() {
+  case "$1" in
+    main|config|settings|global|dns|routing|default|ui|yacd|general|podkop)
+      return 0
+    ;;
+  esac
+  return 1
+}
+
+mkdir -p /etc/sub-sync
+
+if [ -x "$REAL" ]; then
+  subs="$("$REAL" list-subs 2>/dev/null || echo '[]')"
+else
+  subs="$(/usr/bin/sub-sync list-subs 2>/dev/null || echo '[]')"
+fi
+
+compact="$(printf '%s' "$subs" | tr -d '[:space:]')"
+echo "SUBS=$compact"
+
+if [ "$compact" != "[]" ] && [ "$compact" != "" ]; then
+  echo "SUBS_EXIST_SKIP_PURGE"
+  exit 0
+fi
+
+echo '[]' > /etc/sub-sync/servers.json
+: > /etc/sub-sync/links.txt
+echo "CLEARED_SUBSYNC_CACHE"
+
+DELETED="/tmp/subsync-v331-deleted-sections.$$"
+: > "$DELETED"
+
+echo "--- podkop before purge, relevant ---"
+uci show podkop 2>/dev/null | grep -Ei 'vless|trojan|hysteria|hy2|ss://|urltest|proxy|server|outbound|node|link|address|port|protocol|transport|uuid|password|213131' || true
+
+for s in $(uci show podkop 2>/dev/null | sed -n "s/^podkop\.\([^.=]*\)=.*/\1/p" | sort -u); do
+  [ -n "$s" ] || continue
+  is_core "$s" && continue
+
+  dump="$(uci show podkop.$s 2>/dev/null || true)"
+  type="$(printf '%s\n' "$dump" | sed -n "s/^podkop\.$s=//p" | head -n 1)"
+
+  del=0
+
+  case "$s" in
+    *[!0-9]*)
+    ;;
+    *)
+      del=1
+    ;;
+  esac
+
+  case "$type" in
+    proxy|proxies|server|servers|node|nodes|outbound|urltest|section)
+      del=1
+    ;;
+  esac
+
+  printf '%s\n' "$dump" | grep -Eiq "vless://|trojan://|ss://|hysteria2://|hy2://|proxy|server|outbound|urltest|node|address|port|protocol|transport|uuid|password|reality|xhttp|tcp|grpc|ws|quic" && del=1
+
+  if [ "$del" = "1" ]; then
+    if uci -q delete "podkop.$s"; then
+      echo "$s" >> "$DELETED"
+      echo "DELETED_SECTION=$s"
+    fi
+  fi
+done
+
+sort -u "$DELETED" -o "$DELETED"
+
+echo "--- clear refs to deleted sections ---"
+uci show podkop 2>/dev/null | while IFS= read -r line; do
+  path="${line%%=*}"
+  val="${line#*=}"
+  opt="${path##*.}"
+
+  case "$path" in
+    podkop.*.*)
+    ;;
+    *)
+      continue
+    ;;
+  esac
+
+  case "$opt" in
+    *server*|*proxy*|*outbound*|*urltest*|*node*|*link*|*url*|*section*|*selected*|*active*)
+    ;;
+    *)
+      continue
+    ;;
+  esac
+
+  while IFS= read -r sec; do
+    [ -n "$sec" ] || continue
+    if printf '%s\n' "$val" | grep -Fq "$sec"; then
+      uci -q delete "$path" 2>/dev/null && echo "CLEARED_REF=$path"
+      break
+    fi
+  done < "$DELETED"
+done
+
+echo "--- clear direct URI options left in core sections ---"
+uci show podkop 2>/dev/null | grep -Ei 'vless://|trojan://|ss://|hysteria2://|hy2://' | while IFS= read -r line; do
+  path="${line%%=*}"
+  case "$path" in
+    podkop.*.*)
+      uci -q delete "$path" 2>/dev/null && echo "CLEARED_URI_OPTION=$path"
+    ;;
+  esac
+done
+
+uci commit podkop 2>/dev/null || true
+rm -f "$DELETED"
+
+echo "--- podkop after purge, relevant ---"
+uci show podkop 2>/dev/null | grep -Ei 'vless|trojan|hysteria|hy2|ss://|urltest|proxy|server|outbound|node|link|address|port|protocol|transport|uuid|password|213131' || echo "OK_NO_ACTIVE_SERVERS_OR_SECTIONS"
+
+rm -rf /tmp/luci-* /tmp/luci-indexcache* /tmp/.uci /tmp/ucitrack* 2>/dev/null || true
+/etc/init.d/podkop restart 2>/dev/null || true
+
+exit 0
