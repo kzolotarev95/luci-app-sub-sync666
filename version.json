@@ -1,9 +1,9 @@
 {
-  "version": "v339",
-  "build": 339,
-  "title": "Podcop Sub v666 v339",
-  "message": "Update module card under donate block with autocheck and log shown only when update is available",
-  "required_marker": "SUBSYNC_UPDATE_CARD_AUTOCHECK_V339",
+  "version": "v340",
+  "build": 340,
+  "title": "Podcop Sub v666 v340",
+  "message": "Fix retry installer verification for v339 update card autocheck build",
+  "required_marker": "SUBSYNC_PUBLIC_BUILD_V340",
   "install_url": "https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main/install.sh",
   "released_at": "2026-06-01"
 }

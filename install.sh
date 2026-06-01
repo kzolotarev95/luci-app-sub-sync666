@@ -1,6 +1,6 @@
 #!/bin/sh
-# SUBSYNC_PUBLIC_BUILD_V339
-# SUBSYNC_PUBLIC_BUILD_V339
+# SUBSYNC_PUBLIC_BUILD_V340
+# SUBSYNC_PUBLIC_BUILD_V340
 # SUBSYNC_INSTALL_VERSION_FILES_V277_BEGIN
 set -u
 
@@ -204,8 +204,8 @@ rm -f /tmp/root.cron.v276
 /etc/init.d/cron restart 2>/dev/null || true
 
 echo "=== version ==="
-echo "v339" > /etc/sub-sync/module-version
-echo "339" > /etc/sub-sync/module-build
+echo "v340" > /etc/sub-sync/module-version
+echo "340" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then

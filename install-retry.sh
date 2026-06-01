@@ -1,41 +1,31 @@
 #!/bin/sh
-# SUBSYNC_RETRY_INSTALL_V277
 set -u
 
-OUT="/tmp/subsync-install-v277.sh"
-BASE="https://raw.githubusercontent.com/kzolotarev95/luci-app-sub-sync666/main"
+REPO_OWNER="${REPO_OWNER:-kzolotarev95}"
+REPO_NAME="${REPO_NAME:-luci-app-sub-sync666}"
+REPO_REF="${REPO_REF:-main}"
+BASE_URL="https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$REPO_REF"
+TMP="/tmp/subsync-install-v340.sh"
 
 echo "========================================="
-echo " Podcop Sub v666 retry installer v277"
+echo " Podcop Sub v666 retry installer v340"
 echo "========================================="
 
-ok=0
 i=1
-while [ "$i" -le 30 ]; do
-  echo "--- install download try $i from $BASE ---"
-  rm -f "$OUT"
+while [ "$i" -le 10 ]; do
+  echo "--- install download try $i from $BASE_URL ---"
+  wget -O "$TMP" "$BASE_URL/install.sh?v=$(date +%s)-$i" || true
 
-  if wget -O "$OUT" "$BASE/install.sh?v=$(date +%s)-$i"; then
-    if grep -q 'SUBSYNC_PUBLIC_BUILD_V277' "$OUT" &&
-       grep -q 'SUBSYNC_INSTALL_VERSION_FILES_V277_BEGIN' "$OUT" &&
-       sh -n "$OUT"; then
-      echo "OK: install.sh v277 downloaded and verified"
-      ok=1
-      break
-    fi
-    echo "WARN: downloaded install.sh is not verified v277"
-  else
-    echo "WARN: install.sh download failed"
+  if [ -s "$TMP" ] && grep -q 'SUBSYNC_PUBLIC_BUILD_V340' "$TMP" && sh -n "$TMP"; then
+    echo "OK: install.sh v340 downloaded and verified"
+    sh "$TMP"
+    exit $?
   fi
 
+  echo "WARN: downloaded install.sh is not verified v340"
   i=$((i + 1))
-  sleep 5
+  sleep 3
 done
 
-if [ "$ok" != "1" ]; then
-  echo "ERROR: cannot download verified Podcop Sub v666 installer v277 now"
-  echo "Try again later or check router internet/GitHub access."
-  exit 1
-fi
-
-sh "$OUT"
+echo "ERROR: cannot download verified install.sh v340"
+exit 1
