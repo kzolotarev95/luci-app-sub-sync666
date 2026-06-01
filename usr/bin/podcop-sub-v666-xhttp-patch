@@ -84,7 +84,7 @@ sing_box_cm_set_xhttp_transport() {
     [ -z "$path" ] && path="/"
     [ -z "$host" ] && host="$sni"
     [ -z "$mode" ] && mode="auto"
-    [ -z "$x_padding_bytes" ] && x_padding_bytes="0-0"
+    [ -z "$x_padding_bytes" ] && x_padding_bytes="1-1"
 
     local no_grpc_header=""
     local sc_max_each_post_bytes=""

@@ -1,8 +1,8 @@
 #!/bin/sh
-# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V390_BEGIN
+# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V392_BEGIN
 cat > /usr/bin/podcop-sub-v666-safe-podkop <<'EOSAFE_MAIN'
 #!/bin/sh
-# PODCOP_SUB_V666_SAFE_PODKOP_RESTART_V390
+# PODCOP_SUB_V666_SAFE_PODKOP_RESTART_V392
 
 CMD="${1:-restart}"
 ORIG="/etc/init.d/podkop"
@@ -26,8 +26,8 @@ case "$CMD" in
     apply_xhttp_patch
 
     if ! has_outbound; then
-      logger -t podcop-sub-v666 "v390: skip podkop $CMD, no outbound configured yet"
-      echo "podcop-sub-v666 v390: skip podkop $CMD, no outbound configured yet"
+      logger -t podcop-sub-v666 "v392: skip podkop $CMD, no outbound configured yet"
+      echo "podcop-sub-v666 v392: skip podkop $CMD, no outbound configured yet"
 
       # Чисто остановить старый Podkop, но НЕ запускать без outbound.
       "$ORIG" stop >/dev/null 2>&1 || true
@@ -50,7 +50,7 @@ chmod +x /usr/bin/podcop-sub-v666-safe-podkop
 
 cat > /usr/bin/podcop-sub-v666-safe-podkop-restart <<'EOSAFE'
 #!/bin/sh
-# PODCOP_SUB_V666_SAFE_PODKOP_RESTART_V390
+# PODCOP_SUB_V666_SAFE_PODKOP_RESTART_V392
 set -u
 
 has_outbound() {
@@ -68,7 +68,7 @@ if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
 fi
 
 if ! has_outbound; then
-  logger -t podcop-sub-v666 "v390: skip podkop restart, no outbound configured yet"
+  logger -t podcop-sub-v666 "v392: skip podkop restart, no outbound configured yet"
   /etc/init.d/podkop stop >/dev/null 2>&1 || true
   echo "SKIP_PODKOP_RESTART_NO_OUTBOUND"
   exit 0
@@ -77,15 +77,15 @@ fi
 /usr/bin/podcop-sub-v666-safe-podkop restart
 EOSAFE
 chmod +x /usr/bin/podcop-sub-v666-safe-podkop-restart
-# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V390_END
-# SUBSYNC_PUBLIC_BUILD_V391
-# SUBSYNC_PUBLIC_BUILD_V391
-# SUBSYNC_PUBLIC_BUILD_V391
-# SUBSYNC_PUBLIC_BUILD_V391
-# SUBSYNC_PUBLIC_BUILD_V391
-# SUBSYNC_PUBLIC_BUILD_V391
-# SUBSYNC_PUBLIC_BUILD_V391
-# SUBSYNC_INSTALL_VERSION_FILES_V391_BEGIN
+# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V392_END
+# SUBSYNC_PUBLIC_BUILD_V392
+# SUBSYNC_PUBLIC_BUILD_V392
+# SUBSYNC_PUBLIC_BUILD_V392
+# SUBSYNC_PUBLIC_BUILD_V392
+# SUBSYNC_PUBLIC_BUILD_V392
+# SUBSYNC_PUBLIC_BUILD_V392
+# SUBSYNC_PUBLIC_BUILD_V392
+# SUBSYNC_INSTALL_VERSION_FILES_V392_BEGIN
 set -u
 
 REPO_OWNER="${REPO_OWNER:-kzolotarev95}"
@@ -94,10 +94,10 @@ REPO_REF="${REPO_REF:-main}"
 RAW_BASE="https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_REF}"
 
 echo "========================================="
-echo "  Podcop Sub v666 — public install v390"
+echo "  Podcop Sub v666 — public install v392"
 echo "========================================="
 echo "Backup: disabled for public/friend install"
-echo "Downloader: wget strict direct installer v390"
+echo "Downloader: wget strict direct installer v392"
 
 dl() {
   rel="$1"
@@ -199,7 +199,7 @@ patch_js_hide_check /www/luci-static/resources/view/sub_sync/sub_sync_v221.js
 echo "=== install ACL ==="
 
 # SUBSYNC_FIX_JS_403_PERMS_V359_BEGIN
-echo "=== fix LuCI static JS permissions v390 ==="
+echo "=== fix LuCI static JS permissions v392 ==="
 chown -R root:root /www/luci-static/resources/view/sub_sync 2>/dev/null || true
 chmod 755 /www /www/luci-static /www/luci-static/resources /www/luci-static/resources/view /www/luci-static/resources/view/sub_sync 2>/dev/null || true
 chmod 644 /www/luci-static/resources/view/sub_sync/*.js 2>/dev/null || true
@@ -289,15 +289,15 @@ MENU
 
 echo "=== cron guard ==="
 touch /etc/crontabs/root
-grep -v '/usr/bin/podcop-sub-v666-guard' /etc/crontabs/root > /tmp/root.cron.v390 2>/dev/null || true
-echo '*/5 * * * * /usr/bin/podcop-sub-v666-guard >/tmp/podcop-sub-v666-guard.log 2>&1' >> /tmp/root.cron.v390
-cat /tmp/root.cron.v390 > /etc/crontabs/root
-rm -f /tmp/root.cron.v390
+grep -v '/usr/bin/podcop-sub-v666-guard' /etc/crontabs/root > /tmp/root.cron.v392 2>/dev/null || true
+echo '*/5 * * * * /usr/bin/podcop-sub-v666-guard >/tmp/podcop-sub-v666-guard.log 2>&1' >> /tmp/root.cron.v392
+cat /tmp/root.cron.v392 > /etc/crontabs/root
+rm -f /tmp/root.cron.v392
 /etc/init.d/cron restart 2>/dev/null || true
 
 echo "=== version ==="
-echo "v391" > /etc/sub-sync/module-version
-echo "391" > /etc/sub-sync/module-build
+echo "v392" > /etc/sub-sync/module-version
+echo "392" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
@@ -354,10 +354,10 @@ rm -rf /tmp/luci-modulecache /tmp/luci-modulecache/* /tmp/luci-indexcache /tmp/l
 /etc/init.d/rpcd restart 2>/dev/null || true
 /etc/init.d/uhttpd restart 2>/dev/null || true
 
-echo "DONE_MODULE_OK: Podcop Sub v666 v390 module installed."
+echo "DONE_MODULE_OK: Podcop Sub v666 v392 module installed."
 echo "DONE_THEME_STATUS: mediaurlbase=$(uci get luci.main.mediaurlbase 2>/dev/null || true)"
-echo "DONE: install.sh v390 finished rc=0"
-# SUBSYNC_INSTALL_VERSION_FILES_V390_END
+echo "DONE: install.sh v392 finished rc=0"
+# SUBSYNC_INSTALL_VERSION_FILES_V392_END
 
 # SUBSYNC_INSTALL_DELETE_PURGE_HELPER_V332_BEGIN
 echo "=== install delete purge helper v331/v332 ==="
