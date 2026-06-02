@@ -297,7 +297,7 @@ rm -f /tmp/root.cron.v393
 
 echo "=== version ==="
 echo "v393" > /etc/sub-sync/module-version
-echo "392" > /etc/sub-sync/module-build
+echo "393" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
