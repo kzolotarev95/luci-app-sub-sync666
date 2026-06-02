@@ -121,16 +121,18 @@ section_has_link() {
 }
 
 # SUBSYNC_TCP_REALITY_ONLY_FILTER_V393_REAL_BEGIN
+# SUBSYNC_MIXED_TCP_XHTTP_URLTEST_V394_REAL_BEGIN
 subsync_tcp_reality_only_v393() {
     case "$1" in
         vless://*) : ;;
         *) return 1 ;;
     esac
+    printf "%s\n" "$1" | grep -qi "type=xhttp" && return 0
     printf "%s\n" "$1" | grep -qi "type=tcp" || return 1
     printf "%s\n" "$1" | grep -qi "security=reality" || return 1
-    printf "%s\n" "$1" | grep -qi "type=xhttp" && return 1
     return 0
 }
+# SUBSYNC_MIXED_TCP_XHTTP_URLTEST_V394_REAL_END
 # SUBSYNC_TCP_REALITY_ONLY_FILTER_V393_REAL_END
 
 cmd_apply() {

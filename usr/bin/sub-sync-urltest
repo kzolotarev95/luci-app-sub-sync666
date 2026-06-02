@@ -87,10 +87,14 @@ apply_links_file() {
 
   while IFS= read -r link; do
     # SUBSYNC_TCP_REALITY_ONLY_FILTER_V393_URLTEST
+    # SUBSYNC_MIXED_TCP_XHTTP_URLTEST_V394_URLTEST
     case "$link" in vless://*) : ;; *) continue ;; esac
-    printf "%s\n" "$link" | grep -qi "type=tcp" || continue
-    printf "%s\n" "$link" | grep -qi "security=reality" || continue
-    printf "%s\n" "$link" | grep -qi "type=xhttp" && continue
+    if printf "%s\n" "$link" | grep -qi "type=xhttp"; then
+      :
+    else
+      printf "%s\n" "$link" | grep -qi "type=tcp" || continue
+      printf "%s\n" "$link" | grep -qi "security=reality" || continue
+    fi
     is_urltest_link "$link" || continue
     grep -Fxq "$link" "$clean" 2>/dev/null && continue
     printf '%s\n' "$link" >> "$clean"

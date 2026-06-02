@@ -1,6 +1,6 @@
 {
-  "version": "v393",
-  "build": 393,
-  "required_marker": "SUBSYNC_PUBLIC_BUILD_V393",
+  "version": "v394",
+  "build": 394,
+  "required_marker": "SUBSYNC_PUBLIC_BUILD_V394",
   "notes": "Safe Podkop restart: never start/restart Podkop when no outbound is configured; preserve xHTTP patch and avoid replacing native Podkop init."
 }

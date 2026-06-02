@@ -1,8 +1,8 @@
 #!/bin/sh
-# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V393_BEGIN
+# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V394_BEGIN
 cat > /usr/bin/podcop-sub-v666-safe-podkop-restart <<'EOSAFE'
 #!/bin/sh
-# SUBSYNC_SAFE_PODKOP_RESTART_V393
+# SUBSYNC_SAFE_PODKOP_RESTART_V394
 set -u
 
 has_outbound() {
@@ -20,7 +20,7 @@ if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
 fi
 
 if ! has_outbound; then
-  logger -t podcop-sub-v666 "v393: skip podkop restart, no outbound configured yet"
+  logger -t podcop-sub-v666 "v394: skip podkop restart, no outbound configured yet"
   /etc/init.d/podkop stop >/dev/null 2>&1 || true
   echo "SKIP_PODKOP_RESTART_NO_OUTBOUND"
   exit 0
@@ -29,17 +29,17 @@ fi
 /etc/init.d/podkop restart
 EOSAFE
 chmod +x /usr/bin/podcop-sub-v666-safe-podkop-restart
-# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V393_END
+# SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V394_END
 set -u
 
 REPO_OWNER="${REPO_OWNER:-kzolotarev95}"
 REPO_NAME="${REPO_NAME:-luci-app-sub-sync666}"
 REPO_REF="${REPO_REF:-main}"
 BASE_URL="https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$REPO_REF"
-TMP="/tmp/subsync-install-v393.sh"
+TMP="/tmp/subsync-install-v394.sh"
 
 echo "========================================="
-echo " Podcop Sub v666 retry installer v393"
+echo " Podcop Sub v666 retry installer v394"
 echo "========================================="
 
 i=1
@@ -47,16 +47,16 @@ while [ "$i" -le 10 ]; do
   echo "--- install download try $i from $BASE_URL ---"
   wget -O "$TMP" "$BASE_URL/install.sh?v=$(date +%s)-$i" || true
 
-  if [ -s "$TMP" ] && grep -q 'SUBSYNC_PUBLIC_BUILD_V393' "$TMP" && sh -n "$TMP"; then
-    echo "OK: install.sh v393 downloaded and verified"
+  if [ -s "$TMP" ] && grep -q 'SUBSYNC_PUBLIC_BUILD_V394' "$TMP" && sh -n "$TMP"; then
+    echo "OK: install.sh v394 downloaded and verified"
     sh "$TMP"
     exit $?
   fi
 
-  echo "WARN: downloaded install.sh is not verified v393"
+  echo "WARN: downloaded install.sh is not verified v394"
   i=$((i + 1))
   sleep 3
 done
 
-echo "ERROR: cannot download verified install.sh v393"
+echo "ERROR: cannot download verified install.sh v394"
 exit 1
