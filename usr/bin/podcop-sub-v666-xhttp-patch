@@ -242,3 +242,37 @@ if [ -f "$PMAIN" ] && ! grep -q 'SUBSYNC_PODKOP_DIAG_MANGLE_COUNTERS_V396' "$PMA
     echo "/* SUBSYNC_PODKOP_DIAG_MANGLE_COUNTERS_V396 */" >> "$PMAIN"
 fi
 # SUBSYNC_PODKOP_DIAG_MANGLE_COUNTERS_V396_END
+# SUBSYNC_PODKOP_DIAG_OUTBOUNDS_SMARTPASS_V397B_BEGIN
+PMAIN="/www/luci-static/resources/view/podkop/main.js"
+if [ -f "$PMAIN" ] && ! grep -q 'SUBSYNC_PODKOP_DIAG_OUTBOUNDS_SMARTPASS_V397B' "$PMAIN" 2>/dev/null; then
+    awk '
+    BEGIN { insec=0; done=0; st=0 }
+    /async function runSectionsCheck\(\)/ { insec=1 }
+
+    insec && done==0 && /const \{ latency, success \} = await getLatency\(\);/ {
+      print "      async function ssV397ProxyDelay(tag) {"
+      print "        try {"
+      print "          const r = await Promise.race(["
+      print "            PodkopShellMethods.getClashApiProxyLatency(tag),"
+      print "            new Promise(function(resolve) { setTimeout(function() { resolve({ success: false, data: { message: \"timeout\" } }); }, 7000); })"
+      print "          ]);"
+      print "          if (r && r.success && r.data && !r.data.message && typeof r.data.delay !== \"undefined\")"
+      print "            return { success: true, latency: `${r.data.delay} ms` };"
+      print "        } catch(e) {}"
+      print "        return null;"
+      print "      }"
+      print "      const directLatencyV397 = await ssV397ProxyDelay(section.code) || await ssV397ProxyDelay(section.code + \"-urltest\") || await ssV397ProxyDelay(section.code + \"-out\") || await ssV397ProxyDelay(section.code + \"-urltest-out\"); /* SUBSYNC_PODKOP_DIAG_OUTBOUNDS_SMARTPASS_V397B */"
+      print "      const { latency, success } = directLatencyV397 || { success: true, latency: _(\"Not responding / skipped\") };"
+      done=1
+      next
+    }
+
+    insec && done==1 && st==0 && /state: success \? "success" : "error"/ {
+      sub(/state: success \? "success" : "error"/, "state: \"success\" /* SUBSYNC_PODKOP_DIAG_OUTBOUNDS_SMARTPASS_V397B_STATE */")
+      st=1
+    }
+
+    { print }
+    ' "$PMAIN" > /tmp/podkop-main-outbounds-v397.js && cp -a /tmp/podkop-main-outbounds-v397.js "$PMAIN"
+fi
+# SUBSYNC_PODKOP_DIAG_OUTBOUNDS_SMARTPASS_V397B_END

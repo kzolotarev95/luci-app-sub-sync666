@@ -1,6 +1,6 @@
 {
-  "version": "v396",
-  "build": 396,
+  "version": "v397",
+  "build": 397,
   "name": "Podcop Sub v666",
-  "notes": "UI port-test label, selected servers synced from UCI, and Podkop mangle diagnostics fixed"
+  "notes": "Outbounds diagnostics smart-pass: working sections show latency, broken sections are skipped without hanging"
 }
