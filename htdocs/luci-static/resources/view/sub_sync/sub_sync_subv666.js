@@ -4048,7 +4048,7 @@ rows[j].className = 'tr ' + (j % 2 === 0 ? 'cbi-rowstyle-1' : 'cbi-rowstyle-2') 
                                       }, "QUIC");
                               }
 			function createPingCell(serverId) {
-				var pingSpan = E('span', { 'style': 'font-size:11px;cursor:pointer;color:#999', 'title': 'Нажмите для проверки' }, '—');
+				var pingSpan = E('span', { 'style': 'font-size:11px;cursor:pointer;color:#999', 'title': 'Нажмите для проверки' }, 'N/A');
 				var pinging = false;
 				pingSpan.addEventListener('click', function() {
 					if (pinging) return;
@@ -4668,7 +4668,7 @@ if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrat
                                                 return;
                                         }
 
-                                        fs.exec('/usr/bin/sub-sync', ['ping', String(s.id)]).then(function(r) {
+                                        fs.exec('/usr/bin/sub-sync', ['dashboard-ping-v403', String(s.code || s.id)]).then(function(r) {
                                                 var data = {};
                                                 try { data = JSON.parse((r.stdout || '{}').trim()); } catch(e) { data = {}; }
 
@@ -7113,6 +7113,231 @@ function createMonitorContent(section) {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();
+/* SUBSYNC_DASHBOARD_ACTIVE_TAB_V403 */
+function createSubSyncDashboardV403(section) {
+        var o = section.option(form.DummyValue, '_subsync_dashboard_v403');
+        o.rawhtml = true;
+        o.render = function() {
+                var grid = E('div', {}, 'Загрузка...');
+                var refresh = E('button', {
+                        'class': 'cbi-button cbi-button-action',
+                        'style': 'padding:3px 10px;font-size:12px'
+                }, 'Обновить');
+
+                var root = E('div', { 'class': 'ss-card' }, [
+                        E('div', {
+                                'style': 'display:flex;justify-content:space-between;align-items:center;margin-bottom:12px'
+                        }, [
+                                E('div', {}, [
+                                        E('div', { 'class': 'ss-card__title' }, 'Дашборд Podcop Sub v666'),
+                                        E('div', { 'style': 'font-size:12px;opacity:.75' }, 'Удаление: нажми «Удалить» у нужных серверов → затем жди около 5-10сек, страница сама перезагрузится.')
+                                ]),
+                                refresh
+                        ]),
+                        grid
+                ]);
+
+                function clear() {
+                        while (grid.firstChild)
+                                grid.removeChild(grid.firstChild);
+                }
+
+                function protoText(s) {
+                        var p = String(s.proto || '?').toUpperCase();
+                        var t = String(s.type || '').toUpperCase();
+                        if (t)
+                                p += ' / ' + t;
+                        return p;
+                }
+
+                function pingOne(s, el) {
+                        el.textContent = '...';
+                        fs.exec('/usr/bin/sub-sync', ['dashboard-ping-v403', String(s.code || s.id)]).then(function(res) {
+                                try {
+                                        var d = JSON.parse((res.stdout || '{}').trim());
+                                        if (d.status === 'ok') {
+                                                el.textContent = d.delay + 'ms';
+                                                var cardOkV403C = el.parentNode && el.parentNode.parentNode;
+                                                if (cardOkV403C) {
+                                                        cardOkV403C.style.borderColor = "rgba(76,175,80,.85)";
+                                                        cardOkV403C.style.boxShadow = "0 0 0 1px rgba(76,175,80,.20) inset";
+                                                }
+                                                el.style.color = '#4caf50';
+                                        } else {
+                                                el.textContent = 'N/A';
+                                                var cardBadV403C = el.parentNode && el.parentNode.parentNode;
+                                                if (cardBadV403C) {
+                                                        cardBadV403C.style.borderColor = "rgba(244,67,54,.85)";
+                                                        cardBadV403C.style.boxShadow = "0 0 0 1px rgba(244,67,54,.20) inset";
+                                                }
+                                                el.style.color = '#888';
+                                        }
+                                } catch(e) {
+                                        el.textContent = 'N/A';
+                                        el.style.color = '#888';
+                                }
+                        });
+                }
+
+                function makeCard(s, reload) {
+                        var ping = E('span', {
+                                'class': 'ss-dash-ping-v403',
+                                'style': 'font-size:12px;font-weight:bold;color:#4caf50;cursor:pointer'
+                        }, 'N/A');
+                        ping.addEventListener('click', function() {
+                                pingOne(s, ping);
+                        });
+
+                        var del = E('button', {
+                                'style': 'color:#f44336;background:transparent;border:1px solid #f44336;border-radius:6px;font-size:11px;cursor:pointer;padding:2px 8px',
+                                'title': 'Удалить сервер',
+                                'click': function(ev) {
+                                        ev.preventDefault();
+                                        ev.stopPropagation();
+
+                                        var name = s.name || ('server #' + s.id);
+                                        if (!window.confirm('Удалить сервер?\n\n' + name))
+                                                return;
+
+                                        del.disabled = true;
+                                        del.textContent = '…';
+
+                                        fs.exec('/usr/bin/sub-sync', ['delete-server-active', String(s.link || ''), String(s.id || ''), String(s.section || ''), String(s.code || ''), String(s.addr || ''), String(s.port || ''), String(s.name || '')]).then(function(res) {
+                                                var out = (res.stdout || '').trim();
+                                                try {
+                                                        var d = JSON.parse(out || '{}');
+                                                        if (d.status === 'ok') {
+                                                                ui.addNotification(null, E('p', {}, 'Удалён: ' + name), 'info');
+                                                                reload();
+                                                        } else {
+                                                                ui.addNotification(null, E('p', {}, 'Ошибка: ' + (d.message || out)), 'danger');
+                                                                del.disabled = false;
+                                                                del.textContent = 'Удалить';
+                                                        }
+                                                } catch(e) {
+                                                        ui.addNotification(null, E('p', {}, 'Ошибка удаления'), 'danger');
+                                                        del.disabled = false;
+                                                        del.textContent = 'Удалить';
+                                                }
+                                        });
+                                }
+                        }, 'Удалить');
+
+                        return E('div', {
+                                'style': 'border:1px solid rgba(120,130,160,.25);border-radius:8px;padding:10px;background:rgba(20,26,38,.55)'
+                        }, [
+                                E('div', {
+                                        'style': 'display:flex;justify-content:space-between;gap:8px'
+                                }, [
+                                        E('div', {
+                                                'style': 'font-weight:800;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap',
+                                                'title': s.name || ''
+                                        }, s.name || ('server #' + s.id)),
+                                        del
+                                ]),
+                                E('div', {
+                                        'style': 'font-size:11px;opacity:.7;margin-top:5px;font-family:monospace'
+                                }, (s.addr || '') + ':' + (s.port || '')),
+                                E('div', {
+                                        'style': 'display:flex;justify-content:space-between;margin-top:8px'
+                                }, [
+                                        E('span', {
+                                                'style': 'font-size:11px;padding:2px 7px;border-radius:99px;background:rgba(80,90,110,.35)'
+                                        }, protoText(s)),
+                                        ping
+                                ])
+                        ]);
+                }
+
+                function load() {
+                        clear();
+                        grid.appendChild(E('div', {}, 'Загрузка...'));
+
+                        fs.exec('/usr/bin/sub-sync', ['dashboard-v403']).then(function(res) {
+                                var data = [];
+                                try {
+                                        data = JSON.parse((res.stdout || '[]').trim());
+                                } catch(e) {}
+
+                                clear();
+
+                                if (!data.length) {
+                                        grid.appendChild(E('div', {}, 'Активных серверов нет'));
+                                        return;
+                                }
+
+                                for (var i = 0; i < data.length; i++) {
+                                        var sec = data[i];
+
+                                        var box = E('div', {
+                                                'style': 'margin-bottom:14px;border:1px solid rgba(120,130,160,.2);border-radius:10px;padding:10px'
+                                        }, [
+                                                E('div', {
+                                                        'style': 'display:flex;justify-content:space-between;margin-bottom:10px'
+                                                }, [
+                                                        E('b', {}, sec.section || 'section'),
+                                                        E('span', { 'style': 'opacity:.7;font-size:12px' }, sec.section_type || '')
+                                                ]),
+                                                E('div', {
+                                                        'style': 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px'
+                                                }, [])
+                                        ]);
+
+                                        var cards = box.childNodes[1];
+                                        /* SUBSYNC_DASHBOARD_PING_ALL_V403B */
+                                        (function(cardsEl, headerEl) {
+                                                var testBtn = E('button', {
+                                                        'class': 'cbi-button cbi-button-action',
+                                                        'style': 'padding:3px 10px;font-size:12px;margin-left:8px'
+                                                }, 'Тестирование задержки');
+                                                testBtn.addEventListener('click', function() {
+                                                        if (testBtn.disabled) return;
+                                                        testBtn.disabled = true;
+                                                        testBtn.textContent = 'Проверка...';
+                                                        var cells = cardsEl.querySelectorAll('.ss-dash-ping-v403');
+                                                        var n = 0;
+                                                        function next() {
+                                                                if (n >= cells.length) {
+                                                                        testBtn.disabled = false;
+                                                                        testBtn.textContent = 'Тестирование задержки';
+                                                                        return;
+                                                                }
+                                                                cells[n].click();
+                                                                n++;
+                                                                window.setTimeout(next, 350);
+                                                        }
+                                                        next();
+                                                });
+                                                headerEl.appendChild(testBtn);
+                                        })(cards, box.childNodes[0]);
+                                        for (var j = 0; j < sec.servers.length; j++)
+                                                cards.appendChild(makeCard(sec.servers[j], load));
+
+                                        grid.appendChild(box);
+                                        /* SUBSYNC_DASHBOARD_AUTO_PING_V403C */
+                                        window.setTimeout((function(boxRef) {
+                                                return function() {
+                                                        var cells = boxRef.querySelectorAll(".ss-dash-ping-v403");
+                                                        var n = 0;
+                                                        function nextPingV403C() {
+                                                                if (n >= cells.length) return;
+                                                                cells[n].click();
+                                                                n++;
+                                                                window.setTimeout(nextPingV403C, 350);
+                                                        }
+                                                        nextPingV403C();
+                                                };
+                                        })(box), 350);
+                                }
+                        });
+                }
+
+                refresh.addEventListener('click', load);
+                window.setTimeout(load, 100);
+
+                return root;
+        };
+}
 return view.extend({
 	render: function() {
 		injectStyles();
@@ -7137,6 +7362,12 @@ return view.extend({
 		monSection.addremove = false;
 		monSection.cfgsections = function() { return ['ss_monitor']; };
 		createMonitorContent(monSection);
+
+                var dashSection = m.section(form.TypedSection, 'ss_dashboard', _('Дашборд'));
+                dashSection.anonymous = true;
+                dashSection.addremove = false;
+                dashSection.cfgsections = function() { return ['ss_dashboard']; };
+                createSubSyncDashboardV403(dashSection);
 
 
 		return m.render();

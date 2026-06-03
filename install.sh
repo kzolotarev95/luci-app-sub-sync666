@@ -78,13 +78,13 @@ fi
 EOSAFE
 chmod +x /usr/bin/podcop-sub-v666-safe-podkop-restart
 # SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V395_END
-# SUBSYNC_PUBLIC_BUILD_V397
-# SUBSYNC_PUBLIC_BUILD_V397
-# SUBSYNC_PUBLIC_BUILD_V397
-# SUBSYNC_PUBLIC_BUILD_V397
-# SUBSYNC_PUBLIC_BUILD_V397
-# SUBSYNC_PUBLIC_BUILD_V397
-# SUBSYNC_PUBLIC_BUILD_V397
+# SUBSYNC_PUBLIC_BUILD_V404
+# SUBSYNC_PUBLIC_BUILD_V404
+# SUBSYNC_PUBLIC_BUILD_V404
+# SUBSYNC_PUBLIC_BUILD_V404
+# SUBSYNC_PUBLIC_BUILD_V404
+# SUBSYNC_PUBLIC_BUILD_V404
+# SUBSYNC_PUBLIC_BUILD_V404
 # SUBSYNC_INSTALL_VERSION_FILES_V395_BEGIN
 set -u
 
@@ -310,8 +310,8 @@ touch /etc/crontabs/root
 /etc/init.d/cron restart 2>/dev/null || true
 
 echo "=== version ==="
-echo "v402" > /etc/sub-sync/module-version
-echo "402" > /etc/sub-sync/module-build
+echo "v404" > /etc/sub-sync/module-version
+echo "404" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
@@ -399,3 +399,10 @@ SUBSYNC_RAW_BASE="https://raw.githubusercontent.com/${REPO_OWNER:-kzolotarev95}/
 wget -O /usr/bin/sub-sync-delete-purge-active-v331 "$SUBSYNC_RAW_BASE/usr/bin/sub-sync-delete-purge-active-v331?v=$(date +%s)" && chmod +x /usr/bin/sub-sync-delete-purge-active-v331 || echo "WARN: delete purge helper download failed"
 
 # SUBSYNC_INSTALL_DELETE_PURGE_HELPER_V332_END
+# SUBSYNC_NATIVE_PODKOP_MAIN_JS_403_FIX_V404_BEGIN
+echo "Fix native Podkop main.js permissions..."
+chmod 755 /www/luci-static/resources/view 2>/dev/null || true
+chmod 755 /www/luci-static/resources/view/podkop 2>/dev/null || true
+chmod 644 /www/luci-static/resources/view/podkop/main.js 2>/dev/null || true
+rm -rf /tmp/luci-* /tmp/luci-indexcache* /tmp/luci-modulecache*
+# SUBSYNC_NATIVE_PODKOP_MAIN_JS_403_FIX_V404_END

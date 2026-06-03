@@ -1,0 +1,33 @@
+#!/bin/sh
+# SUBSYNC_DASHBOARD_PODKOP_URLTEST_PING_V403D
+CODE="$1"
+CFG="/etc/sing-box/config.json"
+URL="http://www.gstatic.com/generate_204"
+
+[ -n "$CODE" ] || {
+  echo '{"status":"error","message":"code required","delay":null}'
+  exit 0
+}
+
+CTRL="$(jq -r '.experimental.clash_api.external_controller // empty' "$CFG" 2>/dev/null)"
+SECRET="$(jq -r '.experimental.clash_api.secret // empty' "$CFG" 2>/dev/null)"
+
+[ -n "$CTRL" ] || CTRL="127.0.0.1:9090"
+CTRL="${CTRL#http://}"
+CTRL="${CTRL#https://}"
+
+API="http://$CTRL/proxies/$CODE/delay?timeout=5000&url=$URL"
+
+if [ -n "$SECRET" ] && [ "$SECRET" != "null" ]; then
+  RES="$(wget -qO- -T 7 --header="Authorization: Bearer $SECRET" "$API" 2>/dev/null)"
+else
+  RES="$(wget -qO- -T 7 "$API" 2>/dev/null)"
+fi
+
+DELAY="$(printf '%s' "$RES" | jq -r '.delay // empty' 2>/dev/null)"
+
+if [ -n "$DELAY" ]; then
+  jq -cn --arg code "$CODE" --argjson delay "$DELAY" '{status:"ok",code:$code,delay:$delay}'
+else
+  jq -cn --arg code "$CODE" --arg raw "$RES" '{status:"error",code:$code,delay:null,raw:$raw}'
+fi

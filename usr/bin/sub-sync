@@ -8,6 +8,35 @@
 REAL="/usr/bin/sub-sync.real"
 # SUBSYNC_DELETE_SUB_PURGE_ACTIVE_SECTIONS_V331_WRAPPER
 case "${1:-}" in
+  # SUBSYNC_DELETE_SERVER_ACTIVE_WRAPPER_V403K
+  delete-server-active)
+    shift
+    exec /usr/bin/sub-sync-delete-server delete-active "$@"
+  ;;
+  # SUBSYNC_DELETE_SERVER_LINK_WRAPPER_V403J
+  delete-server-link)
+    shift
+    exec /usr/bin/sub-sync-delete-server delete-link "$@"
+  ;;
+  # SUBSYNC_DASHBOARD_PING_WRAPPER_V403D
+  dashboard-ping-v403)
+    shift
+    exec /usr/bin/sub-sync-dashboard-ping-v403 "$@"
+  ;;
+  # SUBSYNC_DASHBOARD_ACTIVE_WRAPPER_V403
+  dashboard-v403)
+    shift
+    exec /usr/bin/sub-sync-dashboard-v403 "$@"
+  ;;
+  # SUBSYNC_DELETE_SERVER_WRAPPER_V403
+  delete-server|del-server|remove-server)
+    shift
+    exec /usr/bin/sub-sync-delete-server delete "$@"
+  ;;
+  servers)
+    [ -x /usr/bin/sub-sync-delete-server ] && /usr/bin/sub-sync-delete-server apply >/dev/null 2>&1 || true
+    exec "$REAL" servers
+  ;;
   txt-v348) shift; exec /usr/bin/sub-sync-txt-v348 "$@" ;; # SUBSYNC_TXT_BLOCK_V348_WRAPPER
   txt-v346) shift; exec /usr/bin/sub-sync-txt-v346 "$@" ;; # SUBSYNC_TXT_BLOCK_V346_WRAPPER
   txt-v345) shift; exec /usr/bin/sub-sync-txt-v345 "$@" ;; # SUBSYNC_TXT_BLOCK_V345_WRAPPER
@@ -69,6 +98,8 @@ rebuild_servers_cache() {
   if [ "$rc" = "0" ] && [ -x /usr/bin/sub-sync-autoadd ]; then
     /usr/bin/sub-sync-autoadd autologic-run 2>&1 || true
   fi
+  # SUBSYNC_DELETE_SERVER_APPLY_BLACKLIST_V403
+  [ -x /usr/bin/sub-sync-delete-server ] && /usr/bin/sub-sync-delete-server apply >/dev/null 2>&1 || true
   return "$rc"
 }
 

@@ -1,0 +1,121 @@
+#!/bin/sh
+# SUBSYNC_DELETE_SERVER_HELPER_V403K_DIRECT_PODKOP_APPLY
+JSON="/etc/sub-sync/servers.json"
+LINKS="/etc/sub-sync/links.txt"
+BLACK="/etc/sub-sync/blacklist-links.txt"
+mkdir -p /etc/sub-sync
+CHANGED=0
+
+remove_line() {
+  file="$1"; bad="$2"
+  [ -n "$bad" ] || return 0
+  [ -s "$file" ] || return 0
+  tmp="$file.tmp.$$"
+  grep -Fvx "$bad" "$file" > "$tmp" 2>/dev/null || true
+  mv "$tmp" "$file"
+}
+
+uci_remove_exact_from_list() {
+  sec="$1"; opt="$2"; bad="$3"
+  [ -n "$bad" ] || return 0
+
+  vals="$(uci -q get podkop.$sec.$opt 2>/dev/null)"
+  [ -n "$vals" ] || return 0
+
+  uci -q delete podkop.$sec.$opt 2>/dev/null || true
+  changed_one=0
+
+  for v in $vals; do
+    if [ "$v" = "$bad" ]; then
+      changed_one=1
+      CHANGED=1
+      continue
+    fi
+    uci add_list podkop.$sec.$opt="$v"
+  done
+
+  if [ "$changed_one" != "1" ]; then
+    uci -q delete podkop.$sec.$opt 2>/dev/null || true
+    for v in $vals; do uci add_list podkop.$sec.$opt="$v"; done
+  fi
+}
+
+uci_remove_outbound_if_match() {
+  sec="$1"; section="$2"; code="$3"; addr="$4"; port="$5"; name="$6"
+
+  oj="$(uci -q get podkop.$sec.outbound_json 2>/dev/null)"
+  [ -n "$oj" ] || return 0
+
+  oj_addr="$(printf '%s' "$oj" | jq -r '.server // empty' 2>/dev/null)"
+  oj_port="$(printf '%s' "$oj" | jq -r '.server_port // empty' 2>/dev/null)"
+  oj_tag="$(printf '%s' "$oj" | jq -r '.tag // empty' 2>/dev/null)"
+
+  if { [ "$sec" = "$section" ] && [ "$code" = "$sec-out" ]; } || \
+     { [ -n "$addr" ] && [ "$oj_addr" = "$addr" ] && [ "$oj_port" = "$port" ]; } || \
+     { [ -n "$name" ] && [ "$oj_tag" = "$name" ]; }; then
+    uci -q delete podkop.$sec.outbound_json 2>/dev/null || true
+    CHANGED=1
+  fi
+}
+
+delete_active() {
+  link="$1"
+  id="$2"
+  section="$3"
+  code="$4"
+  addr="$5"
+  port="$6"
+  name="$7"
+
+  for sec in $(uci show podkop | sed -n "s/^podkop\.\([^.=]*\)=.*/\1/p"); do
+    uci_remove_exact_from_list "$sec" proxy_string "$link"
+    uci_remove_exact_from_list "$sec" urltest_proxy_links "$link"
+    uci_remove_exact_from_list "$sec" selector_proxy_links "$link"
+    uci_remove_outbound_if_match "$sec" "$section" "$code" "$addr" "$port" "$name"
+  done
+
+  [ -n "$link" ] && {
+    touch "$BLACK"
+    grep -Fqx "$link" "$BLACK" 2>/dev/null || printf '%s\n' "$link" >> "$BLACK"
+    remove_line "$LINKS" "$link"
+  }
+
+  if [ -s "$JSON" ]; then
+    tmp="$JSON.tmp.$$"
+    jq --arg link "$link" --arg id "$id" --arg addr "$addr" --arg port "$port" --arg name "$name" '
+      [.[] | select(
+        ((.link // "") != $link or $link == "")
+        and ((.id|tostring) != $id or $id == "")
+        and (not(((.addr // "") == $addr and ((.port // "")|tostring) == ($port|tostring)) and $addr != ""))
+        and ((.name // "") != $name or $name == "")
+      )]
+      | to_entries | map(.value.id = (.key + 1) | .value)
+    ' "$JSON" > "$tmp" 2>/dev/null && mv "$tmp" "$JSON"
+    rm -f "$tmp"
+  fi
+
+  chmod 600 "$JSON" "$LINKS" "$BLACK" 2>/dev/null || true
+
+  uci commit podkop 2>/dev/null || true
+
+  if [ -x /etc/init.d/podkop ]; then
+    /etc/init.d/podkop restart >/tmp/subsync-delete-podkop-restart.log 2>&1 || true
+  else
+    podkop restart >/tmp/subsync-delete-podkop-restart.log 2>&1 || true
+  fi
+
+  jq -cn \
+    --arg link "$link" \
+    --arg id "$id" \
+    --arg section "$section" \
+    --arg code "$code" \
+    --arg changed "$CHANGED" \
+    '{status:"ok",link:$link,id:$id,section:$section,code:$code,podkop_changed:$changed,podkop_committed:true,podkop_restarted:true}'
+}
+
+case "${1:-}" in
+  delete-active) shift; delete_active "$1" "$2" "$3" "$4" "$5" "$6" "$7" ;;
+  delete-link) shift; delete_active "$1" "$2" "" "" "" "" "" ;;
+  list-blacklist) cat "$BLACK" 2>/dev/null || true ;;
+  *) echo '{"status":"error","message":"usage: delete-active <link> <id> <section> <code> <addr> <port> <name>"}' ;;
+esac

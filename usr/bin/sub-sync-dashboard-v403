@@ -1,0 +1,121 @@
+#!/bin/sh
+# SUBSYNC_DASHBOARD_ACTIVE_HELPER_V403F_EXACT_BY_TYPE
+SERVERS="/etc/sub-sync/servers.json"
+TMP="/tmp/subsync-dashboard-v403.$$"
+OUT="/tmp/subsync-dashboard-v403.out.$$"
+
+[ -s "$SERVERS" ] || echo '[]' > "$SERVERS"
+: > "$TMP"
+
+fallback_json() {
+  sec="$1"; typ="$2"; code="$3"; link="$4"
+
+  proto="${link%%://*}"
+  [ "$proto" = "$link" ] && proto="unknown"
+
+  rest="${link#*://}"
+  addrport="${rest#*@}"
+  addrport="${addrport%%/*}"
+  addrport="${addrport%%\?*}"
+  addrport="${addrport%%#*}"
+
+  addr="${addrport%%:*}"
+  port="${addrport##*:}"
+  [ "$addr" = "$port" ] && port=""
+
+  name="$addr"
+  jq -cn \
+    --arg sec "$sec" --arg typ "$typ" --arg code "$code" --arg link "$link" \
+    --arg proto "$proto" --arg name "$name" --arg addr "$addr" --arg port "$port" \
+    '{id:$code,proto:$proto,name:$name,addr:$addr,port:$port,type:"",security:"",link:$link,section:$sec,section_type:$typ,code:$code,fallback:true}'
+}
+
+add_link() {
+  sec="$1"; typ="$2"; code="$3"; link="$4"
+  [ -n "$link" ] || return 0
+
+  found="$(jq -c --arg sec "$sec" --arg typ "$typ" --arg code "$code" --arg link "$link" '
+    .[] | select((.link // "") == $link)
+    | .section = $sec
+    | .section_type = $typ
+    | .code = $code
+  ' "$SERVERS" 2>/dev/null | head -n1)"
+
+  [ -n "$found" ] && printf '%s\n' "$found" >> "$TMP" || fallback_json "$sec" "$typ" "$code" "$link" >> "$TMP"
+}
+
+add_outbound_json() {
+  sec="$1"; typ="$2"; code="$sec-out"
+  oj="$(uci -q get podkop.$sec.outbound_json 2>/dev/null)"
+  [ -n "$oj" ] || return 0
+
+  addr="$(printf '%s' "$oj" | jq -r '.server // empty' 2>/dev/null)"
+  port="$(printf '%s' "$oj" | jq -r '.server_port // empty' 2>/dev/null)"
+  tag="$(printf '%s' "$oj" | jq -r '.tag // empty' 2>/dev/null)"
+
+  found="$(jq -c --arg sec "$sec" --arg typ "$typ" --arg code "$code" --arg addr "$addr" --arg port "$port" --arg tag "$tag" '
+    .[]
+    | select(
+        ((.addr // "") == $addr and ((.port // "")|tostring) == ($port|tostring))
+        or ((.name // "") == $tag)
+      )
+    | .section = $sec
+    | .section_type = $typ
+    | .code = $code
+  ' "$SERVERS" 2>/dev/null | head -n1)"
+
+  if [ -n "$found" ]; then
+    printf '%s\n' "$found" >> "$TMP"
+  else
+    jq -cn \
+      --arg sec "$sec" --arg typ "$typ" --arg code "$code" \
+      --arg proto "vless" --arg name "$tag" --arg addr "$addr" --arg port "$port" \
+      '{id:$code,proto:$proto,name:$name,addr:$addr,port:$port,type:"outbound",security:"",link:"",section:$sec,section_type:$typ,code:$code,fallback:true}' >> "$TMP"
+  fi
+}
+
+for sec in $(uci show podkop | sed -n "s/^podkop\.\([^.=]*\)=.*/\1/p"); do
+  typ="$(uci -q get podkop.$sec.proxy_config_type 2>/dev/null)"
+  [ -n "$typ" ] || continue
+
+  case "$typ" in
+    outbound)
+      add_outbound_json "$sec" "$typ"
+    ;;
+    urltest)
+      vals="$(uci -q get podkop.$sec.urltest_proxy_links 2>/dev/null)"
+      n=1
+      for link in $vals; do
+        add_link "$sec" "$typ" "$sec-$n-out" "$link"
+        n=$((n+1))
+      done
+    ;;
+    selector)
+      vals="$(uci -q get podkop.$sec.selector_proxy_links 2>/dev/null)"
+      n=1
+      for link in $vals; do
+        add_link "$sec" "$typ" "$sec-$n-out" "$link"
+        n=$((n+1))
+      done
+    ;;
+    url)
+      vals="$(uci -q get podkop.$sec.proxy_string 2>/dev/null)"
+      for link in $vals; do
+        add_link "$sec" "$typ" "$sec-out" "$link"
+      done
+    ;;
+  esac
+done
+
+jq -s '
+  unique_by(.section + "|" + (.code // "") + "|" + (.link // "") + "|" + (.addr // "") + ":" + ((.port // "")|tostring))
+  | group_by(.section)
+  | map({
+      section: .[0].section,
+      section_type: .[0].section_type,
+      servers: .
+    })
+' "$TMP" > "$OUT" 2>/dev/null || echo '[]' > "$OUT"
+
+cat "$OUT"
+rm -f "$TMP" "$OUT"
