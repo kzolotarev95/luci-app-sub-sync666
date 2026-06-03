@@ -1,6 +1,6 @@
 {
-  "version": "v395",
-  "build": 395,
+  "version": "v396",
+  "build": 396,
   "name": "Podcop Sub v666",
-  "notes": "Fix xHTTP URLTest TLS SNI/ALPN, transport host fallback, and xHTTP padding defaults"
+  "notes": "UI port-test label, selected servers synced from UCI, and Podkop mangle diagnostics fixed"
 }

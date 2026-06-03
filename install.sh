@@ -78,13 +78,13 @@ fi
 EOSAFE
 chmod +x /usr/bin/podcop-sub-v666-safe-podkop-restart
 # SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V395_END
-# SUBSYNC_PUBLIC_BUILD_V395
-# SUBSYNC_PUBLIC_BUILD_V395
-# SUBSYNC_PUBLIC_BUILD_V395
-# SUBSYNC_PUBLIC_BUILD_V395
-# SUBSYNC_PUBLIC_BUILD_V395
-# SUBSYNC_PUBLIC_BUILD_V395
-# SUBSYNC_PUBLIC_BUILD_V395
+# SUBSYNC_PUBLIC_BUILD_V396
+# SUBSYNC_PUBLIC_BUILD_V396
+# SUBSYNC_PUBLIC_BUILD_V396
+# SUBSYNC_PUBLIC_BUILD_V396
+# SUBSYNC_PUBLIC_BUILD_V396
+# SUBSYNC_PUBLIC_BUILD_V396
+# SUBSYNC_PUBLIC_BUILD_V396
 # SUBSYNC_INSTALL_VERSION_FILES_V395_BEGIN
 set -u
 
@@ -296,8 +296,8 @@ rm -f /tmp/root.cron.v395
 /etc/init.d/cron restart 2>/dev/null || true
 
 echo "=== version ==="
-echo "v395" > /etc/sub-sync/module-version
-echo "395" > /etc/sub-sync/module-build
+echo "v396" > /etc/sub-sync/module-version
+echo "396" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then

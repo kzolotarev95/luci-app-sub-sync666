@@ -232,3 +232,13 @@ case "$MODE" in
         exit 1
         ;;
 esac
+# SUBSYNC_PODKOP_DIAG_MANGLE_COUNTERS_V396_BEGIN
+PMAIN="/www/luci-static/resources/view/podkop/main.js"
+if [ -f "$PMAIN" ] && ! grep -q 'SUBSYNC_PODKOP_DIAG_MANGLE_COUNTERS_V396' "$PMAIN" 2>/dev/null; then
+    sed -i \
+      -e 's/Boolean(data.rules_mangle_counters)/Boolean(data.rules_mangle_counters || data.rules_mangle_output_counters || data.rules_proxy_counters)/g' \
+      -e 's/state: data.rules_mangle_counters ? "success" : "error"/state: (data.rules_mangle_counters || data.rules_mangle_output_counters || data.rules_proxy_counters) ? "success" : "error"/g' \
+      "$PMAIN" 2>/dev/null || true
+    echo "/* SUBSYNC_PODKOP_DIAG_MANGLE_COUNTERS_V396 */" >> "$PMAIN"
+fi
+# SUBSYNC_PODKOP_DIAG_MANGLE_COUNTERS_V396_END

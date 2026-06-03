@@ -47,7 +47,7 @@ while [ "$i" -le 10 ]; do
   echo "--- install download try $i from $BASE_URL ---"
   wget -O "$TMP" "$BASE_URL/install.sh?v=$(date +%s)-$i" || true
 
-  if [ -s "$TMP" ] && grep -q 'SUBSYNC_PUBLIC_BUILD_V395' "$TMP" && sh -n "$TMP"; then
+  if [ -s "$TMP" ] && grep -q 'SUBSYNC_PUBLIC_BUILD_V396' "$TMP" && sh -n "$TMP"; then
     echo "OK: install.sh v395 downloaded and verified"
     sh "$TMP"
     exit $?

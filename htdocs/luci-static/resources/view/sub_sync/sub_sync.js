@@ -96,7 +96,7 @@
 
     var importBtn = btn('Импорт TXT', 'cbi-button cbi-button-positive');
     var clearBtn = btn('Удалить все TXT');
-    var scanBtn = btn('Скан пинга', 'cbi-button cbi-button-action');
+    var scanBtn = btn('Порт-тест', 'cbi-button cbi-button-action');
     var showBtn = btn('Показать все');
 
     var sectionSelect = document.createElement('select');
@@ -385,7 +385,7 @@
           return;
         }
 
-        status.textContent = 'Скан пинга ' + (i + 1) + '/' + scanItems.length + '...';
+        status.textContent = 'Порт-тест ' + (i + 1) + '/' + scanItems.length + '...';
 
         run(['ping', String(scanItems[i].id)]).then(function(r) {
           var out = String((r && r.stdout) || '').trim();
@@ -507,7 +507,7 @@
 
     var hint = document.createElement('div');
     hint.style.cssText = 'font-size:12px;color:#aaa;margin-bottom:10px';
-    hint.textContent = '25 строк, Показать все/Скрыть, скан пинга, work/no work, выбор секции списком.';
+    hint.textContent = '25 строк, Показать все/Скрыть, скан порта, work/no work, выбор секции списком.';
 
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px';
@@ -527,7 +527,7 @@
 
     var importBtn = btn('Импорт TXT', 'cbi-button cbi-button-positive');
     var clearBtn = btn('Удалить TXT серверы');
-    var scanBtn = btn('Скан пинга', 'cbi-button cbi-button-action');
+    var scanBtn = btn('Порт-тест', 'cbi-button cbi-button-action');
     var showBtn = btn('Показать все');
 
     var sectionSelect = document.createElement('select');
@@ -751,7 +751,7 @@
           return;
         }
 
-        status.textContent = 'Скан пинга ' + (i + 1) + '/' + scanItemsV347.length + '...';
+        status.textContent = 'Порт-тест ' + (i + 1) + '/' + scanItemsV347.length + '...';
 
         runV346(['ping', String(scanItemsV347[i].id)]).then(function(r) {
           var out = String((r && r.stdout) || '').trim();
@@ -835,7 +835,7 @@
 
     card.innerHTML =
       '<div style="font-weight:800;color:#77ff88;font-size:16px;margin-bottom:4px">TXT серверы</div>' +
-      '<div style="font-size:12px;color:#aaa;margin-bottom:10px">Отдельный TXT-список: скан пинга, сортировка и применение в выбранную Podkop-секцию.</div>';
+      '<div style="font-size:12px;color:#aaa;margin-bottom:10px">Отдельный TXT-список: скан порта, сортировка и применение в выбранную Podkop-секцию.</div>';
 
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px';
@@ -855,7 +855,7 @@
 
     var importBtn = btn('Импорт TXT', 'cbi-button cbi-button-positive');
     var clearBtn = btn('Удалить TXT серверы');
-    var scanBtn = btn('Скан пинга', 'cbi-button cbi-button-action');
+    var scanBtn = btn('Порт-тест', 'cbi-button cbi-button-action');
     var applyBtn = btn('Применить выбранные', 'cbi-button cbi-button-positive');
 
     var sectionSelect = document.createElement('select');
@@ -946,7 +946,7 @@
           applyIds([String(it.id)]);
         };
 
-        var pingBtn = btn('Пинг', 'cbi-button');
+        var pingBtn = btn('Порт', 'cbi-button');
         pingBtn.style.cssText = 'font-size:11px;padding:2px 6px';
         pingBtn.onclick = function(ev) {
           ev.preventDefault();
@@ -1073,12 +1073,12 @@
       function next() {
         if (i >= items.length) {
           scanBtn.disabled = false;
-          status.textContent = 'Скан пинга завершён. Быстрые сверху.';
+          status.textContent = 'Порт-тест завершён. Быстрые сверху.';
           render();
           return;
         }
 
-        status.textContent = 'Скан пинга ' + (i + 1) + '/' + items.length + '...';
+        status.textContent = 'Порт-тест ' + (i + 1) + '/' + items.length + '...';
 
         run(['ping', String(items[i].id)]).then(function(r) {
           items[i].ping = String((r && r.stdout) || '').trim() || 'timeout';
@@ -1220,7 +1220,7 @@
 
   function pingValue(row) {
     try {
-      var c = row.querySelector('.td[data-title="Пинг"]') || row.children[5];
+      var c = row.querySelector('.td[data-title="Порт"]') || row.children[5];
       var t = textOf(c);
       var m = t.match(/[0-9]+/);
       return m ? parseInt(m[0], 10) : 999999;
@@ -1295,7 +1295,7 @@
       for (var i = 0; i < buttons.length; i++) {
         var b = buttons[i];
         if (b.__ssPingSortV327) continue;
-        if (!/Проверить\s+пинг|Пинг/i.test(textOf(b))) continue;
+        if (!/Проверить\s+пинг|Порт/i.test(textOf(b))) continue;
 
         b.__ssPingSortV327 = true;
         b.addEventListener('click', function() {
@@ -1316,7 +1316,7 @@
       for (var i = 0; i < ths.length; i++) {
         var th = ths[i];
         if (th.__ssPingHeaderSortV327) continue;
-        if (!/^Пинг$/i.test(textOf(th))) continue;
+        if (!/^Порт$/i.test(textOf(th))) continue;
 
         th.__ssPingHeaderSortV327 = true;
         th.style.cursor = 'pointer';
@@ -1954,6 +1954,15 @@ return false;
 function ssHydrateActiveBadgesV28(sec3) {
 if (!serverTable || !sec3 || typeof fs === "undefined") return;
 var rows = serverTable.querySelectorAll(".tr[data-link]");
+                                /* SUBSYNC_SYNC_SELECTED_FROM_UCI_V396_BEGIN */
+                                try {
+                                        var liveLinksV396 = uci.get('podkop', sec3, 'urltest_proxy_links');
+                                        if (!liveLinksV396 || (Array.isArray(liveLinksV396) && liveLinksV396.length === 0))
+                                                liveLinksV396 = uci.get('podkop', sec3, 'selector_proxy_links');
+                                        if (typeof liveLinksV396 === 'string') liveLinksV396 = liveLinksV396 ? [ liveLinksV396 ] : [];
+                                        if (Array.isArray(liveLinksV396)) activeLinksBySection[sec3] = liveLinksV396;
+                                } catch(e) {}
+                                /* SUBSYNC_SYNC_SELECTED_FROM_UCI_V396_END */
 var curLinks = activeLinksBySection[sec3] || [];
 for (var i = 0; i < rows.length; i++) {
 (function(row) {
@@ -3920,7 +3929,7 @@ syncAllBtnStates(sec3);
 				E('div', { 'class': 'th', 'style': 'width:120px' }, 'Транспорт'),
 				E('div', { 'class': 'th' }, 'Имя'),
 				E('div', { 'class': 'th', 'style': 'width:200px' }, 'Адрес'),
-				E('div', { 'class': 'th', 'style': 'width:70px;text-align:center' }, 'Пинг'),
+				E('div', { 'class': 'th', 'style': 'width:70px;text-align:center' }, 'Порт'),
 				E('div', { 'class': 'th', 'style': 'width:160px;text-align:right' }, '')
 			]);
 			var sRows = [headerRow];
@@ -4186,6 +4195,15 @@ btn.dataset.link = ssNormLinkV28(link2 || btn.dataset.link || "");
 
 			function syncAllBtnStates(sec3) {
 				if (!serverTable) return;
+                                /* SUBSYNC_SYNC_SELECTED_FROM_UCI_V396_BEGIN */
+                                try {
+                                        var liveLinksV396 = uci.get('podkop', sec3, 'urltest_proxy_links');
+                                        if (!liveLinksV396 || (Array.isArray(liveLinksV396) && liveLinksV396.length === 0))
+                                                liveLinksV396 = uci.get('podkop', sec3, 'selector_proxy_links');
+                                        if (typeof liveLinksV396 === 'string') liveLinksV396 = liveLinksV396 ? [ liveLinksV396 ] : [];
+                                        if (Array.isArray(liveLinksV396)) activeLinksBySection[sec3] = liveLinksV396;
+                                } catch(e) {}
+                                /* SUBSYNC_SYNC_SELECTED_FROM_UCI_V396_END */
 				var curLinks = activeLinksBySection[sec3] || [];
 
 				var rows = serverTable.querySelectorAll('.tr[data-link]');
@@ -4388,7 +4406,7 @@ if (!ssLinkInListV28(link2, myLinks)) {
 					E('div', { 'class': 'td', 'data-title': 'Имя' }, nameChildren),
 					E('div', { 'class': 'td', 'data-title': 'Адрес', 'style': 'font-family:monospace;font-size:12px' },
 						(s.addr || '') + ':' + (s.port || '')),
-					E('div', { 'class': 'td', 'data-title': 'Пинг', 'style': 'text-align:center' }, [(isHy2ServerPingV172(s) ? createHy2PingCellV172(s) : createPingCell(s.id || (idx + 1)))]),
+					E('div', { 'class': 'td', 'data-title': 'Порт', 'style': 'text-align:center' }, [(isHy2ServerPingV172(s) ? createHy2PingCellV172(s) : createPingCell(s.id || (idx + 1)))]),
 					E('div', { 'class': 'td', 'style': 'text-align:right' }, E('div', { 'style': 'display:flex;gap:4px;justify-content:flex-end' }, [selectBtn, copyBtn]))
 				]);
 			}
@@ -4419,7 +4437,7 @@ if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrat
                                    try { if (!expandedPingV79 && typeof applyServerLimitV79 === 'function') applyServerLimitV79(); } catch(e) {}
                                    for (var prV79 = 0; prV79 < pingRowsV79.length; prV79++) {
                                            if (!expandedPingV79 && prV79 >= LIMIT) break;
-                                           var cellV79 = pingRowsV79[prV79].querySelector('.td[data-title="Пинг"] span');
+                                           var cellV79 = pingRowsV79[prV79].querySelector('.td[data-title="Порт"] span');
                                            if (cellV79) pingCells.push(cellV79);
                                            if (pingCells.length >= maxPingV79) break;
                                    }
@@ -4607,7 +4625,7 @@ if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrat
                                 apRows.appendChild(E('div', { 'class': 'tr table-titles' }, [
                                         E('div', { 'class': 'th', style: 'width:38px' }, ''),
                                         E('div', { 'class': 'th', style: 'width:55px' }, '#'),
-                                        E('div', { 'class': 'th', style: 'width:70px' }, 'Пинг'),
+                                        E('div', { 'class': 'th', style: 'width:70px' }, 'Порт'),
                                         E('div', { 'class': 'th', style: 'width:90px' }, 'Транспорт'),
                                         E('div', { 'class': 'th' }, 'Сервер'),
                                         E('div', { 'class': 'th', style: 'width:70px' }, 'Протокол')
@@ -4766,7 +4784,7 @@ if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrat
                                 'class': 'cbi-button',
                                 style: 'padding:2px 10px;font-size:12px;background:transparent;color:#4caf50;border:1px solid #4caf50',
                                 click: apPingAndPick
-                        }, 'Пинг + отобрать');
+                        }, 'Порт + отобрать');
 
                         var apApplyBtn = E('button', {
                                 'class': 'cbi-button cbi-button-action',
@@ -5073,8 +5091,8 @@ if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrat
                         var pb = ev.currentTarget || ev.target;
                         if (pb.disabled) return;
                         pb.disabled = true;
-                        pb.textContent = 'Пинг...';
-                        var cells = xhttpTable ? xhttpTable.querySelectorAll('.td[data-title="Пинг"] span') : [];
+                        pb.textContent = 'Порт...';
+                        var cells = xhttpTable ? xhttpTable.querySelectorAll('.td[data-title="Порт"] span') : [];
                         var pi = 0;
                         function pingNextXhttpV8() {
                             if (pi >= cells.length) {
@@ -7490,3 +7508,4 @@ return view.extend({
     }, 1000);
   } catch(e) {}
 })();
+/* SUBSYNC_UI_PING_IS_PORT_TEST_V396: UI label only, backend ping checks host:port */
