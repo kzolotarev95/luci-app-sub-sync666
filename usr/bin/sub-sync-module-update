@@ -1,4 +1,5 @@
 #!/bin/sh
+# SUBSYNC_UPDATE_HELPER_NO_LUCI_RESTART_ON_CHECK_V406
 # SUBSYNC_MODULE_UPDATE_HELPER_V277
 set -u
 
@@ -136,24 +137,3 @@ case "${1:-check}" in
   update) cmd_update ;;
   *) echo "Usage: $0 check|update"; exit 1 ;;
 esac
-# SUBSYNC_DASHBOARD_HELPERS_FORCE_INSTALL_V405_BEGIN
-echo "Install Podcop Sub v666 dashboard helpers..."
-BASE_URL="${BASE_URL:-https://raw.githubusercontent.com/${REPO_OWNER:-kzolotarev95}/${REPO_NAME:-luci-app-sub-sync666}/${REPO_REF:-main}}"
-mkdir -p /usr/bin /www/luci-static/resources/view/sub_sync /etc/sub-sync
-
-wget -qO /www/luci-static/resources/view/sub_sync/sub_sync_subv666.js "$BASE_URL/htdocs/luci-static/resources/view/sub_sync/sub_sync_subv666.js" 2>/dev/null || true
-for f in sub-sync sub-sync-delete-server sub-sync-dashboard-v403 sub-sync-dashboard-ping-v403; do
-  wget -qO "/usr/bin/$f" "$BASE_URL/usr/bin/$f" 2>/dev/null && chmod +x "/usr/bin/$f"
-done
-
-chmod 755 /www/luci-static/resources/view 2>/dev/null || true
-chmod 755 /www/luci-static/resources/view/podkop 2>/dev/null || true
-chmod 644 /www/luci-static/resources/view/podkop/main.js 2>/dev/null || true
-
-echo "v405" > /etc/sub-sync/module-version
-echo "405" > /etc/sub-sync/module-build
-
-rm -rf /tmp/luci-* /tmp/luci-indexcache* /tmp/luci-modulecache*
-/etc/init.d/rpcd restart 2>/dev/null || true
-/etc/init.d/uhttpd restart 2>/dev/null || true
-# SUBSYNC_DASHBOARD_HELPERS_FORCE_INSTALL_V405_END
