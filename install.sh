@@ -1,6 +1,6 @@
 #!/bin/sh
-# SUBSYNC_PUBLIC_BUILD_V447
-# SUBSYNC_PUBLIC_BUILD_V447
+# SUBSYNC_PUBLIC_BUILD_V448
+# SUBSYNC_PUBLIC_BUILD_V448
 # SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V395_BEGIN
 cat > /usr/bin/podcop-sub-v666-safe-podkop <<'EOSAFE_MAIN'
 #!/bin/sh
@@ -80,13 +80,13 @@ fi
 EOSAFE
 chmod +x /usr/bin/podcop-sub-v666-safe-podkop-restart
 # SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V395_END
-# SUBSYNC_PUBLIC_BUILD_V447
-# SUBSYNC_PUBLIC_BUILD_V447
-# SUBSYNC_PUBLIC_BUILD_V447
-# SUBSYNC_PUBLIC_BUILD_V447
-# SUBSYNC_PUBLIC_BUILD_V447
-# SUBSYNC_PUBLIC_BUILD_V447
-# SUBSYNC_PUBLIC_BUILD_V447
+# SUBSYNC_PUBLIC_BUILD_V448
+# SUBSYNC_PUBLIC_BUILD_V448
+# SUBSYNC_PUBLIC_BUILD_V448
+# SUBSYNC_PUBLIC_BUILD_V448
+# SUBSYNC_PUBLIC_BUILD_V448
+# SUBSYNC_PUBLIC_BUILD_V448
+# SUBSYNC_PUBLIC_BUILD_V448
 # SUBSYNC_INSTALL_VERSION_FILES_V395_BEGIN
 set -u
 
@@ -328,17 +328,31 @@ subsync_dl_helper_v435() {
 subsync_dl_helper_v435 sub-sync-link-source-map-v432c
 subsync_dl_helper_v435 sub-sync-del-sub-source-clean-v432c
 # SUBSYNC_INSTALL_SOURCE_DELETE_HELPERS_V435_END
-
-# SUBSYNC_INSTALL_DASHBOARD_FIX_HELPERS_V447_BEGIN
-subsync_dl_helper_v435 usr/bin/sub-sync-subs-info /usr/bin/sub-sync-subs-info || true
-subsync_dl_helper_v435 usr/bin/sub-sync-subs-info.real-v444 /usr/bin/sub-sync-subs-info.real-v444 || true
-subsync_dl_helper_v435 usr/bin/sub-sync-dashboard-v403 /usr/bin/sub-sync-dashboard-v403 || true
-subsync_dl_helper_v435 usr/bin/sub-sync-dashboard-ping-v403 /usr/bin/sub-sync-dashboard-ping-v403 || true
-subsync_dl_helper_v435 usr/bin/sub-sync-delete-server /usr/bin/sub-sync-delete-server || true
+# SUBSYNC_INSTALL_DASHBOARD_FIX_HELPERS_V448_BEGIN
+subsync_install_helper_v448() {
+  rel="$1"
+  dst="$2"
+  mkdir -p "$(dirname "$dst")" 2>/dev/null || true
+  url="https://raw.githubusercontent.com/${REPO_OWNER:-kzolotarev95}/${REPO_NAME:-luci-app-sub-sync666}/${REPO_REF:-main}/$rel?v=$(date +%s)"
+  tmp="${dst}.tmp.$$"
+  rm -f "$tmp"
+  echo "install helper v448 $rel"
+  wget -q -O "$tmp" "$url" 2>/dev/null || uclient-fetch -q -O "$tmp" "$url" 2>/dev/null || { rm -f "$tmp"; echo "WARN: helper v448 download failed $rel"; return 1; }
+  [ -s "$tmp" ] || { rm -f "$tmp"; echo "WARN: helper v448 empty $rel"; return 1; }
+  mv "$tmp" "$dst" || { rm -f "$tmp"; echo "WARN: helper v448 move failed $dst"; return 1; }
+  chmod +x "$dst" 2>/dev/null || true
+  return 0
+}
+subsync_install_helper_v448 usr/bin/sub-sync-subs-info /usr/bin/sub-sync-subs-info || true
+subsync_install_helper_v448 usr/bin/sub-sync-subs-info.real-v444 /usr/bin/sub-sync-subs-info.real-v444 || true
+subsync_install_helper_v448 usr/bin/sub-sync-dashboard-v403 /usr/bin/sub-sync-dashboard-v403 || true
+subsync_install_helper_v448 usr/bin/sub-sync-dashboard-ping-v403 /usr/bin/sub-sync-dashboard-ping-v403 || true
+subsync_install_helper_v448 usr/bin/sub-sync-delete-server /usr/bin/sub-sync-delete-server || true
 chmod +x /usr/bin/sub-sync /usr/bin/sub-sync-subs-info /usr/bin/sub-sync-subs-info.real-v444 /usr/bin/sub-sync-dashboard-v403 /usr/bin/sub-sync-dashboard-ping-v403 /usr/bin/sub-sync-delete-server 2>/dev/null || true
-# SUBSYNC_INSTALL_DASHBOARD_FIX_HELPERS_V447_END
-echo "v447" > /etc/sub-sync/module-version
-echo "447" > /etc/sub-sync/module-build
+# SUBSYNC_INSTALL_DASHBOARD_FIX_HELPERS_V448_END
+
+echo "v448" > /etc/sub-sync/module-version
+echo "448" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
@@ -447,8 +461,8 @@ chmod 755 /www/luci-static/resources/view 2>/dev/null || true
 chmod 755 /www/luci-static/resources/view/podkop 2>/dev/null || true
 chmod 644 /www/luci-static/resources/view/podkop/main.js 2>/dev/null || true
 
-echo "v447" > /etc/sub-sync/module-version
-echo "447" > /etc/sub-sync/module-build
+echo "v448" > /etc/sub-sync/module-version
+echo "448" > /etc/sub-sync/module-build
 
 rm -rf /tmp/luci-* /tmp/luci-indexcache* /tmp/luci-modulecache*
 /etc/init.d/rpcd restart 2>/dev/null || true
