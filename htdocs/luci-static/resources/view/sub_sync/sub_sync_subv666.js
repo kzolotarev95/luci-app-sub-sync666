@@ -4698,7 +4698,7 @@ if (typeof window !== "undefined") window.setTimeout(function() { try { ssHydrat
                                                 return;
                                         }
 
-                                        fs.exec('/usr/bin/sub-sync', ['dashboard-ping-v403', String(s.code || s.id)]).then(function(r) {
+                                        fs.exec('/usr/bin/sub-sync', ['ping', String(s.id || s.code) /* SUBSYNC_AUTOPICK_SERVER_PING_V434B */]).then(function(r) {
                                                 var data = {};
                                                 try { data = JSON.parse((r.stdout || '{}').trim()); } catch(e) { data = {}; }
 
@@ -7220,6 +7220,8 @@ function createSubSyncDashboardV403(section) {
                         var del = E('button', {
                                 'style': 'color:#f44336;background:transparent;border:1px solid #f44336;border-radius:6px;font-size:11px;cursor:pointer;padding:2px 8px',
                                 'title': 'Удалить сервер',
+                                /* SUBSYNC_HIDE_DASH_DELETE_BUTTONS_V426 */
+                                'style': 'display:none!important;visibility:hidden!important;width:0!important;height:0!important;padding:0!important;margin:0!important;border:0!important;overflow:hidden!important',
                                         /* SUBSYNC_DELETE_BUTTON_DATA_V407C */
                                         'data-link': String(s.link || ''),
                                         'data-id': String(s.id || ''),
@@ -7735,6 +7737,9 @@ function createSubSyncDashboardV403(section) {
                                                 window.setTimeout(polishSmallDeleteXV407G, 1500);
                                         })(grid);
                                         /* SUBSYNC_DASHBOARD_AUTO_PING_V403C */
+                                        /* SUBSYNC_DASHBOARD_AUTO_PING_ON_ENTER_V428 */
+                                        window.setTimeout((function(boxRef) { return function() { var cells = boxRef.querySelectorAll(".ss-dash-ping-v403"); var n = 0; function nextPingV428() { if (n >= cells.length) return; cells[n].click(); n++; window.setTimeout(nextPingV428, 180); } nextPingV428(); }; })(box), 60);
+                                        window.setTimeout((function(boxRef) { return function() { var cells = boxRef.querySelectorAll(".ss-dash-ping-v403"); var n = 0; function nextPingV428b() { if (n >= cells.length) return; if ((cells[n].textContent || "") === "N/A") cells[n].click(); n++; window.setTimeout(nextPingV428b, 180); } nextPingV428b(); }; })(box), 1600);
                                         window.setTimeout((function(boxRef) {
                                                 return function() {
                                                         var cells = boxRef.querySelectorAll(".ss-dash-ping-v403");
@@ -7818,6 +7823,22 @@ st407ad.textContent = '.cbi-section h3:first-child{display:none!important;}';
 document.head.appendChild(st407ad);
 return view.extend({
 	render: function() {
+            /* SUBSYNC_DEL_SUB_WEB_RELOAD_V433 */
+            try {
+                if (typeof fs !== 'undefined' && fs.exec && !fs.__subsyncDelSubReloadV433) {
+                    var __subsyncOrigFsExecV433 = fs.exec;
+                    fs.exec = function(cmd, args) {
+                        var r = __subsyncOrigFsExecV433.apply(this, arguments);
+                        try {
+                            if (cmd === '/usr/bin/sub-sync' && args && /^(del-sub|delete-sub|remove-sub|delete-subscription)$/.test(args[0] || '')) {
+                                Promise.resolve(r).then(function() { window.setTimeout(function() { window.location.reload(); }, 900); });
+                            }
+                        } catch(e) {}
+                        return r;
+                    };
+                    fs.__subsyncDelSubReloadV433 = true;
+                }
+            } catch(e) {}
 		injectStyles();
 
 		var m = new form.Map('podkop',

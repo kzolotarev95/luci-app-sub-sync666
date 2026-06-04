@@ -1,4 +1,5 @@
 #!/bin/sh
+# SUBSYNC_PUBLIC_BUILD_V434
 # SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V395_BEGIN
 cat > /usr/bin/podcop-sub-v666-safe-podkop <<'EOSAFE_MAIN'
 #!/bin/sh
@@ -310,8 +311,8 @@ touch /etc/crontabs/root
 /etc/init.d/cron restart 2>/dev/null || true
 
 echo "=== version ==="
-echo "v407" > /etc/sub-sync/module-version
-echo "407" > /etc/sub-sync/module-build
+echo "v434" > /etc/sub-sync/module-version
+echo "434" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
@@ -420,8 +421,8 @@ chmod 755 /www/luci-static/resources/view 2>/dev/null || true
 chmod 755 /www/luci-static/resources/view/podkop 2>/dev/null || true
 chmod 644 /www/luci-static/resources/view/podkop/main.js 2>/dev/null || true
 
-echo "v407" > /etc/sub-sync/module-version
-echo "407" > /etc/sub-sync/module-build
+echo "v434" > /etc/sub-sync/module-version
+echo "434" > /etc/sub-sync/module-build
 
 rm -rf /tmp/luci-* /tmp/luci-indexcache* /tmp/luci-modulecache*
 /etc/init.d/rpcd restart 2>/dev/null || true

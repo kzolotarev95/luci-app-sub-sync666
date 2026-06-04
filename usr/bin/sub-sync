@@ -1,4 +1,23 @@
 #!/bin/sh
+# SUBSYNC_SOURCE_MAP_WRAPPER_V432C
+case "${1:-}" in
+  sync)
+    shift
+    /usr/bin/sub-sync.real sync "$@"
+    _rc="$?"
+    /usr/bin/sub-sync-link-source-map-v432c >/tmp/subsync-v432c-map.log 2>&1 || true
+    exit "$_rc"
+  ;;
+  del-sub|delete-sub|remove-sub|delete-subscription)
+    shift
+    exec /usr/bin/sub-sync-del-sub-source-clean-v432c "$@"
+  ;;
+esac
+# SUBSYNC_STAGED_DELETE_ALIAS_V427B
+case "${1:-}" in
+  stage-delete-active) shift; exec /usr/bin/sub-sync-delete-server stage-active "$@" ;;
+  apply-delete-active) shift; exec /usr/bin/sub-sync-delete-server apply-staged "$@" ;;
+esac
 # SUBSYNC_WRAPPER_HAPP_HY2_DELETE_EMPTY_V221
 # includes SUBSYNC_WRAPPER_HAPP_HY2_DELETE_EMPTY_V220
 # includes SUBSYNC_WRAPPER_EMPTY_SUBS_EMPTY_SERVERS_V219

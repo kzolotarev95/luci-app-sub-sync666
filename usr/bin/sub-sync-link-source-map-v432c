@@ -1,0 +1,47 @@
+#!/bin/sh
+# SUBSYNC_LINK_SOURCE_MAP_HELPER_V432C
+
+DATA="/etc/sub-sync"
+SUBS="$DATA/subscriptions.txt"
+OUT="$DATA/link-sources.tsv"
+TMP="/tmp/subsync-map-v432c.$$"
+
+mkdir -p "$DATA"
+: > "$OUT.tmp"
+
+[ -s "$SUBS" ] || {
+  : > "$OUT"
+  rm -f "$OUT.tmp"
+  exit 0
+}
+
+while IFS= read -r url; do
+  url="$(printf '%s' "$url" | tr -d '\r\n')"
+  [ -n "$url" ] || continue
+
+  RAW="$TMP.raw"
+  DEC="$TMP.dec"
+
+  if command -v curl >/dev/null 2>&1; then
+    curl -skL --connect-timeout 15 --max-time 30 -o "$RAW" "$url" 2>/dev/null || true
+  else
+    wget -q -O "$RAW" "$url" 2>/dev/null || uclient-fetch -q -O "$RAW" "$url" 2>/dev/null || true
+  fi
+
+  [ -s "$RAW" ] || continue
+
+  base64 -d < "$RAW" > "$DEC" 2>/dev/null || cp "$RAW" "$DEC"
+  grep -q '://' "$DEC" 2>/dev/null || cp "$RAW" "$DEC"
+
+  tr '\r' '\n' < "$DEC" \
+    | sed 's/[[:space:]]/\n/g' \
+    | grep -E '^(vless|vmess|trojan|ss|hysteria2|hy2)://' \
+    | while IFS= read -r link; do
+        [ -n "$link" ] && printf '%s\t%s\n' "$link" "$url" >> "$OUT.tmp"
+      done
+
+  rm -f "$RAW" "$DEC"
+done < "$SUBS"
+
+sort -u "$OUT.tmp" > "$OUT"
+rm -f "$OUT.tmp" "$TMP.raw" "$TMP.dec"

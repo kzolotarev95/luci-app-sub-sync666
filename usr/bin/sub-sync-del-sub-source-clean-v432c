@@ -1,0 +1,119 @@
+#!/bin/sh
+# SUBSYNC_DEL_SUB_SOURCE_CLEAN_V432E
+# SUBSYNC_DEL_SUB_DIRECT_REMOVE_URL_V432E
+
+ARG="${1:-}"
+DATA="/etc/sub-sync"
+SUBS="$DATA/subscriptions.txt"
+MAP="$DATA/link-sources.tsv"
+TMP="/tmp/subsync-v432e-links.$$"
+HP="/tmp/subsync-v432e-hp.$$"
+TAB="$(printf '\t')"
+
+: > "$TMP"
+: > "$HP"
+
+resolve_url() {
+  case "$ARG" in
+    http://*|https://*) printf '%s\n' "$ARG"; return ;;
+  esac
+  case "$ARG" in
+    ''|*[!0-9]*) return ;;
+    *) [ -s "$SUBS" ] && sed -n "${ARG}p" "$SUBS" 2>/dev/null | head -n1 ;;
+  esac
+}
+
+hostport() {
+  x="$1"
+  x="${x#*://}"
+  x="${x#*@}"
+  x="${x%%\?*}"
+  x="${x%%#*}"
+  x="${x%%/*}"
+  [ -n "$x" ] && printf '%s\n' "$x"
+}
+
+URL="$(resolve_url)"
+[ -n "$URL" ] || URL="$ARG"
+
+[ -s "$MAP" ] && grep -F "${TAB}${URL}" "$MAP" | cut -f1 | sort -u > "$TMP" || true
+
+for f in "$DATA/subscriptions.txt" "$DATA/subs-meta.tsv" "$DATA/subs-manual.tsv"; do
+  [ -f "$f" ] || continue
+  awk -F '\t' -v u="$URL" '$0 != u && $1 != u { print }' "$f" > "$f.tmp.$$" || true
+  mv "$f.tmp.$$" "$f"
+done
+
+if [ -s "$SUBS" ]; then
+  /usr/bin/sub-sync.real sync >/tmp/subsync-v432e-sync.log 2>&1 || true
+  /usr/bin/sub-sync-link-source-map-v432c >/tmp/subsync-v432e-map.log 2>&1 || true
+else
+  : > "$DATA/links.txt"
+  echo '[]' > "$DATA/servers.json"
+  : > "$MAP"
+fi
+
+if [ -s "$TMP" ] && [ -s "$MAP" ]; then
+  KEEP="/tmp/subsync-v432e-delete-only.$$"
+  : > "$KEEP"
+  while IFS= read -r link; do
+    grep -Fq "${link}${TAB}" "$MAP" 2>/dev/null && continue
+    printf '%s\n' "$link" >> "$KEEP"
+  done < "$TMP"
+  mv "$KEEP" "$TMP"
+fi
+
+while IFS= read -r l; do hostport "$l"; done < "$TMP" | sed '/^$/d' | sort -u > "$HP"
+
+match_link() {
+  v="$1"
+  grep -Fxq "$v" "$TMP" 2>/dev/null && return 0
+  hp="$(hostport "$v")"
+  [ -n "$hp" ] && grep -Fxq "$hp" "$HP" 2>/dev/null
+}
+
+purge_list() {
+  sec="$1"; opt="$2"
+  vals="$(uci -q get podkop.$sec.$opt 2>/dev/null || true)"
+  [ -n "$vals" ] || return 0
+
+  KEEP="/tmp/subsync-v432e-keep.$$"
+  : > "$KEEP"
+  removed=0
+
+  for v in $vals; do
+    if match_link "$v"; then removed=1; else printf '%s\n' "$v" >> "$KEEP"; fi
+  done
+
+  [ "$removed" = "1" ] || { rm -f "$KEEP"; return 0; }
+
+  uci -q delete podkop.$sec.$opt 2>/dev/null || true
+  while IFS= read -r v; do
+    [ -n "$v" ] && uci -q add_list podkop.$sec.$opt="$v"
+  done < "$KEEP"
+  rm -f "$KEEP"
+
+  left="$(uci -q get podkop.$sec.$opt 2>/dev/null || true)"
+  [ -n "$left" ] || uci -q delete podkop.$sec 2>/dev/null || true
+}
+
+for sec in $(uci show podkop 2>/dev/null | sed -n "s/^podkop\.\([^.=]*\)=.*/\1/p" | sort -u); do
+  [ "$sec" = "settings" ] && continue
+  typ="$(uci -q get podkop.$sec.proxy_config_type 2>/dev/null || true)"
+  case "$typ" in
+    outbound)
+      oj="$(uci -q get podkop.$sec.outbound_json 2>/dev/null || true)"
+      srv="$(printf '%s' "$oj" | jq -r '.server // empty' 2>/dev/null || true)"
+      port="$(printf '%s' "$oj" | jq -r '.server_port // empty' 2>/dev/null || true)"
+      [ -n "$srv" ] && [ -n "$port" ] && grep -Fxq "$srv:$port" "$HP" 2>/dev/null && uci -q delete podkop.$sec 2>/dev/null || true
+    ;;
+    urltest) purge_list "$sec" "urltest_proxy_links" ;;
+    selector) purge_list "$sec" "selector_proxy_links" ;;
+    url|"") purge_list "$sec" "proxy_string" ;;
+  esac
+done
+
+uci commit podkop 2>/dev/null || true
+/etc/init.d/podkop restart >/tmp/subsync-v432e-podkop-restart.log 2>&1 || true
+rm -f "$TMP" "$HP"
+:
