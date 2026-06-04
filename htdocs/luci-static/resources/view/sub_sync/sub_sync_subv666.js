@@ -2398,6 +2398,97 @@ syncAllBtnStates(sec3);
 			}, 'Применить');
 
 			injectStyles();
+            /* SUBSYNC_UPDATE_CHECK_TEXT_RED_V454D */
+            try {
+                function ssUpdateCheckTextRedV454D() {
+                    var buttons = document.querySelectorAll('button.cbi-button, button');
+                    for (var i = 0; i < buttons.length; i++) {
+                        var b = buttons[i];
+                        var t = String(b.textContent || '').replace(/\s+/g, ' ').trim();
+                        if (t === 'Проверить обновление') {
+                            b.style.removeProperty('background');
+                            b.style.removeProperty('background-color');
+                            b.style.removeProperty('border-color');
+                            b.style.setProperty('color', '#d93025', 'important');
+                            b.style.setProperty('font-weight', '600', 'important');
+                        }
+                    }
+                }
+
+                ssUpdateCheckTextRedV454D();
+                window.setTimeout(ssUpdateCheckTextRedV454D, 300);
+                window.setTimeout(ssUpdateCheckTextRedV454D, 1200);
+                window.setTimeout(ssUpdateCheckTextRedV454D, 2500);
+            } catch(e) {}
+                        /* SUBSYNC_DONATE_COPY_NO_JUMP_V454B */
+                        try {
+                                if (!document.getElementById('ss-donate-copy-nojump-v454b-style')) {
+                                        var st454b = document.createElement('style');
+                                        st454b.id = 'ss-donate-copy-nojump-v454b-style';
+                                        st454b.textContent =
+                                                '.ss-donate-banner-v258__copy:not([data-ss-donate-inline-v454b="1"]){visibility:hidden!important}' +
+                                                '.ss-donate-banner-v258__copy[data-ss-donate-inline-v454b="1"]{visibility:visible!important;float:none!important;position:static!important;display:inline-block!important;margin-left:6px!important;margin-top:0!important;vertical-align:middle!important;white-space:nowrap!important;width:auto!important}';
+                                        document.head.appendChild(st454b);
+                                }
+
+                                function ssDonateCopyNoJumpV454B() {
+                                        var btn = document.querySelector('.ss-donate-banner-v258__copy');
+                                        if (!btn) return false;
+                                        if (btn.getAttribute('data-ss-donate-inline-v454b') === '1') return true;
+
+                                        var numText = '4817760258323256';
+                                        var root = btn;
+                                        for (var up = 0; up < 8 && root && root.parentNode; up++) {
+                                                root = root.parentNode;
+                                                if (String(root.className || '').indexOf('ss-donate') >= 0) break;
+                                        }
+                                        if (!root) return false;
+
+                                        var found = null;
+                                        function walk(n) {
+                                                if (!n || found || n === btn) return;
+                                                if (n.nodeType === 3 && String(n.nodeValue || '').indexOf(numText) >= 0) {
+                                                        found = n;
+                                                        return;
+                                                }
+                                                if (n.nodeType === 1 && String(n.className || '').indexOf('ss-donate-banner-v258__copy') >= 0) return;
+                                                for (var c = n.firstChild; c; c = c.nextSibling) walk(c);
+                                        }
+                                        walk(root);
+                                        if (!found || !found.parentNode) return false;
+
+                                        var txt = String(found.nodeValue || '');
+                                        var idx = txt.indexOf(numText);
+                                        if (idx < 0) return false;
+
+                                        var p = found.parentNode;
+                                        p.insertBefore(document.createTextNode(txt.slice(0, idx)), found);
+
+                                        var num = document.createElement('span');
+                                        num.className = 'ss-donate-number-inline-v454b';
+                                        num.textContent = numText;
+                                        p.insertBefore(num, found);
+                                        p.insertBefore(document.createTextNode(' '), found);
+                                        p.insertBefore(btn, found);
+                                        p.insertBefore(document.createTextNode(txt.slice(idx + numText.length)), found);
+                                        p.removeChild(found);
+
+                                        btn.setAttribute('data-ss-donate-inline-v454b', '1');
+                                        return true;
+                                }
+
+                                ssDonateCopyNoJumpV454B();
+                                var mo454b = new MutationObserver(function() {
+                                        if (ssDonateCopyNoJumpV454B()) {
+                                                try { mo454b.disconnect(); } catch(e) {}
+                                        }
+                                });
+                                mo454b.observe(document.documentElement, { childList: true, subtree: true });
+                                window.setTimeout(function() {
+                                        ssDonateCopyNoJumpV454B();
+                                        try { mo454b.disconnect(); } catch(e) {}
+                                }, 1500);
+                        } catch(e) {}
 
 			var wStatus = E('div', { 'class': 'ss-widget' }, [
 				E('div', { 'class': 'ss-widget__title' }, 'Статус'),
@@ -6917,7 +7008,12 @@ function createMonitorContent(section) {
     var section = getTopSectionName();
 
     box.innerHTML =
-      '<h3>HYSTERIA2 / HY2</h3>' +
+      /* SUBSYNC_HY2_NATIVE_COLLAPSED_CARD_V452X */
+      '<div class="ss-card__header ss-hy2-native-header-v452x" style="cursor:pointer;user-select:none" onclick="var b=this.nextElementSibling,a=this.lastElementChild,o=b&&b.style.display.length>0;if(b)b.style.display=o?String():String.fromCharCode(110,111,110,101);if(a)a.textContent=o?String.fromCharCode(9650):String.fromCharCode(9660);">' +
+        '<div class="ss-card__title">HYSTERIA2 / HY2</div>' +
+        '<span class="ss-hy2-native-arrow-v452x" style="margin-left:auto;font-size:14px;opacity:.85">▼</span>' +
+      '</div>' +
+      '<div class="ss-hy2-native-body-v452x" style="display:none">' +
       '<div class="ss-label" style="margin-bottom:8px">' +
         '<div class="ss-label" style="margin-bottom:8px"><!-- SUBSYNC_HY2_MANUAL_TEXT_V183 --><b>Ручной если у вас нет подписки.</b><br>Вставь hy2:// или hysteria2://. Кнопка ниже применяет.</div>' +
       '</div>' +
@@ -6934,7 +7030,7 @@ function createMonitorContent(section) {
         '<button id="ss-hy2-v180-probe" class="btn cbi-button" style="margin-left:8px">Проверить HY2 сервер</button>' +
         '<span class="ss-label" id="ss-hy2-v169d-status" style="margin-left:8px;color:#888"></span>' +
       '</div>' +
-      '<pre id="ss-hy2-v169d-out" style="white-space:pre-wrap;word-break:break-word;max-height:240px;overflow:auto;margin-top:10px;padding:10px;border-radius:10px;background:rgba(0,0,0,.18)">Готово. Укажи секцию, вставь HY2-ссылку и нажми “Выбрать HYSTERIA2 в секцию”.</pre>';
+      '<pre id="ss-hy2-v169d-out" style="white-space:pre-wrap;word-break:break-word;max-height:240px;overflow:auto;margin-top:10px;padding:10px;border-radius:10px;background:rgba(0,0,0,.18)">Готово. Укажи секцию, вставь HY2-ссылку и нажми “Выбрать HYSTERIA2 в секцию”.</pre></div>';
 
     createCard.parentNode.insertBefore(box, createCard.nextSibling);
 
@@ -7841,6 +7937,801 @@ return view.extend({
                 window.setTimeout(ssApplyHy2NewBadgeV445B, 1800);
             } catch(e) {}
             /* SUBSYNC_ACTIVE_ROW_BUTTON_SELECTED_V443 */
+            /* SUBSYNC_AUTOPICK_CARD_COLLAPSE_V452A */
+            /* SUBSYNC_TXT_CARD_ONE_ARROW_HY2_STYLE_V452H */
+            /* SUBSYNC_XHTTP_CARD_COLLAPSE_V452L */
+            /* SUBSYNC_XHTTP_LINE_SHIFT_RIGHT_V453M */
+            try {
+                function ssXhttpLineShiftRightV453M() {
+                    var card = document.querySelector('.ss-xhttp-card-v2');
+                    if (!card) return;
+
+                    var header = card.querySelector('.ss-card__header');
+                    if (!header) return;
+
+                    card.style.setProperty('border-left', '0', 'important');
+                    card.style.setProperty('padding-left', '0', 'important');
+
+                    header.style.setProperty('border-left', '3px solid #4caf50', 'important');
+                    header.style.setProperty('padding-left', '10px', 'important');
+                    header.style.setProperty('margin-left', '14px', 'important');
+                    header.style.setProperty('box-sizing', 'border-box', 'important');
+                }
+
+                window.setTimeout(ssXhttpLineShiftRightV453M, 200);
+                window.setTimeout(ssXhttpLineShiftRightV453M, 900);
+                window.setTimeout(ssXhttpLineShiftRightV453M, 1800);
+            } catch(e) {}
+            /* SUBSYNC_COLLAPSE_COLORED_LINES_V453E */
+            try {
+                function ssPaintCollapseLinesV453E() {
+                    function parentCard(el) {
+                        while (el && el !== document.body) {
+                            if (String(el.className || '').indexOf('ss-card') >= 0) return el;
+                            el = el.parentNode;
+                        }
+                        return null;
+                    }
+
+                    function line(card, color) {
+                        if (!card) return;
+                        card.style.setProperty('border-left', '3px solid ' + color, 'important');
+                        card.style.setProperty('padding-left', '10px', 'important');
+                    }
+
+                    function paint(prefix, color) {
+                        var els = document.querySelectorAll('.ss-card__title,h3');
+                        for (var i = 0; i < els.length; i++) {
+                            var t = String(els[i].textContent || '').trim();
+                            if (t === prefix || t.indexOf(prefix + ' ') === 0 || t.indexOf(prefix + '(') === 0) {
+                                line(parentCard(els[i]), color);
+                            }
+                        }
+                    }
+
+                    paint('Активные серверы', '#ff6b6b');
+                    paint('Создать секцию', '#009688');
+                    paint('HYSTERIA2 / HY2', '#9c27b0');
+                    paint('Подписки', '#ff9800');
+                    paint('Все Сервера', '#ffc107');
+                    paint('Автоподбор серверов после обновления', '#2196f3');
+                    paint('TXT серверы', '#00bcd4');
+
+                    /* xHTTP не красим — у него уже есть родная зелёная линия */
+                }
+
+                window.setTimeout(ssPaintCollapseLinesV453E, 100);
+                window.setTimeout(ssPaintCollapseLinesV453E, 700);
+                window.setTimeout(ssPaintCollapseLinesV453E, 1600);
+                window.setTimeout(ssPaintCollapseLinesV453E, 3000);
+            } catch(e) {}
+            /* SUBSYNC_ACTIVE_SERVERS_CARD_COLLAPSE_V452Z */
+            try {
+                function ssActiveServersCollapseV452Z() {
+                    var titles = document.querySelectorAll('.ss-card__title');
+                    var card = null;
+
+                    for (var i = 0; i < titles.length; i++) {
+                        var tt = String(titles[i].textContent || '').trim();
+                        if (/^Активные серверы/.test(tt)) {
+                            card = titles[i].closest ? titles[i].closest('.ss-card') : null;
+                            break;
+                        }
+                    }
+
+                    if (!card || card.dataset.ssActiveServersCollapseV452Z === '1') return;
+
+                    card.dataset.ssActiveServersCollapseV452Z = '1';
+                    card.className = 'ss-card';
+                    card.style.marginTop = card.style.marginTop || '10px';
+
+                    var nodes = [];
+                    while (card.firstChild) {
+                        var n = card.firstChild;
+                        card.removeChild(n);
+
+                        if (n.nodeType === 1 && n.classList && n.classList.contains('ss-card__header')) continue;
+
+                        if (n.nodeType === 1) {
+                            var cls = String(n.className || '');
+                            var txt = String(n.textContent || '').trim();
+
+                            if (cls.indexOf('ss-active-servers-collapse-body') >= 0) {
+                                while (n.firstChild) {
+                                    nodes.push(n.firstChild);
+                                    n.removeChild(n.firstChild);
+                                }
+                                continue;
+                            }
+
+                            if (/^Активные серверы/.test(txt)) continue;
+                        }
+
+                        nodes.push(n);
+                    }
+
+                    var header = document.createElement('div');
+                    header.className = 'ss-card__header';
+                    header.style.cursor = 'pointer';
+                    header.style.userSelect = 'none';
+
+                    var titleNode = document.createElement('div');
+                    titleNode.className = 'ss-card__title';
+                    titleNode.textContent = 'Активные серверы';
+
+                    var arrow = document.createElement('span');
+                    arrow.className = 'ss-active-servers-collapse-arrow-v452z';
+                    arrow.style.cssText = 'margin-left:auto;font-size:14px;opacity:.85';
+
+                    header.appendChild(titleNode);
+                    header.appendChild(arrow);
+
+                    var body = document.createElement('div');
+                    body.className = 'ss-active-servers-collapse-body-v452z';
+
+                    for (var j = 0; j < nodes.length; j++) body.appendChild(nodes[j]);
+
+                    card.appendChild(header);
+                    card.appendChild(body);
+
+                    var opened = false;
+
+                    function renderState() {
+                        body.style.display = opened ? '' : 'none';
+                        arrow.textContent = opened ? '▲' : '▼';
+                    }
+
+                    header.addEventListener('click', function(ev) {
+                        if (ev.target && /button|input|select|textarea|a/i.test(ev.target.tagName || '')) return;
+                        opened = !opened;
+                        renderState();
+                    }, false);
+
+                    renderState();
+                }
+
+                window.setTimeout(ssActiveServersCollapseV452Z, 350);
+                window.setTimeout(ssActiveServersCollapseV452Z, 1300);
+                window.setTimeout(ssActiveServersCollapseV452Z, 2600);
+            } catch(e) {}
+            /* SUBSYNC_CREATE_SECTION_CARD_COLLAPSE_V452N */
+            try {
+                function ssCreateSectionCollapseV452N() {
+                    var cards = document.querySelectorAll('.ss-card');
+                    var card = null;
+                    var h3 = null;
+
+                    for (var i = 0; i < cards.length; i++) {
+                        var h = cards[i].querySelector('h3');
+                        var ht = h ? String(h.textContent || '').trim() : '';
+                        if (ht === 'Создать Podkop-секцию') {
+                            card = cards[i];
+                            h3 = h;
+                            break;
+                        }
+                    }
+
+                    if (!card || !h3 || card.dataset.ssCreateSectionCollapseV452N === '1') return;
+
+                    card.dataset.ssCreateSectionCollapseV452N = '1';
+                    card.className = 'ss-card';
+                    card.style.marginTop = card.style.marginTop || '10px';
+
+                    var nodes = [];
+                    while (card.firstChild) {
+                        var n = card.firstChild;
+                        card.removeChild(n);
+
+                        if (n === h3) continue;
+
+                        if (n.nodeType === 1) {
+                            var cls = String(n.className || '');
+                            var txt = String(n.textContent || '').trim();
+
+                            if (cls.indexOf('ss-create-section-collapse-body') >= 0) {
+                                while (n.firstChild) {
+                                    nodes.push(n.firstChild);
+                                    n.removeChild(n.firstChild);
+                                }
+                                continue;
+                            }
+
+                            if (txt === 'Создать секцию' || txt === 'Создать секцию▲' || txt === 'Создать секцию▼') continue;
+                        }
+
+                        nodes.push(n);
+                    }
+
+                    var header = document.createElement('div');
+                    header.className = 'ss-card__header';
+                    header.style.cursor = 'pointer';
+                    header.style.userSelect = 'none';
+
+                    var title = document.createElement('div');
+                    title.className = 'ss-card__title';
+                    title.textContent = 'Создать секцию';
+
+                    var arrow = document.createElement('span');
+                    arrow.className = 'ss-create-section-collapse-arrow-v452n';
+                    arrow.style.cssText = 'margin-left:auto;font-size:14px;opacity:.85';
+
+                    header.appendChild(title);
+                    header.appendChild(arrow);
+
+                    var body = document.createElement('div');
+                    body.className = 'ss-create-section-collapse-body-v452n';
+                    for (var j = 0; j < nodes.length; j++) body.appendChild(nodes[j]);
+
+                    card.appendChild(header);
+                    card.appendChild(body);
+
+                    var key = 'subsync_create_section_collapse_v452n';
+                    var opened = false; /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q */
+
+                    function renderState() {
+                        body.style.display = opened ? '' : 'none';
+                        arrow.textContent = opened ? '▲' : '▼';
+                    }
+
+                    header.addEventListener('click', function(ev) {
+                        if (ev.target && /button|input|select|textarea|a/i.test(ev.target.tagName || '')) return;
+                        opened = !opened;
+                        /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q: do not persist */
+                        renderState();
+                    }, false);
+
+                    renderState();
+                }
+
+                window.setTimeout(ssCreateSectionCollapseV452N, 350);
+                window.setTimeout(ssCreateSectionCollapseV452N, 1300);
+                window.setTimeout(ssCreateSectionCollapseV452N, 2600);
+            } catch(e) {}
+            /* SUBSYNC_ALL_SERVERS_CARD_COLLAPSE_V452M */
+            try {
+                function ssAllServersCollapseV452M() {
+                    var cards = document.querySelectorAll('.ss-card');
+                    var card = null;
+
+                    for (var i = 0; i < cards.length; i++) {
+                        if (cards[i].classList && cards[i].classList.contains('ss-xhttp-card-v2')) continue;
+
+                        var h3 = cards[i].querySelector('h3');
+                        var ht = h3 ? String(h3.textContent || '').trim() : '';
+                        var tx = String(cards[i].textContent || '');
+
+                        if (/^Серверы\s*\([0-9]+\)/.test(ht) &&
+                            tx.indexOf('Секция:') >= 0 &&
+                            tx.indexOf('Режим:') >= 0 &&
+                            tx.indexOf('Выбрать') >= 0 &&
+                            tx.indexOf('Копировать') >= 0) {
+                            card = cards[i];
+                            break;
+                        }
+                    }
+
+                    if (!card || card.dataset.ssAllServersCollapseV452M === '1') return;
+
+                    card.dataset.ssAllServersCollapseV452M = '1';
+                    card.className = 'ss-card';
+                    card.style.marginTop = card.style.marginTop || '10px';
+
+                    var nodes = [];
+                    while (card.firstChild) {
+                        var n = card.firstChild;
+                        card.removeChild(n);
+
+                        if (n.nodeType === 1 && n.classList && n.classList.contains('ss-card__header')) {
+                            while (n.firstChild) {
+                                var c = n.firstChild;
+                                n.removeChild(c);
+                                var ct = String(c.textContent || '').trim();
+                                if (ct === 'Серверы' || /^Серверы\s*\([0-9]+\)/.test(ct)) continue;
+                                nodes.push(c);
+                            }
+                            continue;
+                        }
+
+                        if (n.nodeType === 1) {
+                            var cls = String(n.className || '');
+                            if (cls.indexOf('ss-all-servers-collapse-body') >= 0) {
+                                while (n.firstChild) {
+                                    nodes.push(n.firstChild);
+                                    n.removeChild(n.firstChild);
+                                }
+                                continue;
+                            }
+                        }
+
+                        nodes.push(n);
+                    }
+
+                    var header = document.createElement('div');
+                    header.className = 'ss-card__header';
+                    header.style.cursor = 'pointer';
+                    header.style.userSelect = 'none';
+
+                    var title = document.createElement('div');
+                    title.className = 'ss-card__title';
+                    title.textContent = 'Все Сервера';
+
+                    var arrow = document.createElement('span');
+                    arrow.className = 'ss-all-servers-collapse-arrow-v452m';
+                    arrow.style.cssText = 'margin-left:auto;font-size:14px;opacity:.85';
+
+                    header.appendChild(title);
+                    header.appendChild(arrow);
+
+                    var body = document.createElement('div');
+                    body.className = 'ss-all-servers-collapse-body-v452m';
+                    for (var j = 0; j < nodes.length; j++) body.appendChild(nodes[j]);
+
+                    card.appendChild(header);
+                    card.appendChild(body);
+
+                    var key = 'subsync_all_servers_collapse_v452m';
+                    var opened = false; /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q */
+
+                    function renderState() {
+                        body.style.display = opened ? '' : 'none';
+                        arrow.textContent = opened ? '▲' : '▼';
+                    }
+
+                    header.addEventListener('click', function(ev) {
+                        if (ev.target && /button|input|select|textarea|a/i.test(ev.target.tagName || '')) return;
+                        opened = !opened;
+                        /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q: do not persist */
+                        renderState();
+                    }, false);
+
+                    renderState();
+                }
+
+                window.setTimeout(ssAllServersCollapseV452M, 350);
+                window.setTimeout(ssAllServersCollapseV452M, 1300);
+                window.setTimeout(ssAllServersCollapseV452M, 2600);
+            } catch(e) {}
+            try {
+                function ssXhttpCollapseV452L() {
+                    var card = document.querySelector('.ss-xhttp-card-v2');
+                    if (!card || card.dataset.ssXhttpCollapseV452L === '1') return;
+
+                    card.dataset.ssXhttpCollapseV452L = '1';
+                    card.className = 'ss-card ss-xhttp-card-v2';
+                    card.style.marginTop = card.style.marginTop || '10px';
+
+                    var nodes = [];
+                    while (card.firstChild) {
+                        var n = card.firstChild;
+                        card.removeChild(n);
+
+                        if (n.nodeType === 1 && n.classList && n.classList.contains('ss-card__header')) {
+                            while (n.firstChild) {
+                                var c = n.firstChild;
+                                n.removeChild(c);
+                                if (c.nodeType === 1 && c.tagName && c.tagName.toLowerCase() === 'button') nodes.push(c);
+                                else {
+                                    if (String(c.textContent || '').indexOf('xHTTP серверы') < 0) nodes.push(c);
+                                }
+                            }
+                            continue;
+                        }
+
+                        if (n.nodeType === 1) {
+                            var cls = String(n.className || '');
+                            if (cls.indexOf('ss-xhttp-collapse-body') >= 0) {
+                                while (n.firstChild) {
+                                    nodes.push(n.firstChild);
+                                    n.removeChild(n.firstChild);
+                                }
+                                continue;
+                            }
+                        }
+
+                        nodes.push(n);
+                    }
+
+                    var header = document.createElement('div');
+                    header.className = 'ss-card__header';
+                    header.style.cursor = 'pointer';
+                    header.style.userSelect = 'none';
+
+                    var title = document.createElement('div');
+                    title.className = 'ss-card__title';
+                    title.textContent = 'xHTTP серверы';
+
+                    var arrow = document.createElement('span');
+                    arrow.className = 'ss-xhttp-collapse-arrow-v452l';
+                    arrow.style.cssText = 'margin-left:auto;font-size:14px;opacity:.85';
+
+                    header.appendChild(title);
+                    header.appendChild(arrow);
+
+                    var body = document.createElement('div');
+                    body.className = 'ss-xhttp-collapse-body-v452l';
+                    for (var i = 0; i < nodes.length; i++) body.appendChild(nodes[i]);
+
+                    card.appendChild(header);
+                    card.appendChild(body);
+
+                    var key = 'subsync_xhttp_collapse_v452l';
+                    var opened = false; /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q */
+
+                    function renderState() {
+                        body.style.display = opened ? '' : 'none';
+                        arrow.textContent = opened ? '▲' : '▼';
+                    }
+
+                    header.addEventListener('click', function(ev) {
+                        if (ev.target && /button|input|select|textarea|a/i.test(ev.target.tagName || '')) return;
+                        opened = !opened;
+                        /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q: do not persist */
+                        renderState();
+                    }, false);
+
+                    renderState();
+                }
+
+                window.setTimeout(ssXhttpCollapseV452L, 350);
+                window.setTimeout(ssXhttpCollapseV452L, 1300);
+                window.setTimeout(ssXhttpCollapseV452L, 2600);
+            } catch(e) {}
+            /* SUBSYNC_SUBSCRIPTIONS_ALL_CARD_COLLAPSE_V452K */
+            try {
+                function ssSubsAllCollapseV452K() {
+                    var cards = document.querySelectorAll('.ss-card');
+                    var card = null;
+
+                    for (var i = 0; i < cards.length; i++) {
+                        var tx = String(cards[i].textContent || '');
+                        if (tx.indexOf('Подписки') >= 0 &&
+                            tx.indexOf('Информация по подпискам') >= 0 &&
+                            tx.indexOf('Добавить одну или несколько подписок') >= 0) {
+                            card = cards[i];
+                            break;
+                        }
+                    }
+
+                    if (!card || card.dataset.ssSubsAllCollapseV452K === '1') return;
+
+                    var allText = String(card.textContent || '');
+                    var m = allText.match(/Подписки\s*\([^)]+\)/);
+                    var titleText = m ? m[0] : 'Подписки';
+
+                    card.dataset.ssSubsAllCollapseV452K = '1';
+                    card.className = 'ss-card';
+                    card.style.marginTop = card.style.marginTop || '10px';
+
+                    var nodes = [];
+                    while (card.firstChild) {
+                        var n = card.firstChild;
+                        card.removeChild(n);
+
+                        if (n.nodeType === 1 && n.classList && n.classList.contains('ss-card__header')) continue;
+
+                        if (n.nodeType === 1) {
+                            var cls = String(n.className || '');
+                            var txt = String(n.textContent || '').trim();
+
+                            if (cls.indexOf('ss-subs-all-collapse-body') >= 0) {
+                                while (n.firstChild) {
+                                    nodes.push(n.firstChild);
+                                    n.removeChild(n.firstChild);
+                                }
+                                continue;
+                            }
+
+                            if (/^Подписки\s*(\([^)]+\))?$/.test(txt)) continue;
+                            if (txt === titleText || txt === titleText + '▲' || txt === titleText + '▼') continue;
+                        }
+
+                        nodes.push(n);
+                    }
+
+                    var header = document.createElement('div');
+                    header.className = 'ss-card__header';
+                    header.style.cursor = 'pointer';
+                    header.style.userSelect = 'none';
+
+                    var title = document.createElement('div');
+                    title.className = 'ss-card__title';
+                    title.textContent = titleText;
+
+                    var arrow = document.createElement('span');
+                    arrow.className = 'ss-subs-all-collapse-arrow-v452k';
+                    arrow.style.cssText = 'margin-left:auto;font-size:14px;opacity:.85';
+
+                    header.appendChild(title);
+                    header.appendChild(arrow);
+
+                    var body = document.createElement('div');
+                    body.className = 'ss-subs-all-collapse-body-v452k';
+                    for (var j = 0; j < nodes.length; j++) body.appendChild(nodes[j]);
+
+                    card.appendChild(header);
+                    card.appendChild(body);
+
+                    var key = 'subsync_subs_all_collapse_v452k';
+                    var opened = false; /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q */
+
+                    function renderState() {
+                        body.style.display = opened ? '' : 'none';
+                        arrow.textContent = opened ? '▲' : '▼';
+                    }
+
+                    header.addEventListener('click', function(ev) {
+                        if (ev.target && /button|input|select|textarea|a/i.test(ev.target.tagName || '')) return;
+                        opened = !opened;
+                        /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q: do not persist */
+                        renderState();
+                    }, false);
+
+                    renderState();
+                }
+
+                window.setTimeout(ssSubsAllCollapseV452K, 350);
+                window.setTimeout(ssSubsAllCollapseV452K, 1300);
+                window.setTimeout(ssSubsAllCollapseV452K, 2600);
+            } catch(e) {}
+            try {
+                function ssTxtOneArrowHy2StyleV452H() {
+                    var card = document.getElementById('ss-txt-block-v348');
+                    if (!card || card.dataset.ssTxtOneArrowHy2StyleV452H === '1') return;
+
+                    if (String(card.textContent || '').indexOf('TXT серверы') < 0) return;
+
+                    card.dataset.ssTxtOneArrowHy2StyleV452H = '1';
+                    card.className = 'ss-card';
+                    card.style.cssText = 'margin-top:10px';
+
+                    var nodes = [];
+                    while (card.firstChild) {
+                        var n = card.firstChild;
+                        card.removeChild(n);
+
+                        if (n.nodeType === 1 && n.classList && n.classList.contains('ss-card__header')) continue;
+
+                        if (n.nodeType === 1) {
+                            var cls = String(n.className || '');
+                            var txt = String(n.textContent || '').trim();
+
+                            if (cls.indexOf('ss-txt-collapse-body') >= 0) {
+                                while (n.firstChild) nodes.push(n.firstChild), n.removeChild(n.firstChild);
+                                continue;
+                            }
+
+                            if (txt === 'TXT серверы' || txt === 'TXT серверы▲' || txt === 'TXT серверы▼') continue;
+                        }
+
+                        nodes.push(n);
+                    }
+
+                    var header = document.createElement('div');
+                    header.className = 'ss-card__header';
+                    header.style.cursor = 'pointer';
+                    header.style.userSelect = 'none';
+
+                    var title = document.createElement('div');
+                    title.className = 'ss-card__title';
+                    title.textContent = 'TXT серверы';
+
+                    var arrow = document.createElement('span');
+                    arrow.className = 'ss-txt-collapse-arrow-v452h';
+                    arrow.style.cssText = 'margin-left:auto;font-size:14px;opacity:.85';
+
+                    header.appendChild(title);
+                    header.appendChild(arrow);
+
+                    var body = document.createElement('div');
+                    body.className = 'ss-txt-collapse-body-v452h';
+
+                    for (var i = 0; i < nodes.length; i++) body.appendChild(nodes[i]);
+
+                    card.appendChild(header);
+                    card.appendChild(body);
+
+                    var key = 'subsync_txt_collapse_v452h';
+                    var opened = false; /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q */
+
+                    function renderState() {
+                        body.style.display = opened ? '' : 'none';
+                        arrow.textContent = opened ? '▲' : '▼';
+                    }
+
+                    header.addEventListener('click', function(ev) {
+                        if (ev.target && /button|input|select|textarea|a/i.test(ev.target.tagName || '')) return;
+                        opened = !opened;
+                        /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q: do not persist */
+                        renderState();
+                    }, false);
+
+                    renderState();
+                }
+
+                window.setTimeout(ssTxtOneArrowHy2StyleV452H, 350);
+                window.setTimeout(ssTxtOneArrowHy2StyleV452H, 1300);
+                window.setTimeout(ssTxtOneArrowHy2StyleV452H, 2600);
+            } catch(e) {}
+            /* SUBSYNC_HY2_CARD_COLLAPSE_HEADER_V452D */
+            try {
+                function ssHy2CollapseHeaderV452D() {
+                    var card = document.getElementById('ss-hy2-v169d-card');
+                    if (!card || card.dataset.ssHy2CollapseHeaderV452D === '1') return;
+
+                    var h3 = card.querySelector('h3');
+                    if (!h3 || String(h3.textContent || '').indexOf('HYSTERIA2') < 0) return;
+
+                    card.dataset.ssHy2CollapseHeaderV452D = '1';
+
+                    var header = document.createElement('div');
+                    header.className = 'ss-card__header';
+                    header.style.cursor = 'pointer';
+                    header.style.userSelect = 'none';
+
+                    var title = document.createElement('div');
+                    title.className = 'ss-card__title';
+                    title.textContent = 'HYSTERIA2 / HY2';
+
+                    var arrow = document.createElement('span');
+                    arrow.className = 'ss-hy2-collapse-arrow-v452d';
+                    arrow.style.cssText = 'margin-left:auto;font-size:14px;opacity:.85';
+
+                    header.appendChild(title);
+                    header.appendChild(arrow);
+
+                    h3.parentNode.replaceChild(header, h3);
+
+                    var body = document.createElement('div');
+                    body.className = 'ss-hy2-collapse-body-v452d';
+
+                    var n = header.nextSibling;
+                    while (n) {
+                        var next = n.nextSibling;
+                        body.appendChild(n);
+                        n = next;
+                    }
+                    card.appendChild(body);
+
+                    var key = 'subsync_hy2_collapse_v452d';
+                    var opened = false; /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q */
+
+                    function renderState() {
+                        body.style.display = opened ? '' : 'none';
+                        arrow.textContent = opened ? '▲' : '▼';
+                    }
+
+                    header.addEventListener('click', function(ev) {
+                        if (ev.target && /button|input|select|textarea|a/i.test(ev.target.tagName || '')) return;
+                        opened = !opened;
+                        /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q: do not persist */
+                        renderState();
+                    }, false);
+
+                    renderState();
+                }
+
+                window.setTimeout(ssHy2CollapseHeaderV452D, 300);
+                window.setTimeout(ssHy2CollapseHeaderV452D, 1200);
+                window.setTimeout(ssHy2CollapseHeaderV452D, 2500);
+            } catch(e) {}
+            try {
+                function ssTxtCollapseV452B() {
+                    var card = document.getElementById('ss-txt-block-v348');
+                    if (!card || card.dataset.ssTxtCollapseV452B === '1') return;
+
+                    var title = card.firstElementChild;
+                    if (!title || String(title.textContent || '').indexOf('TXT серверы') < 0) return;
+
+                    card.dataset.ssTxtCollapseV452B = '1';
+
+                    var body = document.createElement('div');
+                    body.className = 'ss-txt-collapse-body-v452b';
+
+                    var n = title.nextSibling;
+                    while (n) {
+                        var next = n.nextSibling;
+                        body.appendChild(n);
+                        n = next;
+                    }
+                    card.appendChild(body);
+
+                    var key = 'subsync_txt_collapse_v452b';
+                    var opened = false; /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q */
+
+                    title.style.cursor = 'pointer';
+                    title.style.userSelect = 'none';
+                    title.style.display = 'flex';
+                    title.style.alignItems = 'center';
+                    title.style.gap = '8px';
+
+                    var arrow = document.createElement('span');
+                    arrow.className = 'ss-txt-collapse-arrow-v452b';
+                    arrow.style.cssText = 'margin-left:auto;font-size:14px;opacity:.85';
+                    title.appendChild(arrow);
+
+                    function renderState() {
+                        body.style.display = opened ? '' : 'none';
+                        arrow.textContent = opened ? '▲' : '▼';
+                    }
+
+                    title.addEventListener('click', function(ev) {
+                        if (ev.target && /button|input|select|textarea|a/i.test(ev.target.tagName || '')) return;
+                        opened = !opened;
+                        /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q: do not persist */
+                        renderState();
+                    }, false);
+
+                    renderState();
+                }
+
+                window.setTimeout(ssTxtCollapseV452B, 300);
+                window.setTimeout(ssTxtCollapseV452B, 1200);
+                window.setTimeout(ssTxtCollapseV452B, 2500);
+                document.addEventListener('change', function() {
+                    window.setTimeout(ssTxtCollapseV452B, 400);
+                }, true);
+            } catch(e) {}
+            try {
+                function ssAutoPickCollapseV452A() {
+                    var titles = document.querySelectorAll('.ss-card__title');
+                    for (var i = 0; i < titles.length; i++) {
+                        var title = titles[i];
+                        if (String(title.textContent || '').trim() !== 'Автоподбор серверов после обновления') continue;
+
+                        var card = title.closest ? title.closest('.ss-card') : null;
+                        if (!card || card.dataset.ssAutopickCollapseV452A === '1') continue;
+
+                        var header = title.closest ? title.closest('.ss-card__header') : null;
+                        if (!header) continue;
+
+                        card.dataset.ssAutopickCollapseV452A = '1';
+
+                        var body = document.createElement('div');
+                        body.className = 'ss-autopick-collapse-body-v452a';
+
+                        var n = header.nextSibling;
+                        while (n) {
+                            var next = n.nextSibling;
+                            body.appendChild(n);
+                            n = next;
+                        }
+                        card.appendChild(body);
+
+                        var key = 'subsync_autopick_collapse_v452a';
+                        var opened = false; /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q */
+
+                        var arrow = document.createElement('span');
+                        arrow.className = 'ss-autopick-collapse-arrow-v452a';
+                        arrow.style.cssText = 'margin-left:auto;font-size:14px;opacity:.85';
+                        header.appendChild(arrow);
+
+                        header.style.cursor = 'pointer';
+                        header.style.userSelect = 'none';
+
+                        function renderState() {
+                            body.style.display = opened ? '' : 'none';
+                            arrow.textContent = opened ? '▲' : '▼';
+                            card.style.paddingBottom = opened ? '' : '10px';
+                        }
+
+                        header.addEventListener('click', function(ev) {
+                            if (ev.target && /button|input|select|textarea|a/i.test(ev.target.tagName || '')) return;
+                            opened = !opened;
+                            /* SUBSYNC_COLLAPSE_SAFE_ALWAYS_CLOSED_V452Q: do not persist */
+                            renderState();
+                        }, false);
+
+                        renderState();
+                    }
+                }
+
+                window.setTimeout(ssAutoPickCollapseV452A, 300);
+                window.setTimeout(ssAutoPickCollapseV452A, 1200);
+                window.setTimeout(ssAutoPickCollapseV452A, 2500);
+                document.addEventListener('change', function() {
+                    window.setTimeout(ssAutoPickCollapseV452A, 400);
+                }, true);
+            } catch(e) {}
             try {
                 function ssSelectBtnInRowV443(row) {
                     var btns = row.querySelectorAll('button');
@@ -8268,3 +9159,23 @@ return view.extend({
     }, 1000);
   } catch(e) {}
 })();
+
+/* SUBSYNC_COLLAPSE_CLEAR_OLD_STORAGE_V452Q */
+try {
+    [
+        'subsync_autopick_collapse_v452a',
+        'subsync_txt_collapse_v452b',
+        'subsync_txt_collapse_v452e',
+        'subsync_txt_collapse_v452f',
+        'subsync_txt_collapse_v452g',
+        'subsync_txt_collapse_v452h',
+        'subsync_hy2_collapse_v452c',
+        'subsync_hy2_collapse_v452d',
+        'subsync_subs_collapse_v452i',
+        'subsync_subs_all_collapse_v452j',
+        'subsync_subs_all_collapse_v452k',
+        'subsync_xhttp_collapse_v452l',
+        'subsync_all_servers_collapse_v452m',
+        'subsync_create_section_collapse_v452n'
+    ].forEach(function(k) { try { localStorage.removeItem(k); } catch(e) {} });
+} catch(e) {}

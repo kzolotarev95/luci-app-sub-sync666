@@ -71,49 +71,8 @@ rm -f /usr/bin/sub-sync-singbox-log /usr/bin/sub-sync-subs-info /usr/bin/sub-syn
 rm -f /usr/bin/sub-sync-urltest /usr/bin/sub-sync-xhttp-guard /usr/bin/sub-sync-module-update 2>/dev/null || true
 rm -f /etc/sub-sync/module-build /etc/sub-sync/module-version 2>/dev/null || true
 
-echo "=== uninstall ProtoByZKS95/proton2025 theme with fallback ==="
-
-subsync_remove_proton2025_local_v271() {
-  echo "=== local fallback remove ProtoByZKS95/proton2025 theme ==="
-  rm -rf /www/luci-static/proton2025 2>/dev/null || true
-  rm -f /usr/share/ucode/luci/template/themes/proton2025* 2>/dev/null || true
-  rm -rf /usr/share/ucode/luci/template/themes/proton2025 2>/dev/null || true
-  rm -f /usr/libexec/rpcd/proton2025* /usr/bin/proton2025* 2>/dev/null || true
-  uci delete luci.themes.ProtoByZKS95 2>/dev/null || true
-  if [ "$(uci get luci.main.mediaurlbase 2>/dev/null || true)" = "/luci-static/proton2025" ]; then
-    uci set luci.main.mediaurlbase="/luci-static/bootstrap" 2>/dev/null || true
-  fi
-  uci commit luci 2>/dev/null || true
-  echo "OK: local theme fallback cleanup done"
-}
-
-THEME_UNINSTALL_URL="${THEME_UNINSTALL_URL:-https://raw.githubusercontent.com/kzolotarev95/luci-theme-protobyzks95/main/uninstall.sh}"
-THEME_UNINSTALLED=0
-i=1
-while [ "$i" -le 3 ]; do
-  echo "=== theme uninstall try $i/3 ==="
-  if wget -O /tmp/protobyzks95-uninstall.sh "$THEME_UNINSTALL_URL?v=$(date +%s)-$i"; then
-    if sh -n /tmp/protobyzks95-uninstall.sh; then
-      if sh /tmp/protobyzks95-uninstall.sh; then
-        THEME_UNINSTALLED=1
-        break
-      fi
-    fi
-  fi
-  i=$((i + 1))
-  sleep 3
-done
-
-if [ "$THEME_UNINSTALLED" != "1" ]; then
-  echo "WARN: theme uninstall script failed, using local fallback"
-  subsync_remove_proton2025_local_v271
-fi
-
-if [ -d /www/luci-static/proton2025 ] || [ "$(uci get luci.main.mediaurlbase 2>/dev/null || true)" = "/luci-static/proton2025" ]; then
-  subsync_remove_proton2025_local_v271
-fi
-
-rm -f /tmp/protobyzks95-uninstall.sh 2>/dev/null || true
+echo "=== theme uninstall skipped by Podcop Sub v666 v455B ==="
+# SUBSYNC_NO_THEME_INSTALL_UNINSTALL_V455B
 
 echo "=== clear LuCI cache after uninstall ==="
 rm -rf /tmp/luci-modulecache /tmp/luci-modulecache/* /tmp/luci-indexcache /tmp/luci-indexcache* /tmp/luci-sessions /tmp/luci-sessions/* 2>/dev/null || true
@@ -162,21 +121,11 @@ echo "--- remove module configs/data ---"
 rm -rf /etc/sub-sync 2>/dev/null || true
 
 echo "--- remove theme files and uci registration ---"
-uci -q set luci.main.mediaurlbase='/luci-static/bootstrap' 2>/dev/null || true
-uci -q delete luci.themes.ProtoByZKS95 2>/dev/null || true
 uci -q commit luci 2>/dev/null || true
 
-rm -rf /www/luci-static/proton2025 2>/dev/null || true
-rm -rf /www/luci-static/resources/proton2025 2>/dev/null || true
-rm -f /usr/share/ucode/luci/template/themes/proton2025*.ut 2>/dev/null || true
-rm -f /usr/bin/proton2025-* /usr/libexec/rpcd/proton2025-* /etc/init.d/proton2025-* 2>/dev/null || true
-rm -f /usr/share/rpcd/acl.d/proton2025*.json 2>/dev/null || true
 
 echo "--- remove public installer/theme backups and tmp leftovers ---"
-rm -f /root/proton2025-before-install-*.tar.gz /root/proton2025-before-uninstall-*.tar.gz 2>/dev/null || true
-rm -f /tmp/subsync-install*.sh /tmp/subsync-uninstall*.sh /tmp/protobyzks95-install.sh /tmp/protobyzks95-uninstall.sh 2>/dev/null || true
 rm -f /tmp/podcop-sub-v666-*.log /tmp/subsync-v*-delayed-restart.log 2>/dev/null || true
-rm -rf /tmp/luci-theme-protobyzks95-* /tmp/protobyzks95-* 2>/dev/null || true
 
 echo "--- clear LuCI cache ---"
 rm -rf /tmp/luci-modulecache /tmp/luci-modulecache/* /tmp/luci-indexcache /tmp/luci-indexcache* /tmp/luci-sessions /tmp/luci-sessions/* 2>/dev/null || true
@@ -190,7 +139,6 @@ echo "--- verify v275 cleanup ---"
 [ ! -e /usr/share/luci/menu.d/luci-app-sub-sync.json ] || echo "WARN: duplicate menu still exists"
 [ ! -e /usr/share/rpcd/acl.d/luci-app-sub-sync.json ] || echo "WARN: ACL still exists"
 [ ! -e /etc/sub-sync ] || echo "WARN: /etc/sub-sync still exists"
-[ ! -e /www/luci-static/proton2025 ] || echo "WARN: proton2025 theme dir still exists"
 
 echo "DONE: Podcop Sub v666 v275 full cleanup complete. No module/theme files should remain."
 # SUBSYNC_FULL_PUBLIC_UNINSTALL_V275_END

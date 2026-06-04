@@ -351,54 +351,16 @@ subsync_install_helper_v448 usr/bin/sub-sync-delete-server /usr/bin/sub-sync-del
 chmod +x /usr/bin/sub-sync /usr/bin/sub-sync-subs-info /usr/bin/sub-sync-subs-info.real-v444 /usr/bin/sub-sync-dashboard-v403 /usr/bin/sub-sync-dashboard-ping-v403 /usr/bin/sub-sync-delete-server 2>/dev/null || true
 # SUBSYNC_INSTALL_DASHBOARD_FIX_HELPERS_V448_END
 
-echo "v451" > /etc/sub-sync/module-version
-echo "451" > /etc/sub-sync/module-build
+echo "v455" > /etc/sub-sync/module-version
+echo "455" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
   /usr/bin/podcop-sub-v666-xhttp-patch apply || true
 fi
 
-echo "=== install ProtoByZKS95/proton2025 theme ==="
-theme_ok=0
-i=1
-while [ "$i" -le 5 ]; do
-  echo "--- theme try $i/5 ---"
-  rm -f /tmp/protobyzks95-install.sh
-  if wget -O /tmp/protobyzks95-install.sh "https://raw.githubusercontent.com/kzolotarev95/luci-theme-protobyzks95/main/install.sh?v=$(date +%s)-$i"; then
-    if sh -n /tmp/protobyzks95-install.sh && REPO_OWNER=kzolotarev95 REPO_NAME=luci-theme-protobyzks95 REPO_REF=main sh /tmp/protobyzks95-install.sh; then
-      theme_ok=1
-      break
-    fi
-  fi
-  i=$((i + 1))
-  sleep 5
-done
-
-[ "$theme_ok" = "1" ] || echo "WARN: theme failed, module still installed"
-
-echo "=== final verify ==="
-[ -s /www/luci-static/resources/view/sub_sync/sub_sync.js ] || { echo "ERROR: sub_sync.js missing"; exit 1; }
-[ -s /www/luci-static/resources/view/sub_sync/sub_sync_v221.js ] || { echo "ERROR: sub_sync_v221.js missing"; exit 1; }
-[ -s /www/luci-static/resources/view/sub_sync/sub_sync_subv666.js ] || { echo "ERROR: sub_sync_subv666.js missing"; exit 1; }
-[ -s /usr/share/rpcd/acl.d/luci-app-sub-sync.json ] || { echo "ERROR: ACL missing"; exit 1; }
-grep -q 'luci-app-sub-sync' /usr/share/rpcd/acl.d/luci-app-sub-sync.json || { echo "ERROR: ACL marker missing"; exit 1; }
-[ -s /usr/share/luci/menu.d/luci-app-podcop-sub-v666.json ] || { echo "ERROR: Sub v666 menu missing"; exit 1; }
-grep -q 'sub_sync/sub_sync_subv666' /usr/share/luci/menu.d/luci-app-podcop-sub-v666.json || { echo "ERROR: Sub v666 route missing"; exit 1; }
-if grep -q 'sub_sync/' /usr/share/luci/menu.d/luci-app-podkop.json 2>/dev/null; then echo "ERROR: native Podkop menu hijacked"; exit 1; fi
-grep -q 'SUBSYNC_HIDE_UPDATE_CHECK_BUTTON_V269B' /www/luci-static/resources/view/sub_sync/sub_sync.js || { echo "ERROR: hide marker missing in sub_sync.js"; exit 1; }
-
-echo "--- files ---"
-ls -l /www/luci-static/resources/view/sub_sync/sub_sync.js
-ls -l /www/luci-static/resources/view/sub_sync/sub_sync_v221.js
-ls -l /www/luci-static/resources/view/sub_sync/sub_sync_subv666.js
-ls -l /usr/share/rpcd/acl.d/luci-app-sub-sync.json
-
-echo "--- menu refs ---"
-grep -RsnE 'sub_sync|Подписки|Мониторинг' /usr/share/luci/menu.d/*.json 2>/dev/null || true
-
-echo "--- theme ---"
-uci get luci.main.mediaurlbase 2>/dev/null || true
+echo "=== theme install skipped by Podcop Sub v666 v455B ==="
+# SUBSYNC_NO_THEME_INSTALL_UNINSTALL_V455B
 
 echo "--- hidden Проверить ---"
 grep -Rsn 'SUBSYNC_HIDE_UPDATE_CHECK_BUTTON_V269B' /www/luci-static/resources/view/sub_sync/sub_sync*.js 2>/dev/null | head
@@ -423,7 +385,6 @@ rm -f /tmp/root.cron.noguard
 rm -f /usr/bin/podcop-sub-v666-guard /etc/init.d/podcop-sub-v666-guard 2>/dev/null || true
 /etc/init.d/cron restart 2>/dev/null || true
 echo "DONE_MODULE_OK: Podcop Sub v666 v402 module installed."
-echo "DONE_THEME_STATUS: mediaurlbase=$(uci get luci.main.mediaurlbase 2>/dev/null || true)"
 echo "DONE: install.sh v402 finished rc=0"
 # SUBSYNC_INSTALL_VERSION_FILES_V395_END
 
@@ -461,8 +422,8 @@ chmod 755 /www/luci-static/resources/view 2>/dev/null || true
 chmod 755 /www/luci-static/resources/view/podkop 2>/dev/null || true
 chmod 644 /www/luci-static/resources/view/podkop/main.js 2>/dev/null || true
 
-echo "v451" > /etc/sub-sync/module-version
-echo "451" > /etc/sub-sync/module-build
+echo "v455" > /etc/sub-sync/module-version
+echo "455" > /etc/sub-sync/module-build
 
 rm -rf /tmp/luci-* /tmp/luci-indexcache* /tmp/luci-modulecache*
 /etc/init.d/rpcd restart 2>/dev/null || true
