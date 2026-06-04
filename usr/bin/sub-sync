@@ -1,4 +1,21 @@
 #!/bin/sh
+# SUBSYNC_FAST_DASH_DELETE_ALIASES_V444_BEGIN
+case "${1:-}" in
+  subs-info) exec /usr/bin/sub-sync-subs-info ;;
+  dashboard-v403) [ -x /usr/bin/sub-sync-dashboard-v403 ] && exec /usr/bin/sub-sync-dashboard-v403 ;;
+  dashboard-ping-v403) shift; [ -x /usr/bin/sub-sync-dashboard-ping-v403 ] && exec /usr/bin/sub-sync-dashboard-ping-v403 "$@" ;;
+  stage-delete-active) shift; [ -x /usr/bin/sub-sync-delete-server ] && exec /usr/bin/sub-sync-delete-server stage-active "$@" ;;
+  apply-delete-active) [ -x /usr/bin/sub-sync-delete-server ] && exec /usr/bin/sub-sync-delete-server apply-staged ;;
+  delete-server-active) shift; [ -x /usr/bin/sub-sync-delete-server ] && exec /usr/bin/sub-sync-delete-server delete-active "$@" ;;
+esac
+# SUBSYNC_FAST_DASH_DELETE_ALIASES_V444_END
+# SUBSYNC_HY2_MANUAL_ADD_WRAPPER_V436B
+case "${1:-}" in
+  hy2-manual-add|manual-hy2-add)
+    shift
+    exec /usr/bin/sub-sync-hy2-manual-v436b add "$@"
+  ;;
+esac
 # SUBSYNC_SOURCE_MAP_WRAPPER_V432C
 case "${1:-}" in
   sync)
@@ -6,6 +23,8 @@ case "${1:-}" in
     /usr/bin/sub-sync.real sync "$@"
     _rc="$?"
     /usr/bin/sub-sync-link-source-map-v432c >/tmp/subsync-v432c-map.log 2>&1 || true
+    [ -x /usr/bin/sub-sync-happ-json-hy2-import ] && /usr/bin/sub-sync-happ-json-hy2-import >/tmp/subsync-hy2-import-last-v436c.log 2>&1 || true # SUBSYNC_HY2_IMPORT_LAST_AFTER_SYNC_V436C
+    /usr/bin/sub-sync-hy2-manual-v436b merge >/tmp/subsync-hy2-manual-v436b.log 2>&1 || true # SUBSYNC_HY2_MANUAL_MERGE_AFTER_SYNC_V436B
     exit "$_rc"
   ;;
   del-sub|delete-sub|remove-sub|delete-subscription)

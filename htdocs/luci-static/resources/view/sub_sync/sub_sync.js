@@ -1953,17 +1953,7 @@ function ssHydrateActiveBadgesV28(sec3) {
 if (!serverTable || !sec3 || typeof fs === "undefined") return;
 var rows = serverTable.querySelectorAll(".tr[data-link]");
 var curLinks = activeLinksBySection[sec3] || [];
-                                /* SUBSYNC_SERVERS_ANY_SECTION_ACTIVE_BUTTON_V407U */
-                                try {
-                                        var allLinksV407U = curLinks.slice();
-                                        Object.keys(activeLinksBySection || {}).forEach(function(k407u) {
-                                                (activeLinksBySection[k407u] || []).forEach(function(l407u) {
-                                                        if (!ssLinkInListV28(l407u, allLinksV407U))
-                                                                allLinksV407U.push(l407u);
-                                                });
-                                        });
-                                        curLinks = allLinksV407U;
-                                } catch(e407u) {}
+                                /* SUBSYNC_SECTION_ACTIVE_STRICT_V440: disabled old any-section active union */
 for (var i = 0; i < rows.length; i++) {
 (function(row) {
 var btn = row.querySelector("button[data-idx]");
@@ -3922,6 +3912,13 @@ syncAllBtnStates(sec3);
 				sectionTypeSelect.value = t || 'url';
 			}
 			if (sections.length > 0) updateTypeSelect();
+                        /* SUBSYNC_SECTION_CHANGE_SYNC_SELECTED_V440 */
+                        try {
+                                globalSectionSelect.addEventListener('change', function() {
+                                        updateTypeSelect();
+                                        syncAllBtnStates(globalSectionSelect.value);
+                                });
+                        } catch(e) {}
 
 			var headerRow = E('div', { 'class': 'tr table-titles' }, [
 				E('div', { 'class': 'th', 'style': 'width:40px' }, '#'),
@@ -4196,17 +4193,7 @@ btn.dataset.link = ssNormLinkV28(link2 || btn.dataset.link || "");
 			function syncAllBtnStates(sec3) {
 				if (!serverTable) return;
 				var curLinks = activeLinksBySection[sec3] || [];
-                                /* SUBSYNC_SERVERS_ANY_SECTION_ACTIVE_BUTTON_V407U */
-                                try {
-                                        var allLinksV407U = curLinks.slice();
-                                        Object.keys(activeLinksBySection || {}).forEach(function(k407u) {
-                                                (activeLinksBySection[k407u] || []).forEach(function(l407u) {
-                                                        if (!ssLinkInListV28(l407u, allLinksV407U))
-                                                                allLinksV407U.push(l407u);
-                                                });
-                                        });
-                                        curLinks = allLinksV407U;
-                                } catch(e407u) {}
+                                /* SUBSYNC_SECTION_ACTIVE_STRICT_V440: disabled old any-section active union */
 
 				var rows = serverTable.querySelectorAll('.tr[data-link]');
 				for (var ri2 = 0; ri2 < rows.length; ri2++) {
@@ -4371,13 +4358,7 @@ if (!ssLinkInListV28(link2, myLinks)) {
 				}
 
 
-                                /* SUBSYNC_SERVERS_CREATE_ANY_ACTIVE_V407U */
-                                try {
-                                        Object.keys(activeLinksBySection || {}).forEach(function(k407u) {
-                                                if (ssLinkInListV28(s.link || '', activeLinksBySection[k407u] || []))
-                                                        isActive = true;
-                                        });
-                                } catch(e407u2) {}
+                                /* SUBSYNC_SECTION_ACTIVE_STRICT_CREATE_V440: disabled old any-section active union */
 				if (isActive && !xhttpNoSupport) {
 					markBtnSelected(selectBtn, s.link || '');
 				}
@@ -7824,6 +7805,72 @@ document.head.appendChild(st407ad);
 return view.extend({
 	render: function() {
             /* SUBSYNC_DEL_SUB_WEB_RELOAD_V433 */
+            /* SUBSYNC_DASHBOARD_HY2_NEW_BADGE_ONE_LINE_V445B */
+            try {
+                function ssApplyHy2NewBadgeV445B() {
+                    var all = document.querySelectorAll('span, div, small, b');
+                    for (var i = 0; i < all.length; i++) {
+                        var el = all[i];
+                        if (el.querySelector && el.querySelector('.ss-hy2-new-badge-v445b')) continue;
+
+                        var txt = String(el.textContent || '').trim();
+                        if (txt !== 'HYSTERIA2 / QUIC' && txt !== 'HY2 / QUIC') continue;
+
+                        var badge = document.createElement('span');
+                        badge.className = 'ss-hy2-new-badge-v445b';
+                        badge.textContent = 'NEW';
+                        badge.style.cssText = 'display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;background:#ffc642;color:#221500;font-size:10px;font-weight:900;vertical-align:middle';
+                        el.appendChild(badge);
+                    }
+                }
+
+                window.setTimeout(ssApplyHy2NewBadgeV445B, 200);
+                window.setTimeout(ssApplyHy2NewBadgeV445B, 900);
+                window.setTimeout(ssApplyHy2NewBadgeV445B, 1800);
+            } catch(e) {}
+            /* SUBSYNC_ACTIVE_ROW_BUTTON_SELECTED_V443 */
+            try {
+                function ssSelectBtnInRowV443(row) {
+                    var btns = row.querySelectorAll('button');
+                    for (var i = 0; i < btns.length; i++) {
+                        var t = String(btns[i].textContent || '').trim();
+                        if (t !== 'Копировать') return btns[i];
+                    }
+                    return null;
+                }
+
+                function ssFixActiveRowButtonsV443() {
+                    var rows = document.querySelectorAll('.ss-table-wrap .tr[data-link]');
+                    for (var i = 0; i < rows.length; i++) {
+                        var row = rows[i];
+                        var active = !!row.querySelector('.ss-active-badge');
+                        var btn = ssSelectBtnInRowV443(row);
+                        if (!btn) continue;
+
+                        if (active) {
+                            btn.dataset.selected = '1';
+                            btn.dataset.link = row.getAttribute('data-link') || btn.dataset.link || '';
+                            btn.textContent = 'Выбрано';
+                            btn.className = 'cbi-button cbi-button-neutral';
+                            btn.style.cssText = 'padding:2px 6px;font-size:11px;min-width:62px;border-color:#4caf50;color:#4caf50';
+                        } else {
+                            btn.dataset.selected = '0';
+                            btn.textContent = 'Выбрать';
+                            btn.className = 'cbi-button cbi-button-action';
+                            btn.style.cssText = 'padding:2px 6px;font-size:11px;min-width:62px';
+                        }
+                    }
+                }
+
+                window.setTimeout(ssFixActiveRowButtonsV443, 100);
+                window.setTimeout(ssFixActiveRowButtonsV443, 500);
+                window.setTimeout(ssFixActiveRowButtonsV443, 1200);
+                window.setTimeout(ssFixActiveRowButtonsV443, 2500);
+                document.addEventListener('change', function() {
+                    window.setTimeout(ssFixActiveRowButtonsV443, 100);
+                    window.setTimeout(ssFixActiveRowButtonsV443, 700);
+                }, true);
+            } catch(e) {}
             try {
                 if (typeof fs !== 'undefined' && fs.exec && !fs.__subsyncDelSubReloadV433) {
                     var __subsyncOrigFsExecV433 = fs.exec;

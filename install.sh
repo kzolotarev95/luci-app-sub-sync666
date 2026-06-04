@@ -1,6 +1,6 @@
 #!/bin/sh
-# SUBSYNC_PUBLIC_BUILD_V435
-# SUBSYNC_PUBLIC_BUILD_V434
+# SUBSYNC_PUBLIC_BUILD_V447
+# SUBSYNC_PUBLIC_BUILD_V447
 # SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V395_BEGIN
 cat > /usr/bin/podcop-sub-v666-safe-podkop <<'EOSAFE_MAIN'
 #!/bin/sh
@@ -80,13 +80,13 @@ fi
 EOSAFE
 chmod +x /usr/bin/podcop-sub-v666-safe-podkop-restart
 # SUBSYNC_SAFE_PODKOP_RESTART_INSTALL_V395_END
-# SUBSYNC_PUBLIC_BUILD_V406
-# SUBSYNC_PUBLIC_BUILD_V406
-# SUBSYNC_PUBLIC_BUILD_V406
-# SUBSYNC_PUBLIC_BUILD_V406
-# SUBSYNC_PUBLIC_BUILD_V406
-# SUBSYNC_PUBLIC_BUILD_V406
-# SUBSYNC_PUBLIC_BUILD_V406
+# SUBSYNC_PUBLIC_BUILD_V447
+# SUBSYNC_PUBLIC_BUILD_V447
+# SUBSYNC_PUBLIC_BUILD_V447
+# SUBSYNC_PUBLIC_BUILD_V447
+# SUBSYNC_PUBLIC_BUILD_V447
+# SUBSYNC_PUBLIC_BUILD_V447
+# SUBSYNC_PUBLIC_BUILD_V447
 # SUBSYNC_INSTALL_VERSION_FILES_V395_BEGIN
 set -u
 
@@ -328,8 +328,17 @@ subsync_dl_helper_v435() {
 subsync_dl_helper_v435 sub-sync-link-source-map-v432c
 subsync_dl_helper_v435 sub-sync-del-sub-source-clean-v432c
 # SUBSYNC_INSTALL_SOURCE_DELETE_HELPERS_V435_END
-echo "v435" > /etc/sub-sync/module-version
-echo "435" > /etc/sub-sync/module-build
+
+# SUBSYNC_INSTALL_DASHBOARD_FIX_HELPERS_V447_BEGIN
+subsync_dl_helper_v435 usr/bin/sub-sync-subs-info /usr/bin/sub-sync-subs-info || true
+subsync_dl_helper_v435 usr/bin/sub-sync-subs-info.real-v444 /usr/bin/sub-sync-subs-info.real-v444 || true
+subsync_dl_helper_v435 usr/bin/sub-sync-dashboard-v403 /usr/bin/sub-sync-dashboard-v403 || true
+subsync_dl_helper_v435 usr/bin/sub-sync-dashboard-ping-v403 /usr/bin/sub-sync-dashboard-ping-v403 || true
+subsync_dl_helper_v435 usr/bin/sub-sync-delete-server /usr/bin/sub-sync-delete-server || true
+chmod +x /usr/bin/sub-sync /usr/bin/sub-sync-subs-info /usr/bin/sub-sync-subs-info.real-v444 /usr/bin/sub-sync-dashboard-v403 /usr/bin/sub-sync-dashboard-ping-v403 /usr/bin/sub-sync-delete-server 2>/dev/null || true
+# SUBSYNC_INSTALL_DASHBOARD_FIX_HELPERS_V447_END
+echo "v447" > /etc/sub-sync/module-version
+echo "447" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
@@ -438,8 +447,8 @@ chmod 755 /www/luci-static/resources/view 2>/dev/null || true
 chmod 755 /www/luci-static/resources/view/podkop 2>/dev/null || true
 chmod 644 /www/luci-static/resources/view/podkop/main.js 2>/dev/null || true
 
-echo "v435" > /etc/sub-sync/module-version
-echo "435" > /etc/sub-sync/module-build
+echo "v447" > /etc/sub-sync/module-version
+echo "447" > /etc/sub-sync/module-build
 
 rm -rf /tmp/luci-* /tmp/luci-indexcache* /tmp/luci-modulecache*
 /etc/init.d/rpcd restart 2>/dev/null || true
