@@ -351,8 +351,8 @@ subsync_install_helper_v448 usr/bin/sub-sync-delete-server /usr/bin/sub-sync-del
 chmod +x /usr/bin/sub-sync /usr/bin/sub-sync-subs-info /usr/bin/sub-sync-subs-info.real-v444 /usr/bin/sub-sync-dashboard-v403 /usr/bin/sub-sync-dashboard-ping-v403 /usr/bin/sub-sync-delete-server 2>/dev/null || true
 # SUBSYNC_INSTALL_DASHBOARD_FIX_HELPERS_V448_END
 
-echo "v456" > /etc/sub-sync/module-version
-echo "456" > /etc/sub-sync/module-build
+echo "v457" > /etc/sub-sync/module-version
+echo "457" > /etc/sub-sync/module-build
 
 echo "=== apply Podkop xHTTP patch ==="
 if [ -x /usr/bin/podcop-sub-v666-xhttp-patch ]; then
@@ -422,8 +422,8 @@ chmod 755 /www/luci-static/resources/view 2>/dev/null || true
 chmod 755 /www/luci-static/resources/view/podkop 2>/dev/null || true
 chmod 644 /www/luci-static/resources/view/podkop/main.js 2>/dev/null || true
 
-echo "v456" > /etc/sub-sync/module-version
-echo "456" > /etc/sub-sync/module-build
+echo "v457" > /etc/sub-sync/module-version
+echo "457" > /etc/sub-sync/module-build
 
 rm -rf /tmp/luci-* /tmp/luci-indexcache* /tmp/luci-modulecache*
 /etc/init.d/rpcd restart 2>/dev/null || true

@@ -2484,6 +2484,39 @@ syncAllBtnStates(sec3);
             } catch(e) {}
 
             /* SUBSYNC_XHTTP_COLOR_ONLY_V456J */
+            /* SUBSYNC_RESTORE_ALL_SERVERS_V456L */
+            try {
+                function ssTxtV456L(n) {
+                    return String((n && n.textContent) || '').replace(/\s+/g, ' ').trim();
+                }
+
+                function ssHasClassV456L(el, cls) {
+                    return !!el && (' ' + String(el.className || '') + ' ').indexOf(' ' + cls + ' ') >= 0;
+                }
+
+                function ssRestoreAllServersV456L() {
+                    var nodes = document.querySelectorAll('.ss-card__title, .ss-card__header, h3, div');
+                    for (var i = 0; i < nodes.length; i++) {
+                        var t = ssTxtV456L(nodes[i]);
+                        if (t.indexOf('Все Сервера') !== 0) continue;
+
+                        var n = nodes[i];
+                        for (var up = 0; up < 10 && n; up++, n = n.parentNode) {
+                            if (n.style) {
+                                n.style.removeProperty('display');
+                                n.style.setProperty('visibility', 'visible', 'important');
+                            }
+                            if (ssHasClassV456L(n, 'ss-card')) break;
+                        }
+                    }
+                }
+
+                ssRestoreAllServersV456L();
+                window.setTimeout(ssRestoreAllServersV456L, 300);
+                window.setTimeout(ssRestoreAllServersV456L, 1200);
+                window.setTimeout(ssRestoreAllServersV456L, 2500);
+                window.setTimeout(ssRestoreAllServersV456L, 4500);
+            } catch(e) {}
             try {
                 function ssTxtV456J(n) {
                     return String((n && n.textContent) || '').replace(/\s+/g, ' ').trim();
