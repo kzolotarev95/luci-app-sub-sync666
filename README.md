@@ -1,6 +1,6 @@
 <p align="center">
   <b>Podcop Sub v666</b><br>
-  Подписки • Мониторинг • xHTTP • HY2 • URL Test • LuCI UI • ProtoByZKS95 Theme
+  Подписки • Мониторинг • xHTTP • HY2 • URL Test • LuCI UI •
 </p>
 
 <p align="center">
