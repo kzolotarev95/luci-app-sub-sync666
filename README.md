@@ -26,7 +26,6 @@
 - 🚀 Поддержка xHTTP для Podkop
 - ⚡ Поддержка HY2 / Hysteria2
 - 🧩 Интеграция прямо в `Services → Podkop`
-- 🎨 Автоустановка темы `ProtoByZKS95 / proton2025`
 - 🛡 ACL fallback, чтобы LuCI-доступ не ломался
 - 🔁 Retry installer/uninstaller для нестабильного GitHub-соединения
 - 🧹 Полное удаление без мусора
